@@ -1,0 +1,51 @@
+program -> program function | ε
+
+function -> type id ( optParams ) { statements }
+
+type -> boolean | int | float | void
+
+optParams -> ε | params
+params -> params , declaration | declaration
+
+statements -> ε | statements statement
+statement -> declaration 
+           | id = expr0 ; 
+           | while ( expr0 ) statement 
+           | if ( expr0 ) statement
+           | return expr0 ;
+           | cin << value ;
+           | cout << value ;
+           | { statements }
+
+declaration -> type id ; 
+
+compare -> < | <= | >= | ==
+logical0 -> and
+logical1 -> or
+aritmetic0 -> * | /
+aritmetic1 -> + | -
+    
+expr0 -> expr0 compare expr1 | expr1
+expr1 -> expr1 logical1 expr2 | expr2
+expr2 -> expr2 logical0 expr3 | expr3
+expr3 -> expr3 aritmetic1 expr4 | expr4
+expr4 -> expr4 aritmetic0 factor | factor 
+
+factor -> ( expr0 ) 
+        | functionCall
+        | value
+
+functionCall -> id ( optParamsCall ) ;
+optParamsCall -> ε | paramsCall
+paramsCall -> paramsCall , value | value
+
+value -> id
+       | number 
+
+/*--------------*/
+
+- Semantica
+    - Parametros passados por copia
+
+number -> 
+id -> 
