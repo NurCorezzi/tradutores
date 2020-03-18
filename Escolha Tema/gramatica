@@ -1,10 +1,10 @@
 program -> program function | ε
 
-function -> type id ( optParams ) { statements }
+function -> type id ( opt_params ) { statements }
 
-type -> 'boolean' | 'int' | 'float' | 'void'
+type -> 'boolean' | 'int' | 'float' | 'void' | 'graph' '[' number_int ']'
 
-optParams -> ε | params
+opt_params -> ε | params
 params -> params , declaration | declaration
 
 statements -> ε | statements statement
@@ -17,11 +17,12 @@ statement -> declaration_and_atrib ';'
            | 'return' expr_decl ';'
            | '>>' value ';'
            | '<<' value ';'
+           | id '.' function_call ';'
            | '{' statements '}'
 
-graph_op -> 'dfs' '(' id ')' | 'bfs' '(' id ')' 
+graph_op -> 'dfs' '(' id ',' id ')' | 'bfs' '(' id ',' id ')' 
 
-declaration_and_atrib -> declaration | delaration '=' expr_decl;
+declaration_and_atrib -> declaration | delaration '=' expr_decl
 declaration -> type id
 
 compare_op -> '<' | '<=' | '>=' | '=='
@@ -36,22 +37,22 @@ expr_add -> expr_add add_op expr_mult | expr_mult
 expr_mult -> expr_mult mul_op factor | factor 
 
 factor -> '(' expr_decl ')' 
-        | functionCall
+        | function_call
         | value
 
-functionCall -> id '(' optParamsCall ')' ;
-optParamsCall -> ε | paramsCall
-paramsCall -> paramsCall , value | value
+function_call -> id '(' opt_params_call ')'
+opt_params_call -> ε | params_call
+params_call -> params_call , value | value
 
-value -> id
-       | number 
+value -> id | number 
 
-number -> numberTerm numberList | numberList '.' numberTerm numberList
-numberList -> numberList numberTerm | ε 
-numberTerm -> [0-9]
+number -> number_int | number_list '.' digit number_list
+number_int -> digit number_list
+number_list -> number_list digit | ε 
+digit -> [0-9]
 
-id -> letter letterList numberList
-letterList -> letterList letter | ε 
+id -> letter letter_list number_list
+letter_list -> letter_list letter | ε 
 letter -> [a-bA-B]
 
 //number -> [0-9][0-9]* | [0-9]*'.'[0-9]*
@@ -59,9 +60,13 @@ letter -> [a-bA-B]
 
 /*--------------*/
 
+- Duvida
+    - Devo definir espaços em branco
+    - Definir como BNF?
+
 - Semantica
     - Parametros passados por copia
-    - main sera a funcao inicial a partir de qual o programa sera rodado
-    - apenas existe cast entre int e float
+    - main sera a funcao inicial a partir de qual o programa sera rodado, falta de main implica em nao execucao
+    - apenas existe cast implicito entre int e float
     - expressoes de atribuição retornam o valor da variavel sendo atribuida
-
+    - apenas grafos podem obter declaracao e acesso <id> '[' <number> ']'
