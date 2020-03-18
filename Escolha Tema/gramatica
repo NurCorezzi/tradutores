@@ -2,50 +2,66 @@ program -> program function | ε
 
 function -> type id ( optParams ) { statements }
 
-type -> boolean | int | float | void
+type -> 'boolean' | 'int' | 'float' | 'void'
 
 optParams -> ε | params
 params -> params , declaration | declaration
 
 statements -> ε | statements statement
-statement -> declaration 
-           | id = expr0 ; 
-           | while ( expr0 ) statement 
-           | if ( expr0 ) statement
-           | return expr0 ;
-           | cin << value ;
-           | cout << value ;
-           | { statements }
+statement -> declaration_and_atrib ';'
+           | expr_decl ';' 
+           | 'for' '(' declaration_and_atrib  ';' expr_decl ';' expr_decl ')' 
+           | 'for' '(' declaration  ':' graph_op ')' 
+           | 'while' '(' expr_decl ')' statement 
+           | 'if' '(' expr_decl ')' statement
+           | 'return' expr_decl ';'
+           | '>>' value ';'
+           | '<<' value ';'
+           | '{' statements '}'
 
-declaration -> type id ; 
+graph_op -> 'dfs' '(' id ')' | 'bfs' '(' id ')' 
 
-compare -> < | <= | >= | ==
-logical0 -> and
-logical1 -> or
-aritmetic0 -> * | /
-aritmetic1 -> + | -
-    
-expr0 -> expr0 compare expr1 | expr1
-expr1 -> expr1 logical1 expr2 | expr2
-expr2 -> expr2 logical0 expr3 | expr3
-expr3 -> expr3 aritmetic1 expr4 | expr4
-expr4 -> expr4 aritmetic0 factor | factor 
+declaration_and_atrib -> declaration | delaration '=' expr_decl;
+declaration -> type id
 
-factor -> ( expr0 ) 
+compare_op -> '<' | '<=' | '>=' | '=='
+add_op -> '*' | '/'
+mul_op -> '+' | '-'
+
+expr_decl  -> id '=' expr_relational | expr_relational
+expr_relational -> expr_relational compare_op expr_and | expr_and
+expr_and -> expr_and '&&' expr_or | expr_or
+expr_or -> expr_or '||' expr_add | expr_add
+expr_add -> expr_add add_op expr_mult | expr_mult
+expr_mult -> expr_mult mul_op factor | factor 
+
+factor -> '(' expr_decl ')' 
         | functionCall
         | value
 
-functionCall -> id ( optParamsCall ) ;
+functionCall -> id '(' optParamsCall ')' ;
 optParamsCall -> ε | paramsCall
 paramsCall -> paramsCall , value | value
 
 value -> id
        | number 
 
+number -> numberTerm numberList | numberList '.' numberTerm numberList
+numberList -> numberList numberTerm | ε 
+numberTerm -> [0-9]
+
+id -> letter letterList numberList
+letterList -> letterList letter | ε 
+letter -> [a-bA-B]
+
+//number -> [0-9][0-9]* | [0-9]*'.'[0-9]*
+//id -> [a-bA-B][a-bA-B]*[0-9]*
+
 /*--------------*/
 
 - Semantica
     - Parametros passados por copia
+    - main sera a funcao inicial a partir de qual o programa sera rodado
+    - apenas existe cast entre int e float
+    - expressoes de atribuição retornam o valor da variavel sendo atribuida
 
-number -> 
-id -> 
