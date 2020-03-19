@@ -1,0 +1,67 @@
+<program> ::= <program> <function> | ''
+
+<function> ::= <type> <id> '(' <opt_params> ')' '{' <statements> '}'
+
+<type> ::= 'boolean' | 'int' | 'float' | 'void' | 'graph' '[' <number_int> ']'
+
+<opt_params> ::= '' | <params>
+<params> ::= <params> ',' <declaration> | <declaration>
+
+<statements> ::= '' | <statements> <statement>
+<statement> ::= <declaration_and_atrib> ';'
+           | <expr_decl> ';' 
+           | <for>
+           | <while> 
+           | <if>
+           | 'return' <expr_decl> ';'
+           | <read>
+           | <write>
+           | <id> '.' <function_call> ';'
+           | '{' <statements> '}'
+
+<for> ::= 'for' '(' <declaration_and_atrib>  ';' <expr_decl> ';' <expr_decl> ')' <statement>
+      | 'for' '(' <declaration>  ':' <graph_op> ')' <statement>
+<while> ::= 'while' '(' <expr_decl> ')' <statement>
+<if> ::= 'if' '(' <expr_decl> ')' <statement>
+<read> ::= '>>' <value> ';'
+<write> ::=  '<<' <value> ';'
+
+<function_call> ::= <id> '(' <opt_params_call> ')'
+<opt_params_call> ::= '' | <params_call>
+<params_call> ::= <params_call> ',' <value> | <value>
+
+<graph_op> ::= 'dfs' '(' <id> ',' <id> ')' | 'bfs' '(' <id> ',' <id> ')' 
+
+<declaration_and_atrib> ::= <declaration> | <declaration> '=' <expr_decl>
+<declaration> ::= <type> id
+
+<expr_decl>  ::= <id> '=' <expr_relational> | <expr_relational>
+<expr_relational> ::= <expr_relational> <compare_op> <expr_and> | <expr_and>
+<expr_and> ::= <expr_and> '&&' <expr_or> | <expr_or>
+<expr_or> ::= <expr_or> '||' <expr_add> | <expr_add>
+<expr_add> ::= <expr_add> <add_op> <expr_mult> | <expr_mult>
+<expr_mult> ::= <expr_mult> <mul_op> <expr_not> | <expr_not> 
+<expr_not> ::= '!' <factor> | <factor>
+
+<factor> ::= '(' <expr_decl> ')' 
+        | <function_call>
+        | <value>
+
+<value> ::= <id> | <number> 
+
+<compare_op> ::= '<' | '<=' | '>=' | '=='
+<add_op> ::= '*' | '/'
+<mul_op> ::= '+' | '-'
+
+<number> ::= <number_int> | <number_list> '.' <digit> <number_list>
+<number_int> ::= <number_list> <digit> 
+<number_list> ::= <number_list> <digit> | '' 
+<digit> ::= '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9'
+
+<id> ::= <letter> <letter_list> <number_list>
+<letter_list> ::= <letter_list> letter | '' 
+<letter> ::= 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G' | 'H' | 'I' | 'J' | 'K' | 'L' 
+| 'M' | 'N' | 'O' | 'P' | 'Q' | 'R' | 'S' | 'T' | 'U' | 'V' | 'W' | 'X' | 'Y' | 'Z' 
+| 'a' | 'b' | 'c' | 'd' | 'e' | 'f' | 'g' | 'h' | 'i' | 'j' | 'k' | 'l' | 'm' | 'n' 
+| 'o' | 'p' | 'q' | 'r' | 's' | 't' | 'u' | 'v' | 'w' | 'x' | 'y' | 'z' | '_'
+
