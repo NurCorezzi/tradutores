@@ -1,0 +1,8 @@
+boolean outra(int d, boolean outro) {
+    if () {}
+}
+
+float main() {
+    while() {
+    }
+}
