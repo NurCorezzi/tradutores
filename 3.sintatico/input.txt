@@ -1,16 +1,18 @@
 boolean outra(int d, boolean outro, graph u) {
     <<;
     >>;
+    if (a) <<; else {}
 }
 
 float main() {
-    if () {
+    int a = b = c;
+    if (a) {
 
-    } else {
-        while() {
-            for(;;) {}
+    } else if (b){
+        while(a) {
+            for(int b;a;a) {}
         }
-        for (;;) {}
-        if () {}
+        for (int b;a;a) {}
+        if (a) {}
     }
 }

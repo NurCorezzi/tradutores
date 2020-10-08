@@ -20,7 +20,6 @@ Terminals unused in grammar
    DIV
    SUM
    SUB
-   ASSIGN
    IT
    OPEN_BRACKET
    CLOSE_BRACKET
@@ -54,25 +53,39 @@ Grammar
    15 statment_no_dangle: statment_prefix statment_end
    16                   | statment_end
 
-   17 dangling_if: IF OPEN_P CLOSE_P statment
+   17 dangling_if: IF OPEN_P expr_assign CLOSE_P statment
 
-   18 statment_prefix: IF OPEN_P CLOSE_P statment_no_dangle ELSE
-   19                | WHILE OPEN_P CLOSE_P
-   20                | FOR OPEN_P END END CLOSE_P
+   18 statment_prefix: IF OPEN_P expr_assign CLOSE_P statment_no_dangle ELSE
+   19                | WHILE OPEN_P expr_assign CLOSE_P
+   20                | FOR OPEN_P declaration_or_assign END expr_assign END expr_assign CLOSE_P
 
    21 statment_end: OPEN_BRACE statments CLOSE_BRACE
    22             | READ END
    23             | WRITE END
+   24             | declaration_or_assign END
 
-   24 declaration: type id
+   25 expr_assign: id_or_access ASSIGN expr_relational
+   26            | expr_relational
 
-   25 id: ID
+   27 expr_relational: factor
 
-   26 type: INT
-   27     | BOOLEAN
-   28     | FLOAT
-   29     | GRAPH
-   30     | VOID
+   28 factor: OPEN_P expr_assign CLOSE_P
+   29       | id
+
+   30 declaration_or_assign: declaration
+   31                      | declaration ASSIGN expr_assign
+
+   32 declaration: type id
+
+   33 id_or_access: id
+
+   34 id: ID
+
+   35 type: INT
+   36     | BOOLEAN
+   37     | FLOAT
+   38     | GRAPH
+   39     | VOID
 
 
 Terminals, with rules where they appear
@@ -83,15 +96,15 @@ IF (258) 17 18
 ELSE (259) 18
 FOR (260) 20
 WHILE (261) 19
-BOOLEAN (262) 27
-INT (263) 26
-FLOAT (264) 28
-GRAPH (265) 29
-VOID (266) 30
+BOOLEAN (262) 36
+INT (263) 35
+FLOAT (264) 37
+GRAPH (265) 38
+VOID (266) 39
 TO (267)
 TRUE (268)
 FALSE (269)
-ID (270) 25
+ID (270) 34
 NUMBER (271)
 READ (272) 22
 WRITE (273) 23
@@ -111,14 +124,14 @@ MUL (286)
 DIV (287)
 SUM (288)
 SUB (289)
-ASSIGN (290)
-END (291) 20 22 23
+ASSIGN (290) 25 31
+END (291) 20 22 23 24
 OPEN_BRACE (292) 4 21
 CLOSE_BRACE (293) 4 21
 IT (294)
 SEPARATOR (295) 8
-OPEN_P (296) 4 17 18 19 20
-CLOSE_P (297) 4 17 18 19 20
+OPEN_P (296) 4 17 18 19 20 28
+CLOSE_P (297) 4 17 18 19 20 28
 OPEN_BRACKET (298)
 CLOSE_BRACKET (299)
 
@@ -148,13 +161,23 @@ dangling_if (54)
 statment_prefix (55)
     on left: 18 19 20, on right: 11 12 15
 statment_end (56)
-    on left: 21 22 23, on right: 11 13 15 16
-declaration (57)
-    on left: 24, on right: 7 8
-id (58)
-    on left: 25, on right: 4 24
-type (59)
-    on left: 26 27 28 29 30, on right: 4 24
+    on left: 21 22 23 24, on right: 11 13 15 16
+expr_assign (57)
+    on left: 25 26, on right: 17 18 19 20 28 31
+expr_relational (58)
+    on left: 27, on right: 25 26
+factor (59)
+    on left: 28 29, on right: 27
+declaration_or_assign (60)
+    on left: 30 31, on right: 20 24
+declaration (61)
+    on left: 32, on right: 7 8 30 31
+id_or_access (62)
+    on left: 33, on right: 25
+id (63)
+    on left: 34, on right: 4 29 32 33
+type (64)
+    on left: 35 36 37 38 39, on right: 4 32
 
 
 State 0
@@ -200,37 +223,37 @@ State 3
 
 State 4
 
-   27 type: BOOLEAN .
+   36 type: BOOLEAN .
 
-    $default  reduce using rule 27 (type)
+    $default  reduce using rule 36 (type)
 
 
 State 5
 
-   26 type: INT .
+   35 type: INT .
 
-    $default  reduce using rule 26 (type)
+    $default  reduce using rule 35 (type)
 
 
 State 6
 
-   28 type: FLOAT .
+   37 type: FLOAT .
 
-    $default  reduce using rule 28 (type)
+    $default  reduce using rule 37 (type)
 
 
 State 7
 
-   29 type: GRAPH .
+   38 type: GRAPH .
 
-    $default  reduce using rule 29 (type)
+    $default  reduce using rule 38 (type)
 
 
 State 8
 
-   30 type: VOID .
+   39 type: VOID .
 
-    $default  reduce using rule 30 (type)
+    $default  reduce using rule 39 (type)
 
 
 State 9
@@ -251,9 +274,9 @@ State 10
 
 State 11
 
-   25 id: ID .
+   34 id: ID .
 
-    $default  reduce using rule 25 (id)
+    $default  reduce using rule 34 (id)
 
 
 State 12
@@ -307,7 +330,7 @@ State 16
 
 State 17
 
-   24 declaration: type . id
+   32 declaration: type . id
 
     ID  shift, and go to state 11
 
@@ -337,9 +360,9 @@ State 19
 
 State 20
 
-   24 declaration: type id .
+   32 declaration: type id .
 
-    $default  reduce using rule 24 (declaration)
+    $default  reduce using rule 32 (declaration)
 
 
 State 21
@@ -366,51 +389,59 @@ State 23
     IF           shift, and go to state 24
     FOR          shift, and go to state 25
     WHILE        shift, and go to state 26
+    BOOLEAN      shift, and go to state 4
+    INT          shift, and go to state 5
+    FLOAT        shift, and go to state 6
+    GRAPH        shift, and go to state 7
+    VOID         shift, and go to state 8
     READ         shift, and go to state 27
     WRITE        shift, and go to state 28
     OPEN_BRACE   shift, and go to state 29
     CLOSE_BRACE  shift, and go to state 30
 
-    statment         go to state 31
-    dangling_if      go to state 32
-    statment_prefix  go to state 33
-    statment_end     go to state 34
+    statment               go to state 31
+    dangling_if            go to state 32
+    statment_prefix        go to state 33
+    statment_end           go to state 34
+    declaration_or_assign  go to state 35
+    declaration            go to state 36
+    type                   go to state 17
 
 
 State 24
 
-   17 dangling_if: IF . OPEN_P CLOSE_P statment
-   18 statment_prefix: IF . OPEN_P CLOSE_P statment_no_dangle ELSE
+   17 dangling_if: IF . OPEN_P expr_assign CLOSE_P statment
+   18 statment_prefix: IF . OPEN_P expr_assign CLOSE_P statment_no_dangle ELSE
 
-    OPEN_P  shift, and go to state 35
+    OPEN_P  shift, and go to state 37
 
 
 State 25
 
-   20 statment_prefix: FOR . OPEN_P END END CLOSE_P
+   20 statment_prefix: FOR . OPEN_P declaration_or_assign END expr_assign END expr_assign CLOSE_P
 
-    OPEN_P  shift, and go to state 36
+    OPEN_P  shift, and go to state 38
 
 
 State 26
 
-   19 statment_prefix: WHILE . OPEN_P CLOSE_P
+   19 statment_prefix: WHILE . OPEN_P expr_assign CLOSE_P
 
-    OPEN_P  shift, and go to state 37
+    OPEN_P  shift, and go to state 39
 
 
 State 27
 
    22 statment_end: READ . END
 
-    END  shift, and go to state 38
+    END  shift, and go to state 40
 
 
 State 28
 
    23 statment_end: WRITE . END
 
-    END  shift, and go to state 39
+    END  shift, and go to state 41
 
 
 State 29
@@ -419,7 +450,7 @@ State 29
 
     $default  reduce using rule 9 (statments)
 
-    statments  go to state 40
+    statments  go to state 42
 
 
 State 30
@@ -448,13 +479,21 @@ State 33
    11 statment: statment_prefix . statment_end
    12         | statment_prefix . dangling_if
 
-    IF          shift, and go to state 41
+    IF          shift, and go to state 43
+    BOOLEAN     shift, and go to state 4
+    INT         shift, and go to state 5
+    FLOAT       shift, and go to state 6
+    GRAPH       shift, and go to state 7
+    VOID        shift, and go to state 8
     READ        shift, and go to state 27
     WRITE       shift, and go to state 28
     OPEN_BRACE  shift, and go to state 29
 
-    dangling_if   go to state 42
-    statment_end  go to state 43
+    dangling_if            go to state 44
+    statment_end           go to state 45
+    declaration_or_assign  go to state 35
+    declaration            go to state 36
+    type                   go to state 17
 
 
 State 34
@@ -466,41 +505,80 @@ State 34
 
 State 35
 
-   17 dangling_if: IF OPEN_P . CLOSE_P statment
-   18 statment_prefix: IF OPEN_P . CLOSE_P statment_no_dangle ELSE
+   24 statment_end: declaration_or_assign . END
 
-    CLOSE_P  shift, and go to state 44
+    END  shift, and go to state 46
 
 
 State 36
 
-   20 statment_prefix: FOR OPEN_P . END END CLOSE_P
+   30 declaration_or_assign: declaration .
+   31                      | declaration . ASSIGN expr_assign
 
-    END  shift, and go to state 45
+    ASSIGN  shift, and go to state 47
+
+    $default  reduce using rule 30 (declaration_or_assign)
 
 
 State 37
 
-   19 statment_prefix: WHILE OPEN_P . CLOSE_P
+   17 dangling_if: IF OPEN_P . expr_assign CLOSE_P statment
+   18 statment_prefix: IF OPEN_P . expr_assign CLOSE_P statment_no_dangle ELSE
 
-    CLOSE_P  shift, and go to state 46
+    ID      shift, and go to state 11
+    OPEN_P  shift, and go to state 48
+
+    expr_assign      go to state 49
+    expr_relational  go to state 50
+    factor           go to state 51
+    id_or_access     go to state 52
+    id               go to state 53
 
 
 State 38
+
+   20 statment_prefix: FOR OPEN_P . declaration_or_assign END expr_assign END expr_assign CLOSE_P
+
+    BOOLEAN  shift, and go to state 4
+    INT      shift, and go to state 5
+    FLOAT    shift, and go to state 6
+    GRAPH    shift, and go to state 7
+    VOID     shift, and go to state 8
+
+    declaration_or_assign  go to state 54
+    declaration            go to state 36
+    type                   go to state 17
+
+
+State 39
+
+   19 statment_prefix: WHILE OPEN_P . expr_assign CLOSE_P
+
+    ID      shift, and go to state 11
+    OPEN_P  shift, and go to state 48
+
+    expr_assign      go to state 55
+    expr_relational  go to state 50
+    factor           go to state 51
+    id_or_access     go to state 52
+    id               go to state 53
+
+
+State 40
 
    22 statment_end: READ END .
 
     $default  reduce using rule 22 (statment_end)
 
 
-State 39
+State 41
 
    23 statment_end: WRITE END .
 
     $default  reduce using rule 23 (statment_end)
 
 
-State 40
+State 42
 
    10 statments: statments . statment
    21 statment_end: OPEN_BRACE statments . CLOSE_BRACE
@@ -508,115 +586,280 @@ State 40
     IF           shift, and go to state 24
     FOR          shift, and go to state 25
     WHILE        shift, and go to state 26
+    BOOLEAN      shift, and go to state 4
+    INT          shift, and go to state 5
+    FLOAT        shift, and go to state 6
+    GRAPH        shift, and go to state 7
+    VOID         shift, and go to state 8
     READ         shift, and go to state 27
     WRITE        shift, and go to state 28
     OPEN_BRACE   shift, and go to state 29
-    CLOSE_BRACE  shift, and go to state 47
+    CLOSE_BRACE  shift, and go to state 56
 
-    statment         go to state 31
-    dangling_if      go to state 32
-    statment_prefix  go to state 33
-    statment_end     go to state 34
-
-
-State 41
-
-   17 dangling_if: IF . OPEN_P CLOSE_P statment
-
-    OPEN_P  shift, and go to state 48
+    statment               go to state 31
+    dangling_if            go to state 32
+    statment_prefix        go to state 33
+    statment_end           go to state 34
+    declaration_or_assign  go to state 35
+    declaration            go to state 36
+    type                   go to state 17
 
 
-State 42
+State 43
+
+   17 dangling_if: IF . OPEN_P expr_assign CLOSE_P statment
+
+    OPEN_P  shift, and go to state 57
+
+
+State 44
 
    12 statment: statment_prefix dangling_if .
 
     $default  reduce using rule 12 (statment)
 
 
-State 43
+State 45
 
    11 statment: statment_prefix statment_end .
 
     $default  reduce using rule 11 (statment)
 
 
-State 44
-
-   17 dangling_if: IF OPEN_P CLOSE_P . statment
-   18 statment_prefix: IF OPEN_P CLOSE_P . statment_no_dangle ELSE
-
-    IF          shift, and go to state 24
-    FOR         shift, and go to state 25
-    WHILE       shift, and go to state 26
-    READ        shift, and go to state 27
-    WRITE       shift, and go to state 28
-    OPEN_BRACE  shift, and go to state 29
-
-    statment            go to state 49
-    statment_no_dangle  go to state 50
-    dangling_if         go to state 32
-    statment_prefix     go to state 51
-    statment_end        go to state 52
-
-
-State 45
-
-   20 statment_prefix: FOR OPEN_P END . END CLOSE_P
-
-    END  shift, and go to state 53
-
-
 State 46
 
-   19 statment_prefix: WHILE OPEN_P CLOSE_P .
+   24 statment_end: declaration_or_assign END .
 
-    $default  reduce using rule 19 (statment_prefix)
+    $default  reduce using rule 24 (statment_end)
 
 
 State 47
+
+   31 declaration_or_assign: declaration ASSIGN . expr_assign
+
+    ID      shift, and go to state 11
+    OPEN_P  shift, and go to state 48
+
+    expr_assign      go to state 58
+    expr_relational  go to state 50
+    factor           go to state 51
+    id_or_access     go to state 52
+    id               go to state 53
+
+
+State 48
+
+   28 factor: OPEN_P . expr_assign CLOSE_P
+
+    ID      shift, and go to state 11
+    OPEN_P  shift, and go to state 48
+
+    expr_assign      go to state 59
+    expr_relational  go to state 50
+    factor           go to state 51
+    id_or_access     go to state 52
+    id               go to state 53
+
+
+State 49
+
+   17 dangling_if: IF OPEN_P expr_assign . CLOSE_P statment
+   18 statment_prefix: IF OPEN_P expr_assign . CLOSE_P statment_no_dangle ELSE
+
+    CLOSE_P  shift, and go to state 60
+
+
+State 50
+
+   26 expr_assign: expr_relational .
+
+    $default  reduce using rule 26 (expr_assign)
+
+
+State 51
+
+   27 expr_relational: factor .
+
+    $default  reduce using rule 27 (expr_relational)
+
+
+State 52
+
+   25 expr_assign: id_or_access . ASSIGN expr_relational
+
+    ASSIGN  shift, and go to state 61
+
+
+State 53
+
+   29 factor: id .
+   33 id_or_access: id .
+
+    ASSIGN    reduce using rule 33 (id_or_access)
+    $default  reduce using rule 29 (factor)
+
+
+State 54
+
+   20 statment_prefix: FOR OPEN_P declaration_or_assign . END expr_assign END expr_assign CLOSE_P
+
+    END  shift, and go to state 62
+
+
+State 55
+
+   19 statment_prefix: WHILE OPEN_P expr_assign . CLOSE_P
+
+    CLOSE_P  shift, and go to state 63
+
+
+State 56
 
    21 statment_end: OPEN_BRACE statments CLOSE_BRACE .
 
     $default  reduce using rule 21 (statment_end)
 
 
-State 48
+State 57
 
-   17 dangling_if: IF OPEN_P . CLOSE_P statment
+   17 dangling_if: IF OPEN_P . expr_assign CLOSE_P statment
 
-    CLOSE_P  shift, and go to state 54
+    ID      shift, and go to state 11
+    OPEN_P  shift, and go to state 48
+
+    expr_assign      go to state 64
+    expr_relational  go to state 50
+    factor           go to state 51
+    id_or_access     go to state 52
+    id               go to state 53
 
 
-State 49
+State 58
 
-   17 dangling_if: IF OPEN_P CLOSE_P statment .
+   31 declaration_or_assign: declaration ASSIGN expr_assign .
+
+    $default  reduce using rule 31 (declaration_or_assign)
+
+
+State 59
+
+   28 factor: OPEN_P expr_assign . CLOSE_P
+
+    CLOSE_P  shift, and go to state 65
+
+
+State 60
+
+   17 dangling_if: IF OPEN_P expr_assign CLOSE_P . statment
+   18 statment_prefix: IF OPEN_P expr_assign CLOSE_P . statment_no_dangle ELSE
+
+    IF          shift, and go to state 24
+    FOR         shift, and go to state 25
+    WHILE       shift, and go to state 26
+    BOOLEAN     shift, and go to state 4
+    INT         shift, and go to state 5
+    FLOAT       shift, and go to state 6
+    GRAPH       shift, and go to state 7
+    VOID        shift, and go to state 8
+    READ        shift, and go to state 27
+    WRITE       shift, and go to state 28
+    OPEN_BRACE  shift, and go to state 29
+
+    statment               go to state 66
+    statment_no_dangle     go to state 67
+    dangling_if            go to state 32
+    statment_prefix        go to state 68
+    statment_end           go to state 69
+    declaration_or_assign  go to state 35
+    declaration            go to state 36
+    type                   go to state 17
+
+
+State 61
+
+   25 expr_assign: id_or_access ASSIGN . expr_relational
+
+    ID      shift, and go to state 11
+    OPEN_P  shift, and go to state 48
+
+    expr_relational  go to state 70
+    factor           go to state 51
+    id               go to state 71
+
+
+State 62
+
+   20 statment_prefix: FOR OPEN_P declaration_or_assign END . expr_assign END expr_assign CLOSE_P
+
+    ID      shift, and go to state 11
+    OPEN_P  shift, and go to state 48
+
+    expr_assign      go to state 72
+    expr_relational  go to state 50
+    factor           go to state 51
+    id_or_access     go to state 52
+    id               go to state 53
+
+
+State 63
+
+   19 statment_prefix: WHILE OPEN_P expr_assign CLOSE_P .
+
+    $default  reduce using rule 19 (statment_prefix)
+
+
+State 64
+
+   17 dangling_if: IF OPEN_P expr_assign . CLOSE_P statment
+
+    CLOSE_P  shift, and go to state 73
+
+
+State 65
+
+   28 factor: OPEN_P expr_assign CLOSE_P .
+
+    $default  reduce using rule 28 (factor)
+
+
+State 66
+
+   17 dangling_if: IF OPEN_P expr_assign CLOSE_P statment .
 
     $default  reduce using rule 17 (dangling_if)
 
 
-State 50
+State 67
 
-   18 statment_prefix: IF OPEN_P CLOSE_P statment_no_dangle . ELSE
+   18 statment_prefix: IF OPEN_P expr_assign CLOSE_P statment_no_dangle . ELSE
 
-    ELSE  shift, and go to state 55
+    ELSE  shift, and go to state 74
 
 
-State 51
+State 68
 
    11 statment: statment_prefix . statment_end
    12         | statment_prefix . dangling_if
    15 statment_no_dangle: statment_prefix . statment_end
 
-    IF          shift, and go to state 41
+    IF          shift, and go to state 43
+    BOOLEAN     shift, and go to state 4
+    INT         shift, and go to state 5
+    FLOAT       shift, and go to state 6
+    GRAPH       shift, and go to state 7
+    VOID        shift, and go to state 8
     READ        shift, and go to state 27
     WRITE       shift, and go to state 28
     OPEN_BRACE  shift, and go to state 29
 
-    dangling_if   go to state 42
-    statment_end  go to state 56
+    dangling_if            go to state 44
+    statment_end           go to state 75
+    declaration_or_assign  go to state 35
+    declaration            go to state 36
+    type                   go to state 17
 
 
-State 52
+State 69
 
    13 statment: statment_end .
    16 statment_no_dangle: statment_end .
@@ -625,38 +868,60 @@ State 52
     $default  reduce using rule 13 (statment)
 
 
-State 53
+State 70
 
-   20 statment_prefix: FOR OPEN_P END END . CLOSE_P
+   25 expr_assign: id_or_access ASSIGN expr_relational .
 
-    CLOSE_P  shift, and go to state 57
+    $default  reduce using rule 25 (expr_assign)
 
 
-State 54
+State 71
 
-   17 dangling_if: IF OPEN_P CLOSE_P . statment
+   29 factor: id .
+
+    $default  reduce using rule 29 (factor)
+
+
+State 72
+
+   20 statment_prefix: FOR OPEN_P declaration_or_assign END expr_assign . END expr_assign CLOSE_P
+
+    END  shift, and go to state 76
+
+
+State 73
+
+   17 dangling_if: IF OPEN_P expr_assign CLOSE_P . statment
 
     IF          shift, and go to state 24
     FOR         shift, and go to state 25
     WHILE       shift, and go to state 26
+    BOOLEAN     shift, and go to state 4
+    INT         shift, and go to state 5
+    FLOAT       shift, and go to state 6
+    GRAPH       shift, and go to state 7
+    VOID        shift, and go to state 8
     READ        shift, and go to state 27
     WRITE       shift, and go to state 28
     OPEN_BRACE  shift, and go to state 29
 
-    statment         go to state 49
-    dangling_if      go to state 32
-    statment_prefix  go to state 33
-    statment_end     go to state 34
+    statment               go to state 66
+    dangling_if            go to state 32
+    statment_prefix        go to state 33
+    statment_end           go to state 34
+    declaration_or_assign  go to state 35
+    declaration            go to state 36
+    type                   go to state 17
 
 
-State 55
+State 74
 
-   18 statment_prefix: IF OPEN_P CLOSE_P statment_no_dangle ELSE .
+   18 statment_prefix: IF OPEN_P expr_assign CLOSE_P statment_no_dangle ELSE .
 
     $default  reduce using rule 18 (statment_prefix)
 
 
-State 56
+State 75
 
    11 statment: statment_prefix statment_end .
    15 statment_no_dangle: statment_prefix statment_end .
@@ -665,8 +930,29 @@ State 56
     $default  reduce using rule 11 (statment)
 
 
-State 57
+State 76
 
-   20 statment_prefix: FOR OPEN_P END END CLOSE_P .
+   20 statment_prefix: FOR OPEN_P declaration_or_assign END expr_assign END . expr_assign CLOSE_P
+
+    ID      shift, and go to state 11
+    OPEN_P  shift, and go to state 48
+
+    expr_assign      go to state 77
+    expr_relational  go to state 50
+    factor           go to state 51
+    id_or_access     go to state 52
+    id               go to state 53
+
+
+State 77
+
+   20 statment_prefix: FOR OPEN_P declaration_or_assign END expr_assign END expr_assign . CLOSE_P
+
+    CLOSE_P  shift, and go to state 78
+
+
+State 78
+
+   20 statment_prefix: FOR OPEN_P declaration_or_assign END expr_assign END expr_assign CLOSE_P .
 
     $default  reduce using rule 20 (statment_prefix)
