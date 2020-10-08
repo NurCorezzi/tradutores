@@ -101,7 +101,7 @@ extern int yydebug;
 
 union YYSTYPE
 {
-#line 66 "gramatica.y" /* yacc.c:1909  */
+#line 96 "gramatica.y" /* yacc.c:1909  */
 
   int id;
   Node* node;

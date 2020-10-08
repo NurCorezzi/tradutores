@@ -2,7 +2,7 @@ prog_name=tradutor.out
 input_default=input.txt
 
 all:
-	bison -d -Wempty-rule gramatica.y
+	bison -d -Wempty-rule -Wconflicts-sr --verbose gramatica.y
 	flex definicao.l
 	gcc -g -Wall lex.yy.c gramatica.tab.c -o ${prog_name}
 

@@ -1,8 +1,16 @@
-boolean outra(int d, boolean outro) {
-    if () {}
+boolean outra(int d, boolean outro, graph u) {
+    <<;
+    >>;
 }
 
 float main() {
-    while() {
+    if () {
+
+    } else {
+        while() {
+            for(;;) {}
+        }
+        for (;;) {}
+        if () {}
     }
 }
