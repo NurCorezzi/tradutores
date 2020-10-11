@@ -162,8 +162,27 @@ extern FILE *yyin, *yyout;
 #define EOB_ACT_END_OF_FILE 1
 #define EOB_ACT_LAST_MATCH 2
     
-    #define YY_LESS_LINENO(n)
-    #define YY_LINENO_REWIND_TO(ptr)
+    /* Note: We specifically omit the test for yy_rule_can_match_eol because it requires
+     *       access to the local variable yy_act. Since yyless() is a macro, it would break
+     *       existing scanners that call yyless() from OUTSIDE yylex.
+     *       One obvious solution it to make yy_act a global. I tried that, and saw
+     *       a 5% performance hit in a non-yylineno scanner, because yy_act is
+     *       normally declared as a register variable-- so it is not worth it.
+     */
+    #define  YY_LESS_LINENO(n) \
+            do { \
+                int yyl;\
+                for ( yyl = n; yyl < yyleng; ++yyl )\
+                    if ( yytext[yyl] == '\n' )\
+                        --yylineno;\
+            }while(0)
+    #define YY_LINENO_REWIND_TO(dst) \
+            do {\
+                const char *p;\
+                for ( p = yy_cp-1; p >= (dst); --p)\
+                    if ( *p == '\n' )\
+                        --yylineno;\
+            }while(0)
     
 /* Return all but the first "n" matched characters back to the input stream. */
 #define yyless(n) \
@@ -491,6 +510,13 @@ static const flex_int16_t yy_chk[152] =
        96
     } ;
 
+/* Table of booleans, true if rule could match eol. */
+static const flex_int32_t yy_rule_can_match_eol[46] =
+    {   0,
+1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+    0, 0, 0, 0, 0, 0,     };
+
 static yy_state_type yy_last_accepting_state;
 static char *yy_last_accepting_cpos;
 
@@ -510,46 +536,36 @@ char *yytext;
     #include <string.h>
     #include "gramatica.tab.h"
 
-    struct token {
-        int id;
-        int line, column;
-        void* value;
-    };
-
-    struct token current_token;
-    int line = 1, column = 1;
-
-    void countInput() {
-        if (yytext[0] == '\n') {
-            line++;
-            column = 1;
-        } else {
-            column += strlen(yytext);
-        }
+    #define YY_USER_ACTION \
+    yylloc.first_line = yylloc.last_line; \
+    yylloc.first_column = yylloc.last_column; \
+    for(int i = 0; yytext[i] != '\0'; i++) { \
+        if(yytext[i] == '\n') { \
+            yylloc.last_line++; \
+            yylloc.last_column = 0; \
+        } \
+        else { \
+            yylloc.last_column++; \
+        } \
     }
 
     void buildToken(int id) {
-        char* cpy = malloc(strlen(yytext) + 1);
-        strcpy(cpy, yytext);
-
         yylval.id = id;
-
-        current_token.id = id;
-        current_token.line = line;
-        current_token.column = column;
-        current_token.value = cpy;
-
-        countInput();
+        // char* cpy = malloc(strlen(yytext) + 1);
+        // strcpy(cpy, yytext);
+        // countInput();
     }
 
     void lexError() {
-        printf("\033[01;33m%d:%d:\033[0;0m \033[1;31merror:\033[0;0m caracter desconhecido neste contexto: %s\n", line, column, yytext);
-        countInput();
+        printf("\033[01;33m%d:%d-%d:%d\033[0;0m \033[1;31merror:\033[0;0m syntactic error, unknown character in this context: %s\n", 
+            yylloc.first_line, yylloc.first_column,
+            yylloc.last_line, yylloc.last_column,
+            yytext);
     }
-#line 550 "lex.yy.c"
+#line 566 "lex.yy.c"
 #define YY_NO_INPUT 1
 /* regular definitions */
-#line 553 "lex.yy.c"
+#line 569 "lex.yy.c"
 
 #define INITIAL 0
 
@@ -764,10 +780,10 @@ YY_DECL
 		}
 
 	{
-#line 53 "definicao.l"
+#line 45 "definicao.l"
 
 
-#line 771 "lex.yy.c"
+#line 787 "lex.yy.c"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -813,6 +829,16 @@ yy_find_action:
 
 		YY_DO_BEFORE_ACTION;
 
+		if ( yy_act != YY_END_OF_BUFFER && yy_rule_can_match_eol[yy_act] )
+			{
+			int yyl;
+			for ( yyl = 0; yyl < yyleng; ++yyl )
+				if ( yytext[yyl] == '\n' )
+					
+    yylineno++;
+;
+			}
+
 do_action:	/* This label is used only to access EOF actions. */
 
 		switch ( yy_act )
@@ -827,230 +853,230 @@ do_action:	/* This label is used only to access EOF actions. */
 case 1:
 /* rule 1 can match eol */
 YY_RULE_SETUP
-#line 55 "definicao.l"
-{ countInput(); }
+#line 47 "definicao.l"
+{ }
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 57 "definicao.l"
+#line 49 "definicao.l"
 { buildToken(IF); return IF; }
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 58 "definicao.l"
+#line 50 "definicao.l"
 { buildToken(ELSE); return ELSE; }
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 59 "definicao.l"
+#line 51 "definicao.l"
 { buildToken(FOR); return FOR; }
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 60 "definicao.l"
+#line 52 "definicao.l"
 { buildToken(WHILE); return WHILE; }
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 62 "definicao.l"
+#line 54 "definicao.l"
 { buildToken(BOOLEAN); return BOOLEAN; }
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 63 "definicao.l"
+#line 55 "definicao.l"
 { buildToken(INT); return INT; }
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 64 "definicao.l"
+#line 56 "definicao.l"
 { buildToken(FLOAT); return FLOAT; }
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 65 "definicao.l"
+#line 57 "definicao.l"
 { buildToken(VOID); return VOID; }
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 66 "definicao.l"
+#line 58 "definicao.l"
 { buildToken(GRAPH); return GRAPH; }
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 67 "definicao.l"
+#line 59 "definicao.l"
 { buildToken(TO); return TO; }
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 69 "definicao.l"
+#line 61 "definicao.l"
 { buildToken(TRUE); return TRUE; }
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 70 "definicao.l"
+#line 62 "definicao.l"
 { buildToken(FALSE); return FALSE; }
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 72 "definicao.l"
+#line 64 "definicao.l"
 { buildToken(GRAPH); return GRAPH; }
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 73 "definicao.l"
+#line 65 "definicao.l"
 { buildToken(TO); return TO; }
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 74 "definicao.l"
+#line 66 "definicao.l"
 { buildToken(RETURN); return RETURN; }
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 76 "definicao.l"
+#line 68 "definicao.l"
 { buildToken(ID); return ID; }
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
-#line 77 "definicao.l"
+#line 69 "definicao.l"
 { buildToken(NUMBER); return NUMBER; }
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
-#line 79 "definicao.l"
+#line 71 "definicao.l"
 { buildToken(READ); return READ; }
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
-#line 80 "definicao.l"
+#line 72 "definicao.l"
 { buildToken(WRITE); return WRITE; }
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
-#line 81 "definicao.l"
+#line 73 "definicao.l"
 { buildToken(AND); return AND; }
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
-#line 82 "definicao.l"
+#line 74 "definicao.l"
 { buildToken(OR); return OR; }
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
-#line 83 "definicao.l"
+#line 75 "definicao.l"
 { buildToken(LE); return LE; }
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
-#line 84 "definicao.l"
+#line 76 "definicao.l"
 { buildToken(GE); return GE; }
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
-#line 85 "definicao.l"
+#line 77 "definicao.l"
 { buildToken(LESS); return LESS; }
 	YY_BREAK
 case 26:
 YY_RULE_SETUP
-#line 86 "definicao.l"
+#line 78 "definicao.l"
 { buildToken(GREATER); return GREATER; }
 	YY_BREAK
 case 27:
 YY_RULE_SETUP
-#line 87 "definicao.l"
+#line 79 "definicao.l"
 { buildToken(EQ); return EQ; }
 	YY_BREAK
 case 28:
 YY_RULE_SETUP
-#line 88 "definicao.l"
+#line 80 "definicao.l"
 { buildToken(NE); return NE; }
 	YY_BREAK
 case 29:
 YY_RULE_SETUP
-#line 89 "definicao.l"
+#line 81 "definicao.l"
 { buildToken(NOT); return NOT; }
 	YY_BREAK
 case 30:
 YY_RULE_SETUP
-#line 90 "definicao.l"
+#line 82 "definicao.l"
 { buildToken(MUL); return MUL; }
 	YY_BREAK
 case 31:
 YY_RULE_SETUP
-#line 91 "definicao.l"
+#line 83 "definicao.l"
 { buildToken(DIV); return DIV; }
 	YY_BREAK
 case 32:
 YY_RULE_SETUP
-#line 92 "definicao.l"
+#line 84 "definicao.l"
 { buildToken(SUM); return SUM; }
 	YY_BREAK
 case 33:
 YY_RULE_SETUP
-#line 93 "definicao.l"
+#line 85 "definicao.l"
 { buildToken(SUB); return SUB; }
 	YY_BREAK
 case 34:
 YY_RULE_SETUP
-#line 94 "definicao.l"
+#line 86 "definicao.l"
 { buildToken(ASSIGN); return ASSIGN; }
 	YY_BREAK
 case 35:
 YY_RULE_SETUP
-#line 95 "definicao.l"
+#line 87 "definicao.l"
 { buildToken(END); return END; }
 	YY_BREAK
 case 36:
 YY_RULE_SETUP
-#line 96 "definicao.l"
+#line 88 "definicao.l"
 { buildToken(OPEN_BRACE); return OPEN_BRACE; }
 	YY_BREAK
 case 37:
 YY_RULE_SETUP
-#line 97 "definicao.l"
+#line 89 "definicao.l"
 { buildToken(CLOSE_BRACE); return CLOSE_BRACE; }
 	YY_BREAK
 case 38:
 YY_RULE_SETUP
-#line 98 "definicao.l"
+#line 90 "definicao.l"
 { buildToken(IT); return IT; }
 	YY_BREAK
 case 39:
 YY_RULE_SETUP
-#line 99 "definicao.l"
+#line 91 "definicao.l"
 { buildToken(SEPARATOR); return SEPARATOR; }
 	YY_BREAK
 case 40:
 YY_RULE_SETUP
-#line 100 "definicao.l"
+#line 92 "definicao.l"
 { buildToken(OPEN_P); return OPEN_P; }
 	YY_BREAK
 case 41:
 YY_RULE_SETUP
-#line 101 "definicao.l"
+#line 93 "definicao.l"
 { buildToken(CLOSE_P); return CLOSE_P; }
 	YY_BREAK
 case 42:
 YY_RULE_SETUP
-#line 102 "definicao.l"
+#line 94 "definicao.l"
 { buildToken(OPEN_BRACKET); return OPEN_BRACKET; }
 	YY_BREAK
 case 43:
 YY_RULE_SETUP
-#line 103 "definicao.l"
+#line 95 "definicao.l"
 { buildToken(CLOSE_BRACKET); return CLOSE_BRACKET; }
 	YY_BREAK
 case 44:
 YY_RULE_SETUP
-#line 104 "definicao.l"
+#line 96 "definicao.l"
 { lexError(); }
 	YY_BREAK
 case 45:
 YY_RULE_SETUP
-#line 106 "definicao.l"
+#line 98 "definicao.l"
 ECHO;
 	YY_BREAK
-#line 1054 "lex.yy.c"
+#line 1080 "lex.yy.c"
 case YY_STATE_EOF(INITIAL):
 	yyterminate();
 
@@ -1457,6 +1483,11 @@ static int yy_get_next_buffer (void)
 	c = *(unsigned char *) (yy_c_buf_p);	/* cast for 8-bit char's */
 	*(yy_c_buf_p) = '\0';	/* preserve yytext */
 	(yy_hold_char) = *++(yy_c_buf_p);
+
+	if ( c == '\n' )
+		
+    yylineno++;
+;
 
 	return c;
 }
@@ -1924,6 +1955,9 @@ static int yy_init_globals (void)
      * This function is called from yylex_destroy(), so don't allocate here.
      */
 
+    /* We do not touch yylineno unless the option is enabled. */
+    yylineno =  1;
+    
     (yy_buffer_stack) = NULL;
     (yy_buffer_stack_top) = 0;
     (yy_buffer_stack_max) = 0;
@@ -2018,7 +2052,7 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 106 "definicao.l"
+#line 98 "definicao.l"
 
 
 // int main() {

@@ -2,47 +2,39 @@
     #include <string.h>
     #include "gramatica.tab.h"
 
-    struct token {
-        int id;
-        int line, column;
-        void* value;
-    };
-
-    struct token current_token;
-    int line = 1, column = 1;
-
-    void countInput() {
-        if (yytext[0] == '\n') {
-            line++;
-            column = 1;
-        } else {
-            column += strlen(yytext);
-        }
+    #define YY_USER_ACTION \
+    yylloc.first_line = yylloc.last_line; \
+    yylloc.first_column = yylloc.last_column; \
+    for(int i = 0; yytext[i] != '\0'; i++) { \
+        if(yytext[i] == '\n') { \
+            yylloc.last_line++; \
+            yylloc.last_column = 0; \
+        } \
+        else { \
+            yylloc.last_column++; \
+        } \
     }
 
     void buildToken(int id) {
-        char* cpy = malloc(strlen(yytext) + 1);
-        strcpy(cpy, yytext);
-
         yylval.id = id;
-
-        current_token.id = id;
-        current_token.line = line;
-        current_token.column = column;
-        current_token.value = cpy;
-
-        countInput();
+        // char* cpy = malloc(strlen(yytext) + 1);
+        // strcpy(cpy, yytext);
+        // countInput();
     }
 
     void lexError() {
-        printf("\033[01;33m%d:%d:\033[0;0m \033[1;31merror:\033[0;0m caracter desconhecido neste contexto: %s\n", line, column, yytext);
-        countInput();
+        printf("\033[01;33m%d:%d-%d:%d\033[0;0m \033[1;31merror:\033[0;0m syntactic error, unknown character in this context: %s\n", 
+            yylloc.first_line, yylloc.first_column,
+            yylloc.last_line, yylloc.last_column,
+            yytext);
     }
 %}
 
 %option noyywrap
 %option nounput
 %option noinput
+%option yylineno
+
 
 /* regular definitions */
 ws          [ \t\n]
@@ -52,7 +44,7 @@ id          {letter}({letter}|{digit}|_)*
 number      {digit}+(\.{digit}+)?
 %%
 
-{ws}            { countInput(); }
+{ws}            { }
 
 if				{ buildToken(IF); return IF; }
 else			{ buildToken(ELSE); return ELSE; }

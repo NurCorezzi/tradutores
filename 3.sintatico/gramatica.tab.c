@@ -71,8 +71,10 @@
 
 #include "node.h"
 
+int yylex_destroy ( void );
 void yyerror (char const *s);
 int yylex();
+int error_recovery_mode;
 
 Node *root;
 void (*tree_prefix[150]) (void);
@@ -89,6 +91,10 @@ Node* create_node(char const *id) {
 }
 
 void push_child(Node *root, Node *child) {
+  if (child == NULL) {
+    return;
+  }
+
   if (root->beginChild == NULL) {
     root->beginChild = child;
     root->endChild = child;
@@ -96,6 +102,23 @@ void push_child(Node *root, Node *child) {
     root->endChild->next = child;
     root->endChild = child;
   }
+}
+
+void free_node(Node *node) {
+  if (node->id != NULL) free(node->id);
+  free(node);
+}
+
+void free_tree(Node *root) {
+  if (root == NULL) return;
+
+  Node *it = root->beginChild;
+  while (it != NULL) {
+    Node *next = it->next;
+    free_tree(it);
+    it = next;
+  }
+  free_node(root);
 }
 
 void print_l_end() {printf("└");}
@@ -131,6 +154,8 @@ void print_node(Node *node, int isLast) {
 }
 
 void print_tree(Node *node, int isLast) {
+  if (node == NULL) return;
+
   i_prefix += 3;
   print_node(node, isLast);  
   Node *it;
@@ -142,7 +167,7 @@ void print_tree(Node *node, int isLast) {
 }
 
 
-#line 146 "gramatica.tab.c" /* yacc.c:339  */
+#line 171 "gramatica.tab.c" /* yacc.c:339  */
 
 # ifndef YY_NULLPTR
 #  if defined __cplusplus && 201103L <= __cplusplus
@@ -176,7 +201,7 @@ extern int yydebug;
 
   #include "node.h"
 
-#line 180 "gramatica.tab.c" /* yacc.c:355  */
+#line 205 "gramatica.tab.c" /* yacc.c:355  */
 
 /* Token type.  */
 #ifndef YYTOKENTYPE
@@ -233,12 +258,12 @@ extern int yydebug;
 
 union YYSTYPE
 {
-#line 97 "gramatica.y" /* yacc.c:355  */
+#line 123 "gramatica.y" /* yacc.c:355  */
 
   int id;
   Node* node;
 
-#line 242 "gramatica.tab.c" /* yacc.c:355  */
+#line 267 "gramatica.tab.c" /* yacc.c:355  */
 };
 
 typedef union YYSTYPE YYSTYPE;
@@ -246,16 +271,30 @@ typedef union YYSTYPE YYSTYPE;
 # define YYSTYPE_IS_DECLARED 1
 #endif
 
+/* Location type.  */
+#if ! defined YYLTYPE && ! defined YYLTYPE_IS_DECLARED
+typedef struct YYLTYPE YYLTYPE;
+struct YYLTYPE
+{
+  int first_line;
+  int first_column;
+  int last_line;
+  int last_column;
+};
+# define YYLTYPE_IS_DECLARED 1
+# define YYLTYPE_IS_TRIVIAL 1
+#endif
+
 
 extern YYSTYPE yylval;
-
+extern YYLTYPE yylloc;
 int yyparse (void);
 
 #endif /* !YY_YY_GRAMATICA_TAB_H_INCLUDED  */
 
 /* Copy the second part of user declarations.  */
 
-#line 259 "gramatica.tab.c" /* yacc.c:358  */
+#line 298 "gramatica.tab.c" /* yacc.c:358  */
 
 #ifdef short
 # undef short
@@ -436,13 +475,15 @@ void free (void *); /* INFRINGES ON USER NAME SPACE */
 
 #if (! defined yyoverflow \
      && (! defined __cplusplus \
-         || (defined YYSTYPE_IS_TRIVIAL && YYSTYPE_IS_TRIVIAL)))
+         || (defined YYLTYPE_IS_TRIVIAL && YYLTYPE_IS_TRIVIAL \
+             && defined YYSTYPE_IS_TRIVIAL && YYSTYPE_IS_TRIVIAL)))
 
 /* A type that is properly aligned for any stack member.  */
 union yyalloc
 {
   yytype_int16 yyss_alloc;
   YYSTYPE yyvs_alloc;
+  YYLTYPE yyls_alloc;
 };
 
 /* The size of the maximum gap between one aligned stack and the next.  */
@@ -451,8 +492,8 @@ union yyalloc
 /* The size of an array large to enough to hold all stacks, each with
    N elements.  */
 # define YYSTACK_BYTES(N) \
-     ((N) * (sizeof (yytype_int16) + sizeof (YYSTYPE)) \
-      + YYSTACK_GAP_MAXIMUM)
+     ((N) * (sizeof (yytype_int16) + sizeof (YYSTYPE) + sizeof (YYLTYPE)) \
+      + 2 * YYSTACK_GAP_MAXIMUM)
 
 # define YYCOPY_NEEDED 1
 
@@ -497,16 +538,16 @@ union yyalloc
 /* YYFINAL -- State number of the termination state.  */
 #define YYFINAL  3
 /* YYLAST -- Last index in YYTABLE.  */
-#define YYLAST   113
+#define YYLAST   118
 
 /* YYNTOKENS -- Number of terminals.  */
 #define YYNTOKENS  45
 /* YYNNTS -- Number of nonterminals.  */
 #define YYNNTS  20
 /* YYNRULES -- Number of rules.  */
-#define YYNRULES  40
+#define YYNRULES  43
 /* YYNSTATES -- Number of states.  */
-#define YYNSTATES  79
+#define YYNSTATES  82
 
 /* YYTRANSLATE[YYX] -- Symbol number corresponding to YYX as returned
    by yylex, with out-of-bounds checking.  */
@@ -556,11 +597,11 @@ static const yytype_uint8 yytranslate[] =
   /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_uint16 yyrline[] =
 {
-       0,   116,   116,   123,   124,   136,   147,   147,   150,   154,
-     167,   167,   180,   184,   188,   191,   196,   200,   205,   212,
-     217,   221,   229,   238,   241,   244,   252,   257,   262,   268,
-     271,   276,   276,   289,   296,   299,   302,   303,   304,   305,
-     306
+       0,   148,   148,   155,   156,   169,   178,   181,   181,   184,
+     188,   202,   202,   216,   220,   224,   227,   230,   233,   237,
+     242,   249,   254,   258,   266,   276,   279,   282,   290,   295,
+     300,   306,   309,   314,   314,   325,   328,   335,   338,   341,
+     342,   343,   344,   345
 };
 #endif
 
@@ -595,12 +636,12 @@ static const yytype_uint16 yytoknum[] =
 };
 # endif
 
-#define YYPACT_NINF -58
+#define YYPACT_NINF -61
 
 #define yypact_value_is_default(Yystate) \
-  (!!((Yystate) == (-58)))
+  (!!((Yystate) == (-61)))
 
-#define YYTABLE_NINF -35
+#define YYTABLE_NINF -38
 
 #define yytable_value_is_error(Yytable_value) \
   0
@@ -609,14 +650,15 @@ static const yytype_uint16 yytoknum[] =
      STATE-NUM.  */
 static const yytype_int8 yypact[] =
 {
-     -58,     4,    81,   -58,   -58,   -58,   -58,   -58,   -58,   -58,
-      -9,   -58,   -29,    81,   -28,   -27,   -58,    -9,   -20,    81,
-     -58,   -58,   -58,    22,   -23,   -21,   -19,   -15,   -13,   -58,
-     -58,   -58,   -58,    76,   -58,    -1,     1,    -7,    81,    -7,
-     -58,   -58,    38,    11,   -58,   -58,   -58,    -7,    -7,   -16,
-     -58,   -58,    18,    19,    21,    16,   -58,    -7,   -58,    20,
-      60,    -7,    -7,   -58,    30,   -58,   -58,    57,    76,    69,
-     -58,   -58,    28,    60,   -58,    70,    -7,    39,   -58
+     -61,     4,    86,   -61,   -61,   -61,   -61,   -61,   -61,   -61,
+     -61,   -10,   -61,   -28,    95,   -34,   -25,   -61,   -10,   -23,
+      95,   -61,   -61,   -61,    23,   -18,   -22,   -20,   -19,   -13,
+      -9,   -61,   -61,   -61,   -61,    81,   -61,    -1,     1,     2,
+     100,     2,   -61,   -61,    41,   -61,    13,   -61,   -61,   -61,
+       2,     2,    14,   -61,   -61,    20,    22,    26,    21,   -61,
+       2,   -61,    25,    63,     2,     2,   -61,    33,   -61,   -61,
+      61,    81,    72,   -61,   -61,    47,    63,   -61,    73,     2,
+      43,   -61
 };
 
   /* YYDEFACT[STATE-NUM] -- Default reduction number in state STATE-NUM.
@@ -624,28 +666,29 @@ static const yytype_int8 yypact[] =
      means the default is an error.  */
 static const yytype_uint8 yydefact[] =
 {
-       3,     0,     2,     1,    37,    36,    38,    39,    40,     4,
-       0,    35,     0,     6,     0,     7,     8,     0,     0,     0,
-      33,    10,     9,     0,     0,     0,     0,     0,     0,    10,
-       5,    11,    15,     0,    14,     0,    31,     0,     0,     0,
-      23,    24,     0,     0,    13,    12,    25,     0,     0,     0,
-      27,    28,     0,    30,     0,     0,    22,     0,    32,     0,
-       0,     0,     0,    20,     0,    29,    18,     0,     0,    14,
-      26,    30,     0,     0,    19,    12,     0,     0,    21
+       3,     0,     0,     1,     6,    40,    39,    41,    42,    43,
+       4,     0,    38,     0,     7,     0,     8,     9,     0,     0,
+       0,    36,    11,    10,     0,    17,     0,     0,     0,     0,
+       0,    11,     5,    12,    16,     0,    15,     0,    33,     0,
+       0,     0,    25,    26,     0,    35,     0,    14,    13,    27,
+       0,     0,     0,    29,    30,     0,    32,     0,     0,    24,
+       0,    34,     0,     0,     0,     0,    22,     0,    31,    20,
+       0,     0,    15,    28,    32,     0,     0,    21,    13,     0,
+       0,    23
 };
 
   /* YYPGOTO[NTERM-NUM].  */
 static const yytype_int8 yypgoto[] =
 {
-     -58,   -58,   -58,   -58,   -58,   -58,    51,   -57,   -58,   -31,
-      35,   -18,   -38,    37,   -58,    44,    -8,   -58,   -10,    94
+     -61,   -61,   -61,   -61,   -61,   -61,    82,   -60,   -61,   -33,
+      49,   -26,   -40,    50,   -61,    75,    -8,   -61,   -11,   114
 };
 
   /* YYDEFGOTO[NTERM-NUM].  */
 static const yytype_int8 yydefgoto[] =
 {
-      -1,     1,     2,     9,    14,    15,    23,    31,    67,    32,
-      33,    34,    49,    50,    51,    35,    36,    52,    53,    17
+      -1,     1,     2,    10,    15,    16,    24,    33,    70,    34,
+      35,    36,    52,    53,    54,    37,    38,    55,    56,    18
 };
 
   /* YYTABLE[YYPACT[STATE-NUM]] -- What to do in state STATE-NUM.  If
@@ -653,68 +696,69 @@ static const yytype_int8 yydefgoto[] =
      number is the opposite.  If YYTABLE_NINF, syntax error.  */
 static const yytype_int8 yytable[] =
 {
-      12,    55,    44,    66,     3,    16,    11,    20,    11,    58,
-      59,    22,    13,    19,    18,    45,    66,    21,    37,    64,
-      38,    40,    39,    41,    72,    24,    60,    25,    26,     4,
-       5,     6,     7,     8,    48,    46,    47,    44,    77,    27,
-      28,    24,    69,    25,    26,     4,     5,     6,     7,     8,
-      75,    71,    57,    61,   -34,    27,    28,    62,    63,    29,
-      30,    74,    65,    24,    76,    25,    26,     4,     5,     6,
-       7,     8,    73,   -17,   -16,    29,    56,    27,    28,    43,
-      42,    78,    54,     4,     5,     6,     7,     8,     4,     5,
-       6,     7,     8,    27,    28,    68,    10,    29,    70,     0,
-       0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
-       0,     0,     0,    29
+      13,    58,    47,    69,     3,    12,    17,    21,    19,    48,
+      61,    62,    23,    14,    22,    20,    69,    12,   -35,    39,
+      67,    40,    41,    42,    25,    75,    26,    43,    27,    28,
+       5,     6,     7,     8,     9,    49,    50,    72,    47,    80,
+      29,    30,    25,    51,    26,    78,    27,    28,     5,     6,
+       7,     8,     9,    74,    60,    64,    63,   -37,    29,    30,
+      31,    32,    65,    66,    25,    77,    26,    68,    27,    28,
+       5,     6,     7,     8,     9,    76,   -19,   -18,    31,    59,
+      29,    30,    45,    79,    46,    81,    -2,     4,     5,     6,
+       7,     8,     9,     5,     6,     7,     8,     9,    29,    30,
+      31,    45,     5,     6,     7,     8,     9,     5,     6,     7,
+       8,     9,    71,    44,    73,    57,    11,     0,    31
 };
 
 static const yytype_int8 yycheck[] =
 {
-      10,    39,    33,    60,     0,    13,    15,    17,    15,    47,
-      48,    19,    41,    40,    42,    33,    73,    37,    41,    57,
-      41,    36,    41,    36,    62,     3,    42,     5,     6,     7,
-       8,     9,    10,    11,    41,    36,    35,    68,    76,    17,
-      18,     3,    60,     5,     6,     7,     8,     9,    10,    11,
-      68,    61,    41,    35,    35,    17,    18,    36,    42,    37,
-      38,     4,    42,     3,    36,     5,     6,     7,     8,     9,
-      10,    11,    42,     4,     4,    37,    38,    17,    18,     3,
-      29,    42,    38,     7,     8,     9,    10,    11,     7,     8,
-       9,    10,    11,    17,    18,    60,     2,    37,    61,    -1,
-      -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,
-      -1,    -1,    -1,    37
+      11,    41,    35,    63,     0,    15,    14,    18,    42,    35,
+      50,    51,    20,    41,    37,    40,    76,    15,    36,    41,
+      60,    41,    41,    36,     1,    65,     3,    36,     5,     6,
+       7,     8,     9,    10,    11,    36,    35,    63,    71,    79,
+      17,    18,     1,    41,     3,    71,     5,     6,     7,     8,
+       9,    10,    11,    64,    41,    35,    42,    35,    17,    18,
+      37,    38,    36,    42,     1,     4,     3,    42,     5,     6,
+       7,     8,     9,    10,    11,    42,     4,     4,    37,    38,
+      17,    18,     1,    36,     3,    42,     0,     1,     7,     8,
+       9,    10,    11,     7,     8,     9,    10,    11,    17,    18,
+      37,     1,     7,     8,     9,    10,    11,     7,     8,     9,
+      10,    11,    63,    31,    64,    40,     2,    -1,    37
 };
 
   /* YYSTOS[STATE-NUM] -- The (internal number of the) accessing
      symbol of state STATE-NUM.  */
 static const yytype_uint8 yystos[] =
 {
-       0,    46,    47,     0,     7,     8,     9,    10,    11,    48,
-      64,    15,    63,    41,    49,    50,    61,    64,    42,    40,
-      63,    37,    61,    51,     3,     5,     6,    17,    18,    37,
-      38,    52,    54,    55,    56,    60,    61,    41,    41,    41,
-      36,    36,    51,     3,    54,    56,    36,    35,    41,    57,
-      58,    59,    62,    63,    60,    57,    38,    41,    57,    57,
-      42,    35,    36,    42,    57,    42,    52,    53,    55,    56,
-      58,    63,    57,    42,     4,    56,    36,    57,    42
+       0,    46,    47,     0,     1,     7,     8,     9,    10,    11,
+      48,    64,    15,    63,    41,    49,    50,    61,    64,    42,
+      40,    63,    37,    61,    51,     1,     3,     5,     6,    17,
+      18,    37,    38,    52,    54,    55,    56,    60,    61,    41,
+      41,    41,    36,    36,    51,     1,     3,    54,    56,    36,
+      35,    41,    57,    58,    59,    62,    63,    60,    57,    38,
+      41,    57,    57,    42,    35,    36,    42,    57,    42,    52,
+      53,    55,    56,    58,    63,    57,    42,     4,    56,    36,
+      57,    42
 };
 
   /* YYR1[YYN] -- Symbol number of symbol that rule YYN derives.  */
 static const yytype_uint8 yyr1[] =
 {
-       0,    45,    46,    47,    47,    48,    49,    49,    50,    50,
-      51,    51,    52,    52,    52,    52,    53,    53,    54,    55,
-      55,    55,    56,    56,    56,    56,    57,    57,    58,    59,
-      59,    60,    60,    61,    62,    63,    64,    64,    64,    64,
-      64
+       0,    45,    46,    47,    47,    48,    48,    49,    49,    50,
+      50,    51,    51,    52,    52,    52,    52,    52,    53,    53,
+      54,    55,    55,    55,    56,    56,    56,    56,    57,    57,
+      58,    59,    59,    60,    60,    60,    61,    62,    63,    64,
+      64,    64,    64,    64
 };
 
   /* YYR2[YYN] -- Number of symbols on the right hand side of rule YYN.  */
 static const yytype_uint8 yyr2[] =
 {
-       0,     2,     1,     0,     2,     8,     0,     1,     1,     3,
-       0,     2,     2,     2,     1,     1,     2,     1,     5,     6,
-       4,     8,     3,     2,     2,     2,     3,     1,     1,     3,
-       1,     1,     3,     2,     1,     1,     1,     1,     1,     1,
-       1
+       0,     2,     1,     0,     2,     8,     1,     0,     1,     1,
+       3,     0,     2,     2,     2,     1,     1,     1,     2,     1,
+       5,     6,     4,     8,     3,     2,     2,     2,     3,     1,
+       1,     3,     1,     1,     3,     1,     2,     1,     1,     1,
+       1,     1,     1,     1
 };
 
 
@@ -752,6 +796,32 @@ while (0)
 #define YYERRCODE       256
 
 
+/* YYLLOC_DEFAULT -- Set CURRENT to span from RHS[1] to RHS[N].
+   If N is 0, then set CURRENT to the empty location which ends
+   the previous symbol: RHS[0] (always defined).  */
+
+#ifndef YYLLOC_DEFAULT
+# define YYLLOC_DEFAULT(Current, Rhs, N)                                \
+    do                                                                  \
+      if (N)                                                            \
+        {                                                               \
+          (Current).first_line   = YYRHSLOC (Rhs, 1).first_line;        \
+          (Current).first_column = YYRHSLOC (Rhs, 1).first_column;      \
+          (Current).last_line    = YYRHSLOC (Rhs, N).last_line;         \
+          (Current).last_column  = YYRHSLOC (Rhs, N).last_column;       \
+        }                                                               \
+      else                                                              \
+        {                                                               \
+          (Current).first_line   = (Current).last_line   =              \
+            YYRHSLOC (Rhs, 0).last_line;                                \
+          (Current).first_column = (Current).last_column =              \
+            YYRHSLOC (Rhs, 0).last_column;                              \
+        }                                                               \
+    while (0)
+#endif
+
+#define YYRHSLOC(Rhs, K) ((Rhs)[K])
+
 
 /* Enable debugging if requested.  */
 #if YYDEBUG
@@ -767,9 +837,48 @@ do {                                            \
     YYFPRINTF Args;                             \
 } while (0)
 
-/* This macro is provided for backward compatibility. */
+
+/* YY_LOCATION_PRINT -- Print the location on the stream.
+   This macro was not mandated originally: define only if we know
+   we won't break user code: when these are the locations we know.  */
+
 #ifndef YY_LOCATION_PRINT
-# define YY_LOCATION_PRINT(File, Loc) ((void) 0)
+# if defined YYLTYPE_IS_TRIVIAL && YYLTYPE_IS_TRIVIAL
+
+/* Print *YYLOCP on YYO.  Private, do not rely on its existence. */
+
+YY_ATTRIBUTE_UNUSED
+static unsigned
+yy_location_print_ (FILE *yyo, YYLTYPE const * const yylocp)
+{
+  unsigned res = 0;
+  int end_col = 0 != yylocp->last_column ? yylocp->last_column - 1 : 0;
+  if (0 <= yylocp->first_line)
+    {
+      res += YYFPRINTF (yyo, "%d", yylocp->first_line);
+      if (0 <= yylocp->first_column)
+        res += YYFPRINTF (yyo, ".%d", yylocp->first_column);
+    }
+  if (0 <= yylocp->last_line)
+    {
+      if (yylocp->first_line < yylocp->last_line)
+        {
+          res += YYFPRINTF (yyo, "-%d", yylocp->last_line);
+          if (0 <= end_col)
+            res += YYFPRINTF (yyo, ".%d", end_col);
+        }
+      else if (0 <= end_col && yylocp->first_column < end_col)
+        res += YYFPRINTF (yyo, "-%d", end_col);
+    }
+  return res;
+ }
+
+#  define YY_LOCATION_PRINT(File, Loc)          \
+  yy_location_print_ (File, &(Loc))
+
+# else
+#  define YY_LOCATION_PRINT(File, Loc) ((void) 0)
+# endif
 #endif
 
 
@@ -779,7 +888,7 @@ do {                                                                      \
     {                                                                     \
       YYFPRINTF (stderr, "%s ", Title);                                   \
       yy_symbol_print (stderr,                                            \
-                  Type, Value); \
+                  Type, Value, Location); \
       YYFPRINTF (stderr, "\n");                                           \
     }                                                                     \
 } while (0)
@@ -790,10 +899,11 @@ do {                                                                      \
 `----------------------------------------*/
 
 static void
-yy_symbol_value_print (FILE *yyoutput, int yytype, YYSTYPE const * const yyvaluep)
+yy_symbol_value_print (FILE *yyoutput, int yytype, YYSTYPE const * const yyvaluep, YYLTYPE const * const yylocationp)
 {
   FILE *yyo = yyoutput;
   YYUSE (yyo);
+  YYUSE (yylocationp);
   if (!yyvaluep)
     return;
 # ifdef YYPRINT
@@ -809,12 +919,14 @@ yy_symbol_value_print (FILE *yyoutput, int yytype, YYSTYPE const * const yyvalue
 `--------------------------------*/
 
 static void
-yy_symbol_print (FILE *yyoutput, int yytype, YYSTYPE const * const yyvaluep)
+yy_symbol_print (FILE *yyoutput, int yytype, YYSTYPE const * const yyvaluep, YYLTYPE const * const yylocationp)
 {
   YYFPRINTF (yyoutput, "%s %s (",
              yytype < YYNTOKENS ? "token" : "nterm", yytname[yytype]);
 
-  yy_symbol_value_print (yyoutput, yytype, yyvaluep);
+  YY_LOCATION_PRINT (yyoutput, *yylocationp);
+  YYFPRINTF (yyoutput, ": ");
+  yy_symbol_value_print (yyoutput, yytype, yyvaluep, yylocationp);
   YYFPRINTF (yyoutput, ")");
 }
 
@@ -847,7 +959,7 @@ do {                                                            \
 `------------------------------------------------*/
 
 static void
-yy_reduce_print (yytype_int16 *yyssp, YYSTYPE *yyvsp, int yyrule)
+yy_reduce_print (yytype_int16 *yyssp, YYSTYPE *yyvsp, YYLTYPE *yylsp, int yyrule)
 {
   unsigned long int yylno = yyrline[yyrule];
   int yynrhs = yyr2[yyrule];
@@ -861,7 +973,7 @@ yy_reduce_print (yytype_int16 *yyssp, YYSTYPE *yyvsp, int yyrule)
       yy_symbol_print (stderr,
                        yystos[yyssp[yyi + 1 - yynrhs]],
                        &(yyvsp[(yyi + 1) - (yynrhs)])
-                                              );
+                       , &(yylsp[(yyi + 1) - (yynrhs)])                       );
       YYFPRINTF (stderr, "\n");
     }
 }
@@ -869,7 +981,7 @@ yy_reduce_print (yytype_int16 *yyssp, YYSTYPE *yyvsp, int yyrule)
 # define YY_REDUCE_PRINT(Rule)          \
 do {                                    \
   if (yydebug)                          \
-    yy_reduce_print (yyssp, yyvsp, Rule); \
+    yy_reduce_print (yyssp, yyvsp, yylsp, Rule); \
 } while (0)
 
 /* Nonzero means print parse trace.  It is left uninitialized so that
@@ -1127,15 +1239,211 @@ yysyntax_error (YYSIZE_T *yymsg_alloc, char **yymsg,
 `-----------------------------------------------*/
 
 static void
-yydestruct (const char *yymsg, int yytype, YYSTYPE *yyvaluep)
+yydestruct (const char *yymsg, int yytype, YYSTYPE *yyvaluep, YYLTYPE *yylocationp)
 {
   YYUSE (yyvaluep);
+  YYUSE (yylocationp);
   if (!yymsg)
     yymsg = "Deleting";
   YY_SYMBOL_PRINT (yymsg, yytype, yyvaluep, yylocationp);
 
   YY_IGNORE_MAYBE_UNINITIALIZED_BEGIN
-  YYUSE (yytype);
+  switch (yytype)
+    {
+          case 46: /* init  */
+#line 140 "gramatica.y" /* yacc.c:1257  */
+      { 
+  if (error_recovery_mode) {
+    free_tree(((*yyvaluep).node));
+  }
+}
+#line 1261 "gramatica.tab.c" /* yacc.c:1257  */
+        break;
+
+    case 47: /* program  */
+#line 140 "gramatica.y" /* yacc.c:1257  */
+      { 
+  if (error_recovery_mode) {
+    free_tree(((*yyvaluep).node));
+  }
+}
+#line 1271 "gramatica.tab.c" /* yacc.c:1257  */
+        break;
+
+    case 48: /* function  */
+#line 140 "gramatica.y" /* yacc.c:1257  */
+      { 
+  if (error_recovery_mode) {
+    free_tree(((*yyvaluep).node));
+  }
+}
+#line 1281 "gramatica.tab.c" /* yacc.c:1257  */
+        break;
+
+    case 49: /* opt_params  */
+#line 140 "gramatica.y" /* yacc.c:1257  */
+      { 
+  if (error_recovery_mode) {
+    free_tree(((*yyvaluep).node));
+  }
+}
+#line 1291 "gramatica.tab.c" /* yacc.c:1257  */
+        break;
+
+    case 50: /* params  */
+#line 140 "gramatica.y" /* yacc.c:1257  */
+      { 
+  if (error_recovery_mode) {
+    free_tree(((*yyvaluep).node));
+  }
+}
+#line 1301 "gramatica.tab.c" /* yacc.c:1257  */
+        break;
+
+    case 51: /* statments  */
+#line 140 "gramatica.y" /* yacc.c:1257  */
+      { 
+  if (error_recovery_mode) {
+    free_tree(((*yyvaluep).node));
+  }
+}
+#line 1311 "gramatica.tab.c" /* yacc.c:1257  */
+        break;
+
+    case 52: /* statment  */
+#line 140 "gramatica.y" /* yacc.c:1257  */
+      { 
+  if (error_recovery_mode) {
+    free_tree(((*yyvaluep).node));
+  }
+}
+#line 1321 "gramatica.tab.c" /* yacc.c:1257  */
+        break;
+
+    case 53: /* statment_no_dangle  */
+#line 140 "gramatica.y" /* yacc.c:1257  */
+      { 
+  if (error_recovery_mode) {
+    free_tree(((*yyvaluep).node));
+  }
+}
+#line 1331 "gramatica.tab.c" /* yacc.c:1257  */
+        break;
+
+    case 54: /* dangling_if  */
+#line 140 "gramatica.y" /* yacc.c:1257  */
+      { 
+  if (error_recovery_mode) {
+    free_tree(((*yyvaluep).node));
+  }
+}
+#line 1341 "gramatica.tab.c" /* yacc.c:1257  */
+        break;
+
+    case 55: /* statment_prefix  */
+#line 140 "gramatica.y" /* yacc.c:1257  */
+      { 
+  if (error_recovery_mode) {
+    free_tree(((*yyvaluep).node));
+  }
+}
+#line 1351 "gramatica.tab.c" /* yacc.c:1257  */
+        break;
+
+    case 56: /* statment_end  */
+#line 140 "gramatica.y" /* yacc.c:1257  */
+      { 
+  if (error_recovery_mode) {
+    free_tree(((*yyvaluep).node));
+  }
+}
+#line 1361 "gramatica.tab.c" /* yacc.c:1257  */
+        break;
+
+    case 57: /* expr_assign  */
+#line 140 "gramatica.y" /* yacc.c:1257  */
+      { 
+  if (error_recovery_mode) {
+    free_tree(((*yyvaluep).node));
+  }
+}
+#line 1371 "gramatica.tab.c" /* yacc.c:1257  */
+        break;
+
+    case 58: /* expr_relational  */
+#line 140 "gramatica.y" /* yacc.c:1257  */
+      { 
+  if (error_recovery_mode) {
+    free_tree(((*yyvaluep).node));
+  }
+}
+#line 1381 "gramatica.tab.c" /* yacc.c:1257  */
+        break;
+
+    case 59: /* factor  */
+#line 140 "gramatica.y" /* yacc.c:1257  */
+      { 
+  if (error_recovery_mode) {
+    free_tree(((*yyvaluep).node));
+  }
+}
+#line 1391 "gramatica.tab.c" /* yacc.c:1257  */
+        break;
+
+    case 60: /* declaration_or_assign  */
+#line 140 "gramatica.y" /* yacc.c:1257  */
+      { 
+  if (error_recovery_mode) {
+    free_tree(((*yyvaluep).node));
+  }
+}
+#line 1401 "gramatica.tab.c" /* yacc.c:1257  */
+        break;
+
+    case 61: /* declaration  */
+#line 140 "gramatica.y" /* yacc.c:1257  */
+      { 
+  if (error_recovery_mode) {
+    free_tree(((*yyvaluep).node));
+  }
+}
+#line 1411 "gramatica.tab.c" /* yacc.c:1257  */
+        break;
+
+    case 62: /* id_or_access  */
+#line 140 "gramatica.y" /* yacc.c:1257  */
+      { 
+  if (error_recovery_mode) {
+    free_tree(((*yyvaluep).node));
+  }
+}
+#line 1421 "gramatica.tab.c" /* yacc.c:1257  */
+        break;
+
+    case 63: /* id  */
+#line 140 "gramatica.y" /* yacc.c:1257  */
+      { 
+  if (error_recovery_mode) {
+    free_tree(((*yyvaluep).node));
+  }
+}
+#line 1431 "gramatica.tab.c" /* yacc.c:1257  */
+        break;
+
+    case 64: /* type  */
+#line 140 "gramatica.y" /* yacc.c:1257  */
+      { 
+  if (error_recovery_mode) {
+    free_tree(((*yyvaluep).node));
+  }
+}
+#line 1441 "gramatica.tab.c" /* yacc.c:1257  */
+        break;
+
+
+      default:
+        break;
+    }
   YY_IGNORE_MAYBE_UNINITIALIZED_END
 }
 
@@ -1147,6 +1455,12 @@ int yychar;
 
 /* The semantic value of the lookahead symbol.  */
 YYSTYPE yylval;
+/* Location data for the lookahead symbol.  */
+YYLTYPE yylloc
+# if defined YYLTYPE_IS_TRIVIAL && YYLTYPE_IS_TRIVIAL
+  = { 1, 1, 1, 1 }
+# endif
+;
 /* Number of syntax errors so far.  */
 int yynerrs;
 
@@ -1165,6 +1479,7 @@ yyparse (void)
     /* The stacks and their tools:
        'yyss': related to states.
        'yyvs': related to semantic values.
+       'yyls': related to locations.
 
        Refer to the stacks through separate pointers, to allow yyoverflow
        to reallocate them elsewhere.  */
@@ -1179,6 +1494,14 @@ yyparse (void)
     YYSTYPE *yyvs;
     YYSTYPE *yyvsp;
 
+    /* The location stack.  */
+    YYLTYPE yylsa[YYINITDEPTH];
+    YYLTYPE *yyls;
+    YYLTYPE *yylsp;
+
+    /* The locations where the error started and ended.  */
+    YYLTYPE yyerror_range[3];
+
     YYSIZE_T yystacksize;
 
   int yyn;
@@ -1188,6 +1511,7 @@ yyparse (void)
   /* The variables used to return semantic value and location from the
      action routines.  */
   YYSTYPE yyval;
+  YYLTYPE yyloc;
 
 #if YYERROR_VERBOSE
   /* Buffer for error messages, and its allocated size.  */
@@ -1196,7 +1520,7 @@ yyparse (void)
   YYSIZE_T yymsg_alloc = sizeof yymsgbuf;
 #endif
 
-#define YYPOPSTACK(N)   (yyvsp -= (N), yyssp -= (N))
+#define YYPOPSTACK(N)   (yyvsp -= (N), yyssp -= (N), yylsp -= (N))
 
   /* The number of symbols on the RHS of the reduced rule.
      Keep to zero when no symbol should be popped.  */
@@ -1204,6 +1528,7 @@ yyparse (void)
 
   yyssp = yyss = yyssa;
   yyvsp = yyvs = yyvsa;
+  yylsp = yyls = yylsa;
   yystacksize = YYINITDEPTH;
 
   YYDPRINTF ((stderr, "Starting parse\n"));
@@ -1212,6 +1537,7 @@ yyparse (void)
   yyerrstatus = 0;
   yynerrs = 0;
   yychar = YYEMPTY; /* Cause a token to be read.  */
+  yylsp[0] = yylloc;
   goto yysetstate;
 
 /*------------------------------------------------------------.
@@ -1237,6 +1563,7 @@ yyparse (void)
            memory.  */
         YYSTYPE *yyvs1 = yyvs;
         yytype_int16 *yyss1 = yyss;
+        YYLTYPE *yyls1 = yyls;
 
         /* Each stack pointer address is followed by the size of the
            data in use in that stack, in bytes.  This used to be a
@@ -1245,8 +1572,10 @@ yyparse (void)
         yyoverflow (YY_("memory exhausted"),
                     &yyss1, yysize * sizeof (*yyssp),
                     &yyvs1, yysize * sizeof (*yyvsp),
+                    &yyls1, yysize * sizeof (*yylsp),
                     &yystacksize);
 
+        yyls = yyls1;
         yyss = yyss1;
         yyvs = yyvs1;
       }
@@ -1269,6 +1598,7 @@ yyparse (void)
           goto yyexhaustedlab;
         YYSTACK_RELOCATE (yyss_alloc, yyss);
         YYSTACK_RELOCATE (yyvs_alloc, yyvs);
+        YYSTACK_RELOCATE (yyls_alloc, yyls);
 #  undef YYSTACK_RELOCATE
         if (yyss1 != yyssa)
           YYSTACK_FREE (yyss1);
@@ -1278,6 +1608,7 @@ yyparse (void)
 
       yyssp = yyss + yysize - 1;
       yyvsp = yyvs + yysize - 1;
+      yylsp = yyls + yysize - 1;
 
       YYDPRINTF ((stderr, "Stack size increased to %lu\n",
                   (unsigned long int) yystacksize));
@@ -1355,7 +1686,7 @@ yybackup:
   YY_IGNORE_MAYBE_UNINITIALIZED_BEGIN
   *++yyvsp = yylval;
   YY_IGNORE_MAYBE_UNINITIALIZED_END
-
+  *++yylsp = yylloc;
   goto yynewstate;
 
 
@@ -1386,26 +1717,27 @@ yyreduce:
      GCC warning that YYVAL may be used uninitialized.  */
   yyval = yyvsp[1-yylen];
 
-
+  /* Default location.  */
+  YYLLOC_DEFAULT (yyloc, (yylsp - yylen), yylen);
   YY_REDUCE_PRINT (yyn);
   switch (yyn)
     {
         case 2:
-#line 116 "gramatica.y" /* yacc.c:1646  */
+#line 148 "gramatica.y" /* yacc.c:1646  */
     {
   root = (yyval.node) = (yyvsp[0].node);
 }
-#line 1399 "gramatica.tab.c" /* yacc.c:1646  */
+#line 1731 "gramatica.tab.c" /* yacc.c:1646  */
     break;
 
   case 3:
-#line 123 "gramatica.y" /* yacc.c:1646  */
+#line 155 "gramatica.y" /* yacc.c:1646  */
     {(yyval.node) = NULL;}
-#line 1405 "gramatica.tab.c" /* yacc.c:1646  */
+#line 1737 "gramatica.tab.c" /* yacc.c:1646  */
     break;
 
   case 4:
-#line 124 "gramatica.y" /* yacc.c:1646  */
+#line 156 "gramatica.y" /* yacc.c:1646  */
     {
   (yyval.node) = create_node("program");
   if ((yyvsp[-1].node) != NULL) {
@@ -1413,14 +1745,15 @@ yyreduce:
     for (it = (yyvsp[-1].node)->beginChild; it != NULL; it = it->next) {
       push_child((yyval.node), it);
     }
+    free_node((yyvsp[-1].node));
   }
   push_child((yyval.node), (yyvsp[0].node));
 }
-#line 1420 "gramatica.tab.c" /* yacc.c:1646  */
+#line 1753 "gramatica.tab.c" /* yacc.c:1646  */
     break;
 
   case 5:
-#line 136 "gramatica.y" /* yacc.c:1646  */
+#line 169 "gramatica.y" /* yacc.c:1646  */
     {
   (yyval.node) = create_node("function");
   push_child((yyval.node), (yyvsp[-7].node));
@@ -1430,32 +1763,38 @@ yyreduce:
   }
   push_child((yyval.node), (yyvsp[-1].node));
 }
-#line 1434 "gramatica.tab.c" /* yacc.c:1646  */
+#line 1767 "gramatica.tab.c" /* yacc.c:1646  */
     break;
 
   case 6:
-#line 147 "gramatica.y" /* yacc.c:1646  */
-    {(yyval.node) = NULL;}
-#line 1440 "gramatica.tab.c" /* yacc.c:1646  */
+#line 178 "gramatica.y" /* yacc.c:1646  */
+    { error_recovery_mode = 0; (yyval.node) = NULL; }
+#line 1773 "gramatica.tab.c" /* yacc.c:1646  */
     break;
 
   case 7:
-#line 147 "gramatica.y" /* yacc.c:1646  */
-    {(yyval.node) = (yyvsp[0].node);}
-#line 1446 "gramatica.tab.c" /* yacc.c:1646  */
+#line 181 "gramatica.y" /* yacc.c:1646  */
+    {(yyval.node) = NULL;}
+#line 1779 "gramatica.tab.c" /* yacc.c:1646  */
     break;
 
   case 8:
-#line 150 "gramatica.y" /* yacc.c:1646  */
+#line 181 "gramatica.y" /* yacc.c:1646  */
+    {(yyval.node) = (yyvsp[0].node);}
+#line 1785 "gramatica.tab.c" /* yacc.c:1646  */
+    break;
+
+  case 9:
+#line 184 "gramatica.y" /* yacc.c:1646  */
     {
   (yyval.node) = create_node("params");
   push_child((yyval.node), (yyvsp[0].node));
 }
-#line 1455 "gramatica.tab.c" /* yacc.c:1646  */
+#line 1794 "gramatica.tab.c" /* yacc.c:1646  */
     break;
 
-  case 9:
-#line 154 "gramatica.y" /* yacc.c:1646  */
+  case 10:
+#line 188 "gramatica.y" /* yacc.c:1646  */
     {
   (yyval.node) = create_node("params");
   
@@ -1463,19 +1802,20 @@ yyreduce:
   for (it = (yyvsp[-2].node)->beginChild; it != NULL; it = it->next) {
     push_child((yyval.node), it);
   }
+  free_node((yyvsp[-2].node));
   push_child((yyval.node), (yyvsp[0].node));
 }
-#line 1469 "gramatica.tab.c" /* yacc.c:1646  */
-    break;
-
-  case 10:
-#line 167 "gramatica.y" /* yacc.c:1646  */
-    {(yyval.node) = NULL;}
-#line 1475 "gramatica.tab.c" /* yacc.c:1646  */
+#line 1809 "gramatica.tab.c" /* yacc.c:1646  */
     break;
 
   case 11:
-#line 167 "gramatica.y" /* yacc.c:1646  */
+#line 202 "gramatica.y" /* yacc.c:1646  */
+    {(yyval.node) = NULL;}
+#line 1815 "gramatica.tab.c" /* yacc.c:1646  */
+    break;
+
+  case 12:
+#line 202 "gramatica.y" /* yacc.c:1646  */
     {
   (yyval.node) = create_node("statments");
 
@@ -1484,105 +1824,112 @@ yyreduce:
     for (it = (yyvsp[-1].node)->beginChild; it != NULL; it = it->next) {
       push_child((yyval.node), it);
     }
+    free_node((yyvsp[-1].node));
   }  
   push_child((yyval.node), (yyvsp[0].node));
 }
-#line 1491 "gramatica.tab.c" /* yacc.c:1646  */
-    break;
-
-  case 12:
-#line 180 "gramatica.y" /* yacc.c:1646  */
-    {
-  (yyval.node) = (yyvsp[-1].node);
-  push_child((yyval.node), (yyvsp[0].node));
-}
-#line 1500 "gramatica.tab.c" /* yacc.c:1646  */
+#line 1832 "gramatica.tab.c" /* yacc.c:1646  */
     break;
 
   case 13:
-#line 184 "gramatica.y" /* yacc.c:1646  */
+#line 216 "gramatica.y" /* yacc.c:1646  */
     {
   (yyval.node) = (yyvsp[-1].node);
   push_child((yyval.node), (yyvsp[0].node));
 }
-#line 1509 "gramatica.tab.c" /* yacc.c:1646  */
+#line 1841 "gramatica.tab.c" /* yacc.c:1646  */
     break;
 
   case 14:
-#line 188 "gramatica.y" /* yacc.c:1646  */
-    {
-  (yyval.node) = (yyvsp[0].node);
-}
-#line 1517 "gramatica.tab.c" /* yacc.c:1646  */
-    break;
-
-  case 15:
-#line 191 "gramatica.y" /* yacc.c:1646  */
-    {
-  (yyval.node) = (yyvsp[0].node);
-}
-#line 1525 "gramatica.tab.c" /* yacc.c:1646  */
-    break;
-
-  case 16:
-#line 196 "gramatica.y" /* yacc.c:1646  */
+#line 220 "gramatica.y" /* yacc.c:1646  */
     {
   (yyval.node) = (yyvsp[-1].node);
   push_child((yyval.node), (yyvsp[0].node));
 }
-#line 1534 "gramatica.tab.c" /* yacc.c:1646  */
+#line 1850 "gramatica.tab.c" /* yacc.c:1646  */
     break;
 
-  case 17:
-#line 200 "gramatica.y" /* yacc.c:1646  */
+  case 15:
+#line 224 "gramatica.y" /* yacc.c:1646  */
     {
   (yyval.node) = (yyvsp[0].node);
 }
-#line 1542 "gramatica.tab.c" /* yacc.c:1646  */
+#line 1858 "gramatica.tab.c" /* yacc.c:1646  */
+    break;
+
+  case 16:
+#line 227 "gramatica.y" /* yacc.c:1646  */
+    {
+  (yyval.node) = (yyvsp[0].node);
+}
+#line 1866 "gramatica.tab.c" /* yacc.c:1646  */
+    break;
+
+  case 17:
+#line 230 "gramatica.y" /* yacc.c:1646  */
+    { error_recovery_mode = 0; (yyval.node) = NULL; }
+#line 1872 "gramatica.tab.c" /* yacc.c:1646  */
     break;
 
   case 18:
-#line 205 "gramatica.y" /* yacc.c:1646  */
+#line 233 "gramatica.y" /* yacc.c:1646  */
+    {
+  (yyval.node) = (yyvsp[-1].node);
+  push_child((yyval.node), (yyvsp[0].node));
+}
+#line 1881 "gramatica.tab.c" /* yacc.c:1646  */
+    break;
+
+  case 19:
+#line 237 "gramatica.y" /* yacc.c:1646  */
+    {
+  (yyval.node) = (yyvsp[0].node);
+}
+#line 1889 "gramatica.tab.c" /* yacc.c:1646  */
+    break;
+
+  case 20:
+#line 242 "gramatica.y" /* yacc.c:1646  */
     {
   (yyval.node) = create_node("if_open");
   push_child((yyval.node), (yyvsp[-2].node));
   push_child((yyval.node), (yyvsp[0].node));
 }
-#line 1552 "gramatica.tab.c" /* yacc.c:1646  */
+#line 1899 "gramatica.tab.c" /* yacc.c:1646  */
     break;
 
-  case 19:
-#line 212 "gramatica.y" /* yacc.c:1646  */
+  case 21:
+#line 249 "gramatica.y" /* yacc.c:1646  */
     {
   (yyval.node) = create_node("if_else");
   push_child((yyval.node), (yyvsp[-3].node));
   push_child((yyval.node), (yyvsp[-1].node));
 }
-#line 1562 "gramatica.tab.c" /* yacc.c:1646  */
+#line 1909 "gramatica.tab.c" /* yacc.c:1646  */
     break;
 
-  case 20:
-#line 217 "gramatica.y" /* yacc.c:1646  */
+  case 22:
+#line 254 "gramatica.y" /* yacc.c:1646  */
     {
   (yyval.node) = create_node("while");
   push_child((yyval.node), (yyvsp[-1].node));
 }
-#line 1571 "gramatica.tab.c" /* yacc.c:1646  */
+#line 1918 "gramatica.tab.c" /* yacc.c:1646  */
     break;
 
-  case 21:
-#line 221 "gramatica.y" /* yacc.c:1646  */
+  case 23:
+#line 258 "gramatica.y" /* yacc.c:1646  */
     {
   (yyval.node) = create_node("for");
   push_child((yyval.node), (yyvsp[-5].node));
   push_child((yyval.node), (yyvsp[-3].node));
   push_child((yyval.node), (yyvsp[-1].node));
 }
-#line 1582 "gramatica.tab.c" /* yacc.c:1646  */
+#line 1929 "gramatica.tab.c" /* yacc.c:1646  */
     break;
 
-  case 22:
-#line 229 "gramatica.y" /* yacc.c:1646  */
+  case 24:
+#line 266 "gramatica.y" /* yacc.c:1646  */
     {
   (yyval.node) = create_node("block");
   if ((yyvsp[-1].node) != NULL) {
@@ -1590,72 +1937,73 @@ yyreduce:
     for (it = (yyvsp[-1].node)->beginChild; it != NULL; it = it->next) {
       push_child((yyval.node), it);
     }
+    free_node((yyvsp[-1].node));
   }  
 }
-#line 1596 "gramatica.tab.c" /* yacc.c:1646  */
-    break;
-
-  case 23:
-#line 238 "gramatica.y" /* yacc.c:1646  */
-    {
-  (yyval.node) = create_node("read");
-}
-#line 1604 "gramatica.tab.c" /* yacc.c:1646  */
-    break;
-
-  case 24:
-#line 241 "gramatica.y" /* yacc.c:1646  */
-    {
-  (yyval.node) = create_node("write");
-}
-#line 1612 "gramatica.tab.c" /* yacc.c:1646  */
+#line 1944 "gramatica.tab.c" /* yacc.c:1646  */
     break;
 
   case 25:
-#line 244 "gramatica.y" /* yacc.c:1646  */
+#line 276 "gramatica.y" /* yacc.c:1646  */
     {
-  (yyval.node) = (yyvsp[-1].node);
+  (yyval.node) = create_node("read");
 }
-#line 1620 "gramatica.tab.c" /* yacc.c:1646  */
+#line 1952 "gramatica.tab.c" /* yacc.c:1646  */
     break;
 
   case 26:
-#line 252 "gramatica.y" /* yacc.c:1646  */
+#line 279 "gramatica.y" /* yacc.c:1646  */
+    {
+  (yyval.node) = create_node("write");
+}
+#line 1960 "gramatica.tab.c" /* yacc.c:1646  */
+    break;
+
+  case 27:
+#line 282 "gramatica.y" /* yacc.c:1646  */
+    {
+  (yyval.node) = (yyvsp[-1].node);
+}
+#line 1968 "gramatica.tab.c" /* yacc.c:1646  */
+    break;
+
+  case 28:
+#line 290 "gramatica.y" /* yacc.c:1646  */
     {
   (yyval.node) = create_node("assignment");
   push_child((yyval.node), (yyvsp[-2].node));
   push_child((yyval.node), (yyvsp[0].node));
 }
-#line 1630 "gramatica.tab.c" /* yacc.c:1646  */
+#line 1978 "gramatica.tab.c" /* yacc.c:1646  */
     break;
 
-  case 27:
-#line 257 "gramatica.y" /* yacc.c:1646  */
+  case 29:
+#line 295 "gramatica.y" /* yacc.c:1646  */
     {  
   (yyval.node) = (yyvsp[0].node);
 }
-#line 1638 "gramatica.tab.c" /* yacc.c:1646  */
+#line 1986 "gramatica.tab.c" /* yacc.c:1646  */
     break;
 
-  case 28:
-#line 262 "gramatica.y" /* yacc.c:1646  */
+  case 30:
+#line 300 "gramatica.y" /* yacc.c:1646  */
     {
   (yyval.node) = create_node("expr_relational");
   push_child((yyval.node), (yyvsp[0].node));
 }
-#line 1647 "gramatica.tab.c" /* yacc.c:1646  */
+#line 1995 "gramatica.tab.c" /* yacc.c:1646  */
     break;
 
-  case 29:
-#line 268 "gramatica.y" /* yacc.c:1646  */
+  case 31:
+#line 306 "gramatica.y" /* yacc.c:1646  */
     {
   (yyval.node) = (yyvsp[-1].node);
 }
-#line 1655 "gramatica.tab.c" /* yacc.c:1646  */
+#line 2003 "gramatica.tab.c" /* yacc.c:1646  */
     break;
 
-  case 32:
-#line 276 "gramatica.y" /* yacc.c:1646  */
+  case 34:
+#line 314 "gramatica.y" /* yacc.c:1646  */
     {
   (yyval.node) = create_node("statments");
 
@@ -1667,57 +2015,63 @@ yyreduce:
   push_child((yyval.node), (yyvsp[-2].node));
   push_child((yyval.node), assign);
 }
-#line 1671 "gramatica.tab.c" /* yacc.c:1646  */
+#line 2019 "gramatica.tab.c" /* yacc.c:1646  */
     break;
 
-  case 33:
-#line 289 "gramatica.y" /* yacc.c:1646  */
+  case 35:
+#line 325 "gramatica.y" /* yacc.c:1646  */
+    { error_recovery_mode = 0; (yyval.node) = NULL; }
+#line 2025 "gramatica.tab.c" /* yacc.c:1646  */
+    break;
+
+  case 36:
+#line 328 "gramatica.y" /* yacc.c:1646  */
     {
   (yyval.node) = create_node("declaration");
   push_child((yyval.node), (yyvsp[-1].node));
   push_child((yyval.node), (yyvsp[0].node));
 }
-#line 1681 "gramatica.tab.c" /* yacc.c:1646  */
-    break;
-
-  case 35:
-#line 299 "gramatica.y" /* yacc.c:1646  */
-    { (yyval.node) = create_node(yytname[YYTRANSLATE(yylval.id)]);}
-#line 1687 "gramatica.tab.c" /* yacc.c:1646  */
-    break;
-
-  case 36:
-#line 302 "gramatica.y" /* yacc.c:1646  */
-    { (yyval.node) = create_node(yytname[YYTRANSLATE(yylval.id)]);}
-#line 1693 "gramatica.tab.c" /* yacc.c:1646  */
-    break;
-
-  case 37:
-#line 303 "gramatica.y" /* yacc.c:1646  */
-    { (yyval.node) = create_node(yytname[YYTRANSLATE(yylval.id)]);}
-#line 1699 "gramatica.tab.c" /* yacc.c:1646  */
+#line 2035 "gramatica.tab.c" /* yacc.c:1646  */
     break;
 
   case 38:
-#line 304 "gramatica.y" /* yacc.c:1646  */
+#line 338 "gramatica.y" /* yacc.c:1646  */
     { (yyval.node) = create_node(yytname[YYTRANSLATE(yylval.id)]);}
-#line 1705 "gramatica.tab.c" /* yacc.c:1646  */
+#line 2041 "gramatica.tab.c" /* yacc.c:1646  */
     break;
 
   case 39:
-#line 305 "gramatica.y" /* yacc.c:1646  */
+#line 341 "gramatica.y" /* yacc.c:1646  */
     { (yyval.node) = create_node(yytname[YYTRANSLATE(yylval.id)]);}
-#line 1711 "gramatica.tab.c" /* yacc.c:1646  */
+#line 2047 "gramatica.tab.c" /* yacc.c:1646  */
     break;
 
   case 40:
-#line 306 "gramatica.y" /* yacc.c:1646  */
+#line 342 "gramatica.y" /* yacc.c:1646  */
     { (yyval.node) = create_node(yytname[YYTRANSLATE(yylval.id)]);}
-#line 1717 "gramatica.tab.c" /* yacc.c:1646  */
+#line 2053 "gramatica.tab.c" /* yacc.c:1646  */
+    break;
+
+  case 41:
+#line 343 "gramatica.y" /* yacc.c:1646  */
+    { (yyval.node) = create_node(yytname[YYTRANSLATE(yylval.id)]);}
+#line 2059 "gramatica.tab.c" /* yacc.c:1646  */
+    break;
+
+  case 42:
+#line 344 "gramatica.y" /* yacc.c:1646  */
+    { (yyval.node) = create_node(yytname[YYTRANSLATE(yylval.id)]);}
+#line 2065 "gramatica.tab.c" /* yacc.c:1646  */
+    break;
+
+  case 43:
+#line 345 "gramatica.y" /* yacc.c:1646  */
+    { (yyval.node) = create_node(yytname[YYTRANSLATE(yylval.id)]);}
+#line 2071 "gramatica.tab.c" /* yacc.c:1646  */
     break;
 
 
-#line 1721 "gramatica.tab.c" /* yacc.c:1646  */
+#line 2075 "gramatica.tab.c" /* yacc.c:1646  */
       default: break;
     }
   /* User semantic actions sometimes alter yychar, and that requires
@@ -1738,6 +2092,7 @@ yyreduce:
   YY_STACK_PRINT (yyss, yyssp);
 
   *++yyvsp = yyval;
+  *++yylsp = yyloc;
 
   /* Now 'shift' the result of the reduction.  Determine what state
      that goes to, based on the state we popped back to and the rule
@@ -1802,7 +2157,7 @@ yyerrlab:
 #endif
     }
 
-
+  yyerror_range[1] = yylloc;
 
   if (yyerrstatus == 3)
     {
@@ -1818,7 +2173,7 @@ yyerrlab:
       else
         {
           yydestruct ("Error: discarding",
-                      yytoken, &yylval);
+                      yytoken, &yylval, &yylloc);
           yychar = YYEMPTY;
         }
     }
@@ -1839,6 +2194,7 @@ yyerrorlab:
   if (/*CONSTCOND*/ 0)
      goto yyerrorlab;
 
+  yyerror_range[1] = yylsp[1-yylen];
   /* Do not reclaim the symbols of the rule whose action triggered
      this YYERROR.  */
   YYPOPSTACK (yylen);
@@ -1872,9 +2228,9 @@ yyerrlab1:
       if (yyssp == yyss)
         YYABORT;
 
-
+      yyerror_range[1] = *yylsp;
       yydestruct ("Error: popping",
-                  yystos[yystate], yyvsp);
+                  yystos[yystate], yyvsp, yylsp);
       YYPOPSTACK (1);
       yystate = *yyssp;
       YY_STACK_PRINT (yyss, yyssp);
@@ -1884,6 +2240,11 @@ yyerrlab1:
   *++yyvsp = yylval;
   YY_IGNORE_MAYBE_UNINITIALIZED_END
 
+  yyerror_range[2] = yylloc;
+  /* Using YYLLOC is tempting, but would change the location of
+     the lookahead.  YYLOC is available though.  */
+  YYLLOC_DEFAULT (yyloc, yyerror_range, 2);
+  *++yylsp = yyloc;
 
   /* Shift the error token.  */
   YY_SYMBOL_PRINT ("Shifting", yystos[yyn], yyvsp, yylsp);
@@ -1923,7 +2284,7 @@ yyreturn:
          user semantic actions for why this is necessary.  */
       yytoken = YYTRANSLATE (yychar);
       yydestruct ("Cleanup: discarding lookahead",
-                  yytoken, &yylval);
+                  yytoken, &yylval, &yylloc);
     }
   /* Do not reclaim the symbols of the rule whose action triggered
      this YYABORT or YYACCEPT.  */
@@ -1932,7 +2293,7 @@ yyreturn:
   while (yyssp != yyss)
     {
       yydestruct ("Cleanup: popping",
-                  yystos[*yyssp], yyvsp);
+                  yystos[*yyssp], yyvsp, yylsp);
       YYPOPSTACK (1);
     }
 #ifndef yyoverflow
@@ -1945,15 +2306,20 @@ yyreturn:
 #endif
   return yyresult;
 }
-#line 310 "gramatica.y" /* yacc.c:1906  */
+#line 349 "gramatica.y" /* yacc.c:1906  */
 
 
 void yyerror (char const *s) {
-  printf ("ERRO: %s\n", s);
+  error_recovery_mode = 1;
+  printf("\033[01;33m%d:%d-%d:%d\033[0;0m \033[1;31merror:\033[0;0m %s\n", 
+    yylloc.first_line, yylloc.first_column,
+    yylloc.last_line, yylloc.last_column,
+    s);
 }
 
 int main() {
   yyparse();
   print_tree(root, 1);
-  // yylex_destroy();
+  free_tree(root);
+  yylex_destroy();
 }

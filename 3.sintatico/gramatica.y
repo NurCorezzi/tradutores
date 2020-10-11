@@ -10,8 +10,10 @@
 
 #include "node.h"
 
+int yylex_destroy ( void );
 void yyerror (char const *s);
 int yylex();
+int error_recovery_mode;
 
 Node *root;
 void (*tree_prefix[150]) (void);
@@ -28,6 +30,10 @@ Node* create_node(char const *id) {
 }
 
 void push_child(Node *root, Node *child) {
+  if (child == NULL) {
+    return;
+  }
+
   if (root->beginChild == NULL) {
     root->beginChild = child;
     root->endChild = child;
@@ -35,6 +41,23 @@ void push_child(Node *root, Node *child) {
     root->endChild->next = child;
     root->endChild = child;
   }
+}
+
+void free_node(Node *node) {
+  if (node->id != NULL) free(node->id);
+  free(node);
+}
+
+void free_tree(Node *root) {
+  if (root == NULL) return;
+
+  Node *it = root->beginChild;
+  while (it != NULL) {
+    Node *next = it->next;
+    free_tree(it);
+    it = next;
+  }
+  free_node(root);
 }
 
 void print_l_end() {printf("└");}
@@ -70,6 +93,8 @@ void print_node(Node *node, int isLast) {
 }
 
 void print_tree(Node *node, int isLast) {
+  if (node == NULL) return;
+
   i_prefix += 3;
   print_node(node, isLast);  
   Node *it;
@@ -84,6 +109,7 @@ void print_tree(Node *node, int isLast) {
 
 %define parse.error verbose
 %token-table
+%locations
 
 %token IF ELSE FOR WHILE 
 %token BOOLEAN INT FLOAT GRAPH VOID
@@ -111,6 +137,12 @@ void print_tree(Node *node, int isLast) {
 %type<node> statment_no_dangle statment_prefix statment_end dangling_if
 %type<node> declaration_or_assign id_or_access expr_relational factor expr_assign
 
+%destructor { 
+  if (error_recovery_mode) {
+    free_tree($$);
+  }
+} init program function opt_params params statments statment declaration type id statment_no_dangle statment_prefix statment_end dangling_if declaration_or_assign id_or_access expr_relational factor expr_assign
+
 %%
 
 init: program {
@@ -128,6 +160,7 @@ program: %empty {$$ = NULL;}
     for (it = $1->beginChild; it != NULL; it = it->next) {
       push_child($$, it);
     }
+    free_node($1);
   }
   push_child($$, $function);
 }
@@ -142,6 +175,7 @@ function: type id OPEN_P opt_params CLOSE_P OPEN_BRACE statments CLOSE_BRACE {
   }
   push_child($$, $statments);
 }
+| error { error_recovery_mode = 0; $$ = NULL; }
 ;
 
 opt_params: %empty {$$ = NULL;} | params {$$ = $1;}
@@ -158,6 +192,7 @@ params: declaration {
   for (it = $1->beginChild; it != NULL; it = it->next) {
     push_child($$, it);
   }
+  free_node($1);
   push_child($$, $declaration);
 }
 ;
@@ -172,6 +207,7 @@ statments: %empty {$$ = NULL;} | statments statment {
     for (it = $1->beginChild; it != NULL; it = it->next) {
       push_child($$, it);
     }
+    free_node($1);
   }  
   push_child($$, $statment);
 }
@@ -191,6 +227,7 @@ statment: statment_prefix statment_end {
 | dangling_if {
   $$ = $1;
 }
+| error { error_recovery_mode = 0; $$ = NULL; }
 ;
 
 statment_no_dangle: statment_prefix statment_end {
@@ -233,6 +270,7 @@ statment_end: OPEN_BRACE statments CLOSE_BRACE {
     for (it = $statments->beginChild; it != NULL; it = it->next) {
       push_child($$, it);
     }
+    free_node($statments);
   }  
 }
 | READ END {
@@ -284,6 +322,7 @@ declaration_or_assign: declaration | declaration ASSIGN expr_assign  {
   push_child($$, $declaration);
   push_child($$, assign);
 }
+| error { error_recovery_mode = 0; $$ = NULL; }
 ;
 
 declaration: type id {
@@ -310,11 +349,16 @@ type: INT  { $$ = create_node(yytname[YYTRANSLATE(yylval.id)]);}
 %%
 
 void yyerror (char const *s) {
-  printf ("ERRO: %s\n", s);
+  error_recovery_mode = 1;
+  printf("\033[01;33m%d:%d-%d:%d\033[0;0m \033[1;31merror:\033[0;0m %s\n", 
+    yylloc.first_line, yylloc.first_column,
+    yylloc.last_line, yylloc.last_column,
+    s);
 }
 
 int main() {
   yyparse();
   print_tree(root, 1);
-  // yylex_destroy();
+  free_tree(root);
+  yylex_destroy();
 }

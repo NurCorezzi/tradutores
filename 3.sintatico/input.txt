@@ -5,13 +5,10 @@ boolean outra(int d, boolean outro, graph u) {
 }
 
 float main() {
-    int a = b = c;
+    int a =  b = c;
     if (a) {
-
     } else if (b){
-        while(a) {
-            for(int b;a;a) {}
-        }
+        while(a) {}
         for (int b;a;a) {}
         if (a) {}
     }
