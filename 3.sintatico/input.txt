@@ -1,4 +1,4 @@
-boolean outra(int d, boolean outro, graph u) {
+boolean outra(int outro, boolean outro, graph outro) {
     <<;
     >>;
     if (a) <<; else {}
@@ -12,4 +12,5 @@ float main() {
         for (int b;a;a) {}
         if (a) {}
     }
+    for (int a:) {}
 }

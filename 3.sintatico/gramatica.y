@@ -7,15 +7,21 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "gramatica.tab.h"
 
 #include "node.h"
 
+extern char *yytext;
 int yylex_destroy ( void );
 void yyerror (char const *s);
 int yylex();
 int error_recovery_mode;
 
-Node *root;
+SymbolNode *symbol_table;
+Node *ast;
+
+/*-------------AST-------------------*/
+
 void (*tree_prefix[150]) (void);
 int i_prefix = 0;
 
@@ -45,6 +51,7 @@ void push_child(Node *root, Node *child) {
 
 void free_node(Node *node) {
   if (node->id != NULL) free(node->id);
+  if (node->complement != NULL) free(node->complement);
   free(node);
 }
 
@@ -60,17 +67,171 @@ void free_tree(Node *root) {
   free_node(root);
 }
 
+/*-----------------CONVERSION---------------------*/
+
+GrammarType token_to_type(int token) {
+  switch(token) {
+    case BOOLEAN:  return GTYPE_BOOLEAN; 
+    case INT:      return GTYPE_INT; 
+    case FLOAT:    return GTYPE_FLOAT; 
+    case GRAPH:    return GTYPE_GRAPH; 
+    case VOID:     return GTYPE_VOID; 
+    default:       return -1;
+  }
+}
+
+char* stype_to_string(int type) {
+  switch(type) {
+    case STYPE_FUNCTION:  return "function";
+    case STYPE_VARIABLE:  return "variable";
+    default:              return "NONE";
+  }
+}
+
+char* gtype_to_string(int type) {
+  switch(type) {
+    case GTYPE_BOOLEAN: return "boolean";
+    case GTYPE_INT:     return "int";
+    case GTYPE_FLOAT:   return "float";
+    case GTYPE_GRAPH:   return "graph";
+    case GTYPE_VOID:    return "void";
+    default:            return "NONE";
+  }
+}
+
+/*------------PRINT SYMBOL TABLE---------------*/
+
+void stable_symbol_print(SymbolNode* entry, int isChild) {
+  char default_format[] = "│%-20p├%-20s│%-15s│%-15s│%-15s│\n";
+  char nth_child_format[] = " %-20p├%-20s %-15s %-15s %-15s \n";
+  char last_child_format[] = " %-20p└%-20s %-15s %-15s %-15s \n";
+  
+  char *format = isChild ? nth_child_format : default_format;
+  if (isChild && entry->matches == NULL) format = last_child_format;
+
+  printf(format, 
+    entry, 
+    entry->id, 
+    entry->scope, 
+    stype_to_string(entry->stype), 
+    gtype_to_string(entry->gtype)
+  );
+}
+
+void stable_print(SymbolNode* table) {
+  printf("│%-20s│%-20s│%-15s│%-15s│%-15s│\n", "ID", "ENTRY", "SCOPE", "STYPE", "GTYPE");
+
+  SymbolNode *entry = table;
+  while(entry) {
+    stable_symbol_print(entry, 0);
+    
+    SymbolNode *match = entry->matches;
+    while(match) {
+      stable_symbol_print(match, 1);
+      match = match->matches;
+    }    
+    
+    entry = entry->next;
+  }
+}
+
+/*-------------SYMBOL TABLE--------------*/
+
+
+SymbolNode* stable_create_symbol(char *id, char *scope, SymbolType stype, GrammarType gtype, Node *ast_node) {
+  SymbolNode* symbol = (SymbolNode*)calloc(1, sizeof(SymbolNode));
+  char *cpy;
+
+  cpy = (char*)malloc(strlen(id) + 1);
+  strcpy(cpy, id);
+  symbol->id = cpy;
+
+  cpy = (char*)malloc(strlen(scope) + 1);
+  strcpy(cpy, scope);
+  symbol->scope = cpy;
+
+  symbol->stype = stype;
+  symbol->gtype = gtype;
+  symbol->ast_node = ast_node;
+
+  return symbol;
+}
+
+SymbolNode* stable_find(SymbolNode* entry, char *id) {
+  if (entry == NULL) return NULL;
+  if (strcmp(id, entry->id) == 0) return entry;
+  else return stable_find(entry->next, id);
+}
+
+SymbolNode* stable_add(SymbolNode* table, SymbolNode* entry) {
+  SymbolNode* lastSymbol = table;
+  while(lastSymbol && lastSymbol->next != NULL) {
+    lastSymbol = lastSymbol->next;
+  }
+
+  if (lastSymbol == NULL) {
+    table = entry;
+  } else {
+    SymbolNode *match = stable_find(table, entry->id);
+    while(match && match->matches != NULL) {
+      match = match->matches;
+    }
+
+    if (match != NULL) {
+      entry->matches = match->matches;
+      match->matches = entry;
+    } else {
+      entry->next = lastSymbol->next;
+      lastSymbol->next = entry;  
+    }
+  }
+
+  return table;
+}
+
+void free_symbol_node(SymbolNode* node) {
+  if (node->id) free(node->id);
+  if (node->scope) free(node->scope);
+  free(node);
+}
+
+void free_stable(SymbolNode* table) {
+  SymbolNode *entry = table;
+  SymbolNode *memo;
+
+  while(entry) {    
+    SymbolNode *match = entry->matches;
+    while(match) {
+      memo = match;
+      match = match->matches;
+      free_symbol_node(memo);
+    }    
+
+    memo = entry;    
+    entry = entry->next;
+    free_symbol_node(memo);
+  }
+}
+
+/*------------PRINT TREE---------------*/
+
 void print_l_end() {printf("└");}
 void print_l_middle() {printf("├");}
 void print_horizontal() {printf("─");}
 void print_vertical() {printf("│");}
 void print_space() {printf(" ");}
 
-void print_prefix() {
+void print_node_prefix() {
   int i;
   for (i = 0; i < i_prefix; ++i) {
     (*tree_prefix[i])();
   }
+}
+
+void print_node_sufix(Node *node) {
+  printf("%s", node->id);
+  if (node->complement) printf(": %s", node->complement);
+  printf("\n");
 }
 
 void print_node(Node *node, int isLast) {
@@ -78,15 +239,15 @@ void print_node(Node *node, int isLast) {
   if (isLast) {
     tree_prefix[i_prefix-3] = &print_l_end;
     tree_prefix[i_prefix-2] = &print_horizontal;
-    print_prefix();
-    printf("%s\n", node->id);
+    print_node_prefix();
+    print_node_sufix(node);
     tree_prefix[i_prefix-3] = &print_space;
     tree_prefix[i_prefix-2] = &print_space;
   } else {
     tree_prefix[i_prefix-3] = &print_l_middle;
     tree_prefix[i_prefix-2] = &print_horizontal;
-    print_prefix();
-    printf("%s\n", node->id);
+    print_node_prefix();
+    print_node_sufix(node);
     tree_prefix[i_prefix-3] = &print_vertical;
     tree_prefix[i_prefix-2] = &print_space;
   }  
@@ -146,7 +307,7 @@ void print_tree(Node *node, int isLast) {
 %%
 
 init: program {
-  root = $$ = $1;
+  ast = $$ = $1;
 }
 ;
 
@@ -261,6 +422,10 @@ statment_prefix: IF OPEN_P expr_assign CLOSE_P statment_no_dangle ELSE {
   push_child($$, $exp1);
   push_child($$, $exp2);
 }
+| FOR OPEN_P declaration IT CLOSE_P {
+  $$ = create_node("for_iterator");
+  push_child($$, $declaration);
+}
 ;
 
 statment_end: OPEN_BRACE statments CLOSE_BRACE {
@@ -322,27 +487,35 @@ declaration_or_assign: declaration | declaration ASSIGN expr_assign  {
   push_child($$, $declaration);
   push_child($$, assign);
 }
-| error { error_recovery_mode = 0; $$ = NULL; }
 ;
 
 declaration: type id {
   $$ = create_node("declaration");
   push_child($$, $type);
   push_child($$, $id);
+
+  SymbolNode *entry = stable_create_symbol($id->complement, "NONE", STYPE_VARIABLE, token_to_type($type->t_token), $id);
+  symbol_table = stable_add(symbol_table, entry);
 }
 ;
 
 id_or_access: id
 ;
 
-id: ID { $$ = create_node(yytname[YYTRANSLATE(yylval.id)]);}
+id: ID { 
+  $$ = create_node(yytname[YYTRANSLATE(yylval.id)]);
+  
+  char *cpy = (char*)malloc(strlen(yytext) + 1);
+  strcpy(cpy, yytext);
+  $$->complement = cpy;
+}
 ;
 
-type: INT  { $$ = create_node(yytname[YYTRANSLATE(yylval.id)]);}
-| BOOLEAN   { $$ = create_node(yytname[YYTRANSLATE(yylval.id)]);}
-| FLOAT     { $$ = create_node(yytname[YYTRANSLATE(yylval.id)]);}
-| GRAPH     { $$ = create_node(yytname[YYTRANSLATE(yylval.id)]);}
-| VOID      { $$ = create_node(yytname[YYTRANSLATE(yylval.id)]);}
+type: INT   { $$ = create_node(yytname[YYTRANSLATE(yylval.id)]); $$->t_token = yylval.id; }
+| BOOLEAN   { $$ = create_node(yytname[YYTRANSLATE(yylval.id)]); $$->t_token = yylval.id; }
+| FLOAT     { $$ = create_node(yytname[YYTRANSLATE(yylval.id)]); $$->t_token = yylval.id; }
+| GRAPH     { $$ = create_node(yytname[YYTRANSLATE(yylval.id)]); $$->t_token = yylval.id; }
+| VOID      { $$ = create_node(yytname[YYTRANSLATE(yylval.id)]); $$->t_token = yylval.id; }
 ;
 
 
@@ -358,7 +531,14 @@ void yyerror (char const *s) {
 
 int main() {
   yyparse();
-  print_tree(root, 1);
-  free_tree(root);
+
+  printf("\n>>>>>>>>>>AST<<<<<<<<<<<\n\n");
+  print_tree(ast, 1);
+
+  printf("\n>>>>>>>>>>SYMBOL TABLE<<<<<<<<<<<\n\n");
+  stable_print(symbol_table);
+  
+  free_tree(ast);
+  free_stable(symbol_table);
   yylex_destroy();
 }
