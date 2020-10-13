@@ -37,11 +37,12 @@
 
 
 /* regular definitions */
-ws          [ \t\n]
-letter      [A-Za-z]
-digit       [0-9]
-id          {letter}({letter}|{digit}|_)*
-number      {digit}+(\.{digit}+)?
+ws              [ \t\n]
+letter          [A-Za-z]
+digit           [0-9]
+id              {letter}({letter}|{digit}|_)*
+number_int      {digit}+
+number_float    {digit}+(\.{digit}+)+
 %%
 
 {ws}            { }
@@ -66,7 +67,8 @@ bfs             { buildToken(TO); return TO; }
 return          { buildToken(RETURN); return RETURN; }
 
 {id}            { buildToken(ID); return ID; }
-{number}        { buildToken(NUMBER); return NUMBER; }
+{number_float}  { buildToken(C_FLOAT); return C_FLOAT; }
+{number_int}    { buildToken(C_INT); return C_INT; }
 
 ">>"			{ buildToken(READ); return READ; }
 "<<"			{ buildToken(WRITE); return WRITE; }
@@ -81,7 +83,7 @@ return          { buildToken(RETURN); return RETURN; }
 "!"				{ buildToken(NOT); return NOT; }
 "*"				{ buildToken(MUL); return MUL; }
 "/"				{ buildToken(DIV); return DIV; }
-"+"				{ buildToken(SUM); return SUM; }
+"+"				{ buildToken(ADD); return ADD; }
 "-"				{ buildToken(SUB); return SUB; }
 "="				{ buildToken(ASSIGN); return ASSIGN; }
 ";"				{ buildToken(END); return END; }

@@ -1,16 +1,6 @@
-boolean outra(int outro, boolean outro, graph outro) {
-    <<;
-    >>;
-    if (a) <<; else {}
-}
+int main() {
+    if (a + 2) {
 
-float main() {
-    int a =  b = c;
-    if (a) {
-    } else if (b){
-        while(a) {}
-        for (int b;a;a) {}
-        if (a) {}
     }
-    for (int a:) {}
+    return 1;
 }

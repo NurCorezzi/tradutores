@@ -275,10 +275,10 @@ void print_tree(Node *node, int isLast) {
 %token IF ELSE FOR WHILE 
 %token BOOLEAN INT FLOAT GRAPH VOID
 %token TO TRUE FALSE
-%token ID NUMBER 
+%token ID C_FLOAT C_INT
 %token READ WRITE 
 %token DFS BFS RETURN
-%token AND OR LE GE LESS GREATER EQ NE NOT MUL DIV SUM SUB 
+%token AND OR LE GE LESS GREATER EQ NE NOT MUL DIV ADD SUB 
 %token ASSIGN END OPEN_BRACE CLOSE_BRACE IT SEPARATOR OPEN_P CLOSE_P OPEN_BRACKET CLOSE_BRACKET
 
 %union {
@@ -289,14 +289,19 @@ void print_tree(Node *node, int isLast) {
 %start init
 
 %type<node> BOOLEAN INT FLOAT GRAPH VOID
-%type<node> ID NUMBER 
+%type<node> ID C_FLOAT C_INT 
 
 %type<node> init program function opt_params params
 %type<node> statments statment
-%type<node> declaration type id
-
 %type<node> statment_no_dangle statment_prefix statment_end dangling_if
-%type<node> declaration_or_assign id_or_access expr_relational factor expr_assign
+
+%type<node> expr_relational expr_and expr_or expr_add expr_sub expr_mul expr_div expr_unary 
+%type<node> unary and or add sub mul div factor
+%type<node> compare_op
+
+%type<node> declaration type id
+%type<node> declaration_or_assign id_or_access expr_assign
+%type<node> value number number_int number_float boolean_const
 
 %destructor { 
   if (error_recovery_mode) {
@@ -438,14 +443,23 @@ statment_end: OPEN_BRACE statments CLOSE_BRACE {
     free_node($statments);
   }  
 }
-| READ END {
+| READ id_or_access END {
   $$ = create_node("read");
+  push_child($$, $id_or_access);
 }
-| WRITE END {
+| WRITE expr_assign END {
   $$ = create_node("write");
+  push_child($$, $expr_assign);
 }
 | declaration_or_assign END {
   $$ = $1;
+}
+| expr_assign END {
+  $$ = $1;
+}
+| RETURN expr_assign END {
+  $$ = create_node("return");
+  push_child($$, $expr_assign);
 }
 ;
 
@@ -453,7 +467,7 @@ statment_end: OPEN_BRACE statments CLOSE_BRACE {
 /*----------------------EXPRESSOES--------------------------------*/
 
 expr_assign: id_or_access ASSIGN expr_relational {
-  $$ = create_node("assignment");
+  $$ = create_node("expr_assign");
   push_child($$, $id_or_access);
   push_child($$, $expr_relational);
 } 
@@ -462,16 +476,104 @@ expr_assign: id_or_access ASSIGN expr_relational {
 }
 ;
 
-expr_relational: factor {
+expr_relational: expr_relational compare_op expr_and {
   $$ = create_node("expr_relational");
-  push_child($$, $factor);
+  push_child($$, $1);
+  push_child($$, $2);
+  push_child($$, $3);
 }
+| expr_and 
+;
+
+expr_and: expr_and and expr_or {
+  $$ = create_node("expr_and");
+  push_child($$, $1);
+  push_child($$, $2);
+  push_child($$, $3);
+} 
+| expr_or
+;
+
+expr_or: expr_or or expr_add {
+  $$ = create_node("expr_or");
+  push_child($$, $1);
+  push_child($$, $2);
+  push_child($$, $3);
+} 
+| expr_add
+;
+
+expr_add: expr_add add expr_sub {
+  $$ = create_node("expr_add");
+  push_child($$, $1);
+  push_child($$, $2);
+  push_child($$, $3);
+} 
+| expr_sub
+;
+
+expr_sub: expr_sub sub expr_mul {
+  $$ = create_node("expr_sub");
+  push_child($$, $1);
+  push_child($$, $2);
+  push_child($$, $3);
+} 
+| expr_mul
+;
+
+expr_mul: expr_mul mul expr_div {
+  $$ = create_node("expr_mul");
+  push_child($$, $1);
+  push_child($$, $2);
+  push_child($$, $3);
+} 
+| expr_div
+;
+
+expr_div: expr_div div expr_unary {
+  $$ = create_node("expr_div");
+  push_child($$, $1);
+  push_child($$, $2);
+  push_child($$, $3);
+} 
+| expr_unary
+;
+
+expr_unary: unary factor {
+  $$ = create_node("expr_unary");
+  push_child($$, $1);
+  push_child($$, $2);
+} 
+| factor
 ;
 
 factor: OPEN_P expr_assign CLOSE_P {
   $$ = $expr_assign;
 }
-| id
+| value
+;
+
+/*-----------------------EXPRESSION SYMBOLS-----------------------------------*/
+
+unary: NOT  { $$ = create_node(yytname[YYTRANSLATE(yylval.id)]); } 
+| add 
+| sub  
+;
+
+and: AND  { $$ = create_node(yytname[YYTRANSLATE(yylval.id)]); };
+or: OR   { $$ = create_node(yytname[YYTRANSLATE(yylval.id)]); };
+
+add: ADD  { $$ = create_node(yytname[YYTRANSLATE(yylval.id)]); };
+sub: SUB  { $$ = create_node(yytname[YYTRANSLATE(yylval.id)]); };
+mul: MUL  { $$ = create_node(yytname[YYTRANSLATE(yylval.id)]); };
+div: DIV  { $$ = create_node(yytname[YYTRANSLATE(yylval.id)]); };
+
+compare_op: LE  { $$ = create_node(yytname[YYTRANSLATE(yylval.id)]); }
+| GE            { $$ = create_node(yytname[YYTRANSLATE(yylval.id)]); }
+| LESS          { $$ = create_node(yytname[YYTRANSLATE(yylval.id)]); }
+| GREATER       { $$ = create_node(yytname[YYTRANSLATE(yylval.id)]); }
+| EQ            { $$ = create_node(yytname[YYTRANSLATE(yylval.id)]); }
+| NE            { $$ = create_node(yytname[YYTRANSLATE(yylval.id)]); }
 ;
 
 /*-----------------------MICRO------------------------------*/
@@ -499,7 +601,25 @@ declaration: type id {
 }
 ;
 
-id_or_access: id
+value: id_or_access {
+  $$ = create_node("value");
+  push_child($$, $1);
+}
+| number {
+  $$ = create_node("value");
+  push_child($$, $1);
+}
+| boolean_const {
+  $$ = create_node("value");
+  push_child($$, $1);
+}
+;
+
+id_or_access: id | id OPEN_BRACKET number_int CLOSE_BRACKET {
+  $$ = create_node("access");
+  push_child($$, $id);
+  push_child($$, $number_int);
+}
 ;
 
 id: ID { 
@@ -518,6 +638,30 @@ type: INT   { $$ = create_node(yytname[YYTRANSLATE(yylval.id)]); $$->t_token = y
 | VOID      { $$ = create_node(yytname[YYTRANSLATE(yylval.id)]); $$->t_token = yylval.id; }
 ;
 
+number: number_int | number_float
+;
+
+number_int: C_INT {
+  $$ = create_node("c_int");
+
+  char *cpy = (char*)malloc(strlen(yytext) + 1);
+  strcpy(cpy, yytext);
+  $$->complement = cpy;
+}
+;
+
+number_float: C_FLOAT {
+  $$ = create_node("c_float");
+
+  char *cpy = (char*)malloc(strlen(yytext) + 1);
+  strcpy(cpy, yytext);
+  $$->complement = cpy;
+}
+;
+
+boolean_const: TRUE { $$ = create_node(yytname[YYTRANSLATE(yylval.id)]); $$->t_token = yylval.id; }
+| FALSE             { $$ = create_node(yytname[YYTRANSLATE(yylval.id)]); $$->t_token = yylval.id; }
+;
 
 %%
 

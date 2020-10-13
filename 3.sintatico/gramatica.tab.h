@@ -64,35 +64,36 @@ extern int yydebug;
     TRUE = 268,
     FALSE = 269,
     ID = 270,
-    NUMBER = 271,
-    READ = 272,
-    WRITE = 273,
-    DFS = 274,
-    BFS = 275,
-    RETURN = 276,
-    AND = 277,
-    OR = 278,
-    LE = 279,
-    GE = 280,
-    LESS = 281,
-    GREATER = 282,
-    EQ = 283,
-    NE = 284,
-    NOT = 285,
-    MUL = 286,
-    DIV = 287,
-    SUM = 288,
-    SUB = 289,
-    ASSIGN = 290,
-    END = 291,
-    OPEN_BRACE = 292,
-    CLOSE_BRACE = 293,
-    IT = 294,
-    SEPARATOR = 295,
-    OPEN_P = 296,
-    CLOSE_P = 297,
-    OPEN_BRACKET = 298,
-    CLOSE_BRACKET = 299
+    C_FLOAT = 271,
+    C_INT = 272,
+    READ = 273,
+    WRITE = 274,
+    DFS = 275,
+    BFS = 276,
+    RETURN = 277,
+    AND = 278,
+    OR = 279,
+    LE = 280,
+    GE = 281,
+    LESS = 282,
+    GREATER = 283,
+    EQ = 284,
+    NE = 285,
+    NOT = 286,
+    MUL = 287,
+    DIV = 288,
+    ADD = 289,
+    SUB = 290,
+    ASSIGN = 291,
+    END = 292,
+    OPEN_BRACE = 293,
+    CLOSE_BRACE = 294,
+    IT = 295,
+    SEPARATOR = 296,
+    OPEN_P = 297,
+    CLOSE_P = 298,
+    OPEN_BRACKET = 299,
+    CLOSE_BRACKET = 300
   };
 #endif
 
@@ -106,7 +107,7 @@ union YYSTYPE
   int id;
   Node* node;
 
-#line 110 "gramatica.tab.h" /* yacc.c:1909  */
+#line 111 "gramatica.tab.h" /* yacc.c:1909  */
 };
 
 typedef union YYSTYPE YYSTYPE;

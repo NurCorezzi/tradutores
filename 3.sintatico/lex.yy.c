@@ -373,8 +373,8 @@ static void yynoreturn yy_fatal_error ( const char* msg  );
 	(yy_hold_char) = *yy_cp; \
 	*yy_cp = '\0'; \
 	(yy_c_buf_p) = yy_cp;
-#define YY_NUM_RULES 45
-#define YY_END_OF_BUFFER 46
+#define YY_NUM_RULES 46
+#define YY_END_OF_BUFFER 47
 /* This struct is not used in this scanner,
    but its presence is necessary. */
 struct yy_trans_info
@@ -384,13 +384,13 @@ struct yy_trans_info
 	};
 static const flex_int16_t yy_accept[97] =
     {   0,
-        0,    0,   46,   44,    1,    1,   29,   44,   40,   41,
-       30,   32,   39,   33,   31,   18,   38,   35,   25,   34,
-       26,   17,   42,   43,   17,   17,   17,   17,   17,   17,
-       17,   17,   17,   17,   36,   44,   37,   28,   21,    0,
-       18,   20,   23,   27,   24,   19,   17,   17,   17,   17,
+        0,    0,   47,   45,    1,    1,   30,   45,   41,   42,
+       31,   33,   40,   34,   32,   19,   39,   36,   26,   35,
+       27,   17,   43,   44,   17,   17,   17,   17,   17,   17,
+       17,   17,   17,   17,   37,   45,   38,   29,   22,    0,
+       19,   21,   24,   28,   25,   20,   17,   17,   17,   17,
        17,   17,   17,   17,   17,    2,   17,   17,   11,   17,
-       17,   17,   22,   18,   15,   17,   14,   17,   17,   17,
+       17,   17,   23,   18,   15,   17,   14,   17,   17,   17,
         4,   17,    7,   17,   17,   17,   17,   17,    3,   17,
        17,   17,   17,   12,    9,   17,   17,   13,    8,   10,
        17,    5,   17,   16,    6,    0
@@ -440,16 +440,16 @@ static const YY_CHAR yy_meta[45] =
 
 static const flex_int16_t yy_base[98] =
     {   0,
-        0,    0,  106,  107,  107,  107,   87,   99,  107,  107,
-      107,  107,  107,  107,  107,   33,  107,  107,   31,   85,
-       32,    0,  107,  107,   18,   74,   69,   29,   64,   26,
-       72,   21,   64,   67,  107,   53,  107,  107,  107,   81,
-       44,  107,  107,  107,  107,  107,    0,   57,   59,   55,
-       54,   58,   55,   52,   63,    0,   48,   47,    0,   45,
-       52,   51,  107,   67,    0,   48,    0,   52,   41,   53,
-        0,   41,    0,   36,   47,   47,   40,   44,    0,   43,
-       31,   38,   31,    0,    0,   39,   41,    0,    0,    0,
-       31,    0,   29,    0,    0,  107,   58
+        0,    0,  107,  108,  108,  108,   88,  100,  108,  108,
+      108,  108,  108,  108,  108,   33,  108,  108,   31,   86,
+       32,    0,  108,  108,   18,   75,   70,   29,   65,   26,
+       73,   21,   65,   68,  108,   54,  108,  108,  108,   82,
+       44,  108,  108,  108,  108,  108,    0,   58,   60,   56,
+       55,   59,   56,   53,   64,    0,   49,   48,    0,   46,
+       53,   52,  108,   48,    0,   50,    0,   54,   43,   55,
+        0,   43,    0,   38,   49,   49,   42,   46,    0,   45,
+       33,   40,   33,    0,    0,   41,   43,    0,    0,    0,
+       33,    0,   32,    0,    0,  108,   62
 
     } ;
 
@@ -468,54 +468,54 @@ static const flex_int16_t yy_def[98] =
 
     } ;
 
-static const flex_int16_t yy_nxt[152] =
+static const flex_int16_t yy_nxt[153] =
     {   0,
         4,    5,    6,    7,    8,    9,   10,   11,   12,   13,
        14,    4,   15,   16,   17,   18,   19,   20,   21,   22,
        23,   24,    4,   22,   25,   26,   27,   28,   29,   22,
        30,   22,   22,   22,   22,   31,   22,   32,   22,   33,
        34,   35,   36,   37,   40,   48,   41,   42,   43,   45,
-       46,   49,   52,   56,   59,   40,   60,   41,   57,   47,
-       53,   95,   54,   94,   93,   92,   91,   90,   89,   88,
-       87,   86,   85,   84,   83,   82,   81,   80,   79,   78,
-       64,   77,   76,   75,   74,   73,   72,   71,   70,   69,
-       68,   67,   66,   65,   64,   63,   62,   61,   58,   55,
+       46,   49,   52,   56,   59,   40,   60,   41,   57,   40,
+       53,   64,   54,   47,   95,   94,   93,   92,   91,   90,
+       89,   88,   87,   86,   85,   84,   83,   82,   81,   80,
+       79,   78,   77,   76,   75,   74,   73,   72,   71,   70,
+       69,   68,   67,   66,   65,   64,   63,   62,   61,   58,
 
-       51,   50,   44,   39,   38,   96,    3,   96,   96,   96,
+       55,   51,   50,   44,   39,   38,   96,    3,   96,   96,
        96,   96,   96,   96,   96,   96,   96,   96,   96,   96,
        96,   96,   96,   96,   96,   96,   96,   96,   96,   96,
        96,   96,   96,   96,   96,   96,   96,   96,   96,   96,
        96,   96,   96,   96,   96,   96,   96,   96,   96,   96,
-       96
+       96,   96
     } ;
 
-static const flex_int16_t yy_chk[152] =
+static const flex_int16_t yy_chk[153] =
     {   0,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
         1,    1,    1,    1,   16,   25,   16,   19,   19,   21,
-       21,   25,   28,   30,   32,   41,   32,   41,   30,   97,
-       28,   93,   28,   91,   87,   86,   83,   82,   81,   80,
-       78,   77,   76,   75,   74,   72,   70,   69,   68,   66,
-       64,   62,   61,   60,   58,   57,   55,   54,   53,   52,
-       51,   50,   49,   48,   40,   36,   34,   33,   31,   29,
+       21,   25,   28,   30,   32,   41,   32,   41,   30,   64,
+       28,   64,   28,   97,   93,   91,   87,   86,   83,   82,
+       81,   80,   78,   77,   76,   75,   74,   72,   70,   69,
+       68,   66,   62,   61,   60,   58,   57,   55,   54,   53,
+       52,   51,   50,   49,   48,   40,   36,   34,   33,   31,
 
-       27,   26,   20,    8,    7,    3,   96,   96,   96,   96,
+       29,   27,   26,   20,    8,    7,    3,   96,   96,   96,
        96,   96,   96,   96,   96,   96,   96,   96,   96,   96,
        96,   96,   96,   96,   96,   96,   96,   96,   96,   96,
        96,   96,   96,   96,   96,   96,   96,   96,   96,   96,
        96,   96,   96,   96,   96,   96,   96,   96,   96,   96,
-       96
+       96,   96
     } ;
 
 /* Table of booleans, true if rule could match eol. */
-static const flex_int32_t yy_rule_can_match_eol[46] =
+static const flex_int32_t yy_rule_can_match_eol[47] =
     {   0,
 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-    0, 0, 0, 0, 0, 0,     };
+    0, 0, 0, 0, 0, 0, 0,     };
 
 static yy_state_type yy_last_accepting_state;
 static char *yy_last_accepting_cpos;
@@ -780,7 +780,7 @@ YY_DECL
 		}
 
 	{
-#line 45 "definicao.l"
+#line 46 "definicao.l"
 
 
 #line 787 "lex.yy.c"
@@ -816,7 +816,7 @@ yy_match:
 			yy_current_state = yy_nxt[yy_base[yy_current_state] + yy_c];
 			++yy_cp;
 			}
-		while ( yy_base[yy_current_state] != 107 );
+		while ( yy_base[yy_current_state] != 108 );
 
 yy_find_action:
 		yy_act = yy_accept[yy_current_state];
@@ -853,230 +853,235 @@ do_action:	/* This label is used only to access EOF actions. */
 case 1:
 /* rule 1 can match eol */
 YY_RULE_SETUP
-#line 47 "definicao.l"
+#line 48 "definicao.l"
 { }
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 49 "definicao.l"
+#line 50 "definicao.l"
 { buildToken(IF); return IF; }
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 50 "definicao.l"
+#line 51 "definicao.l"
 { buildToken(ELSE); return ELSE; }
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 51 "definicao.l"
+#line 52 "definicao.l"
 { buildToken(FOR); return FOR; }
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 52 "definicao.l"
+#line 53 "definicao.l"
 { buildToken(WHILE); return WHILE; }
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 54 "definicao.l"
+#line 55 "definicao.l"
 { buildToken(BOOLEAN); return BOOLEAN; }
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 55 "definicao.l"
+#line 56 "definicao.l"
 { buildToken(INT); return INT; }
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 56 "definicao.l"
+#line 57 "definicao.l"
 { buildToken(FLOAT); return FLOAT; }
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 57 "definicao.l"
+#line 58 "definicao.l"
 { buildToken(VOID); return VOID; }
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 58 "definicao.l"
+#line 59 "definicao.l"
 { buildToken(GRAPH); return GRAPH; }
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 59 "definicao.l"
+#line 60 "definicao.l"
 { buildToken(TO); return TO; }
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 61 "definicao.l"
+#line 62 "definicao.l"
 { buildToken(TRUE); return TRUE; }
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 62 "definicao.l"
+#line 63 "definicao.l"
 { buildToken(FALSE); return FALSE; }
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 64 "definicao.l"
+#line 65 "definicao.l"
 { buildToken(GRAPH); return GRAPH; }
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 65 "definicao.l"
+#line 66 "definicao.l"
 { buildToken(TO); return TO; }
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 66 "definicao.l"
+#line 67 "definicao.l"
 { buildToken(RETURN); return RETURN; }
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 68 "definicao.l"
+#line 69 "definicao.l"
 { buildToken(ID); return ID; }
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
-#line 69 "definicao.l"
-{ buildToken(NUMBER); return NUMBER; }
+#line 70 "definicao.l"
+{ buildToken(C_FLOAT); return C_FLOAT; }
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
 #line 71 "definicao.l"
-{ buildToken(READ); return READ; }
+{ buildToken(C_INT); return C_INT; }
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
-#line 72 "definicao.l"
-{ buildToken(WRITE); return WRITE; }
+#line 73 "definicao.l"
+{ buildToken(READ); return READ; }
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
-#line 73 "definicao.l"
-{ buildToken(AND); return AND; }
+#line 74 "definicao.l"
+{ buildToken(WRITE); return WRITE; }
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
-#line 74 "definicao.l"
-{ buildToken(OR); return OR; }
+#line 75 "definicao.l"
+{ buildToken(AND); return AND; }
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
-#line 75 "definicao.l"
-{ buildToken(LE); return LE; }
+#line 76 "definicao.l"
+{ buildToken(OR); return OR; }
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
-#line 76 "definicao.l"
-{ buildToken(GE); return GE; }
+#line 77 "definicao.l"
+{ buildToken(LE); return LE; }
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
-#line 77 "definicao.l"
-{ buildToken(LESS); return LESS; }
+#line 78 "definicao.l"
+{ buildToken(GE); return GE; }
 	YY_BREAK
 case 26:
 YY_RULE_SETUP
-#line 78 "definicao.l"
-{ buildToken(GREATER); return GREATER; }
+#line 79 "definicao.l"
+{ buildToken(LESS); return LESS; }
 	YY_BREAK
 case 27:
 YY_RULE_SETUP
-#line 79 "definicao.l"
-{ buildToken(EQ); return EQ; }
+#line 80 "definicao.l"
+{ buildToken(GREATER); return GREATER; }
 	YY_BREAK
 case 28:
 YY_RULE_SETUP
-#line 80 "definicao.l"
-{ buildToken(NE); return NE; }
+#line 81 "definicao.l"
+{ buildToken(EQ); return EQ; }
 	YY_BREAK
 case 29:
 YY_RULE_SETUP
-#line 81 "definicao.l"
-{ buildToken(NOT); return NOT; }
+#line 82 "definicao.l"
+{ buildToken(NE); return NE; }
 	YY_BREAK
 case 30:
 YY_RULE_SETUP
-#line 82 "definicao.l"
-{ buildToken(MUL); return MUL; }
+#line 83 "definicao.l"
+{ buildToken(NOT); return NOT; }
 	YY_BREAK
 case 31:
 YY_RULE_SETUP
-#line 83 "definicao.l"
-{ buildToken(DIV); return DIV; }
+#line 84 "definicao.l"
+{ buildToken(MUL); return MUL; }
 	YY_BREAK
 case 32:
 YY_RULE_SETUP
-#line 84 "definicao.l"
-{ buildToken(SUM); return SUM; }
+#line 85 "definicao.l"
+{ buildToken(DIV); return DIV; }
 	YY_BREAK
 case 33:
 YY_RULE_SETUP
-#line 85 "definicao.l"
-{ buildToken(SUB); return SUB; }
+#line 86 "definicao.l"
+{ buildToken(ADD); return ADD; }
 	YY_BREAK
 case 34:
 YY_RULE_SETUP
-#line 86 "definicao.l"
-{ buildToken(ASSIGN); return ASSIGN; }
+#line 87 "definicao.l"
+{ buildToken(SUB); return SUB; }
 	YY_BREAK
 case 35:
 YY_RULE_SETUP
-#line 87 "definicao.l"
-{ buildToken(END); return END; }
+#line 88 "definicao.l"
+{ buildToken(ASSIGN); return ASSIGN; }
 	YY_BREAK
 case 36:
 YY_RULE_SETUP
-#line 88 "definicao.l"
-{ buildToken(OPEN_BRACE); return OPEN_BRACE; }
+#line 89 "definicao.l"
+{ buildToken(END); return END; }
 	YY_BREAK
 case 37:
 YY_RULE_SETUP
-#line 89 "definicao.l"
-{ buildToken(CLOSE_BRACE); return CLOSE_BRACE; }
+#line 90 "definicao.l"
+{ buildToken(OPEN_BRACE); return OPEN_BRACE; }
 	YY_BREAK
 case 38:
 YY_RULE_SETUP
-#line 90 "definicao.l"
-{ buildToken(IT); return IT; }
+#line 91 "definicao.l"
+{ buildToken(CLOSE_BRACE); return CLOSE_BRACE; }
 	YY_BREAK
 case 39:
 YY_RULE_SETUP
-#line 91 "definicao.l"
-{ buildToken(SEPARATOR); return SEPARATOR; }
+#line 92 "definicao.l"
+{ buildToken(IT); return IT; }
 	YY_BREAK
 case 40:
 YY_RULE_SETUP
-#line 92 "definicao.l"
-{ buildToken(OPEN_P); return OPEN_P; }
+#line 93 "definicao.l"
+{ buildToken(SEPARATOR); return SEPARATOR; }
 	YY_BREAK
 case 41:
 YY_RULE_SETUP
-#line 93 "definicao.l"
-{ buildToken(CLOSE_P); return CLOSE_P; }
+#line 94 "definicao.l"
+{ buildToken(OPEN_P); return OPEN_P; }
 	YY_BREAK
 case 42:
 YY_RULE_SETUP
-#line 94 "definicao.l"
-{ buildToken(OPEN_BRACKET); return OPEN_BRACKET; }
+#line 95 "definicao.l"
+{ buildToken(CLOSE_P); return CLOSE_P; }
 	YY_BREAK
 case 43:
 YY_RULE_SETUP
-#line 95 "definicao.l"
-{ buildToken(CLOSE_BRACKET); return CLOSE_BRACKET; }
+#line 96 "definicao.l"
+{ buildToken(OPEN_BRACKET); return OPEN_BRACKET; }
 	YY_BREAK
 case 44:
 YY_RULE_SETUP
-#line 96 "definicao.l"
-{ lexError(); }
+#line 97 "definicao.l"
+{ buildToken(CLOSE_BRACKET); return CLOSE_BRACKET; }
 	YY_BREAK
 case 45:
 YY_RULE_SETUP
 #line 98 "definicao.l"
+{ lexError(); }
+	YY_BREAK
+case 46:
+YY_RULE_SETUP
+#line 100 "definicao.l"
 ECHO;
 	YY_BREAK
-#line 1080 "lex.yy.c"
+#line 1085 "lex.yy.c"
 case YY_STATE_EOF(INITIAL):
 	yyterminate();
 
@@ -2052,7 +2057,7 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 98 "definicao.l"
+#line 100 "definicao.l"
 
 
 // int main() {
