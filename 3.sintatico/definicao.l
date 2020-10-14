@@ -62,8 +62,8 @@ to              { buildToken(TO); return TO; }
 true            { buildToken(TRUE); return TRUE; }
 false           { buildToken(FALSE); return FALSE; }
 
-dfs			    { buildToken(GRAPH); return GRAPH; }
-bfs             { buildToken(TO); return TO; }
+dfs			    { buildToken(DFS); return DFS; }
+bfs             { buildToken(BFS); return BFS; }
 return          { buildToken(RETURN); return RETURN; }
 
 {id}            { buildToken(ID); return ID; }

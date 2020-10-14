@@ -919,12 +919,12 @@ YY_RULE_SETUP
 case 14:
 YY_RULE_SETUP
 #line 65 "definicao.l"
-{ buildToken(GRAPH); return GRAPH; }
+{ buildToken(DFS); return DFS; }
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
 #line 66 "definicao.l"
-{ buildToken(TO); return TO; }
+{ buildToken(BFS); return BFS; }
 	YY_BREAK
 case 16:
 YY_RULE_SETUP

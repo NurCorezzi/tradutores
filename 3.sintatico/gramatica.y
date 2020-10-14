@@ -291,11 +291,11 @@ void print_tree(Node *node, int isLast) {
 %type<node> BOOLEAN INT FLOAT GRAPH VOID
 %type<node> ID C_FLOAT C_INT 
 
-%type<node> init program function opt_params params
+%type<node> init program function params function_call params_call graph_call graph_params_call
 %type<node> statments statment
 %type<node> statment_no_dangle statment_prefix statment_end dangling_if
 
-%type<node> expr_relational expr_and expr_or expr_add expr_sub expr_mul expr_div expr_unary 
+%type<node> expr_relational expr_and expr_or expr_add expr_sub expr_mul expr_div expr_unary
 %type<node> unary and or add sub mul div factor
 %type<node> compare_op
 
@@ -307,7 +307,7 @@ void print_tree(Node *node, int isLast) {
   if (error_recovery_mode) {
     free_tree($$);
   }
-} init program function opt_params params statments statment declaration type id statment_no_dangle statment_prefix statment_end dangling_if declaration_or_assign id_or_access expr_relational factor expr_assign
+} init program function params function_call params_call graph_call graph_params_call statments statment statment_no_dangle statment_prefix statment_end dangling_if expr_relational expr_and expr_or expr_add expr_sub expr_mul expr_div expr_unary unary and or add sub mul div factor compare_op declaration type id declaration_or_assign id_or_access expr_assign value number number_int number_float boolean_const
 
 %%
 
@@ -316,7 +316,7 @@ init: program {
 }
 ;
 
-/*------------------FUNCOES-----------------------*/
+/*------------------FUNCTIONS-----------------------*/
 
 program: %empty {$$ = NULL;}
   | program function {
@@ -332,26 +332,20 @@ program: %empty {$$ = NULL;}
 }
 ;
 
-function: type id OPEN_P opt_params CLOSE_P OPEN_BRACE statments CLOSE_BRACE {
+function: type id OPEN_P params CLOSE_P OPEN_BRACE statments CLOSE_BRACE {
   $$ = create_node("function");
   push_child($$, $type);
   push_child($$, $id);
-  if ($opt_params != NULL) {
-    push_child($$, $opt_params);
+  if ($params != NULL) {
+    push_child($$, $params);
   }
   push_child($$, $statments);
 }
 | error { error_recovery_mode = 0; $$ = NULL; }
 ;
 
-opt_params: %empty {$$ = NULL;} | params {$$ = $1;}
-;
-
-params: declaration {
-  $$ = create_node("params");
-  push_child($$, $declaration);
-}
-| params SEPARATOR declaration {
+params: %empty {$$ = NULL;}
+|params SEPARATOR declaration {
   $$ = create_node("params");
   
   Node *it;
@@ -361,9 +355,51 @@ params: declaration {
   free_node($1);
   push_child($$, $declaration);
 }
+| declaration {
+  $$ = create_node("params");
+  push_child($$, $declaration);
+}
 ;
 
-/*------------------STATMENTS-----------------------*/
+function_call: id OPEN_P params_call CLOSE_P {
+  $$ = create_node("function_call");
+  push_child($$, $id);
+  if ($params_call != NULL) {
+    push_child($$, $params_call);
+  }
+}
+;
+
+params_call: %empty {$$ = NULL;}
+| params_call SEPARATOR expr_assign {
+  $$ = create_node("params_call");
+  
+  Node *it;
+  for (it = $1->beginChild; it != NULL; it = it->next) {
+    push_child($$, it);
+  }
+  free_node($1);
+  push_child($$, $expr_assign);
+} 
+| expr_assign {
+  $$ = create_node("params_call");
+  push_child($$, $expr_assign);
+}
+;
+
+graph_call: DFS graph_params_call { $$ = create_node("dfs"); push_child($$, $graph_params_call);}
+| BFS  graph_params_call          { $$ = create_node("bfs"); push_child($$, $graph_params_call);}
+;
+
+graph_params_call: OPEN_P id SEPARATOR expr_assign[exp1] SEPARATOR expr_assign[exp2] CLOSE_P {
+  $$ = create_node("graph_params");
+  push_child($$, $id);
+  push_child($$, $exp1);
+  push_child($$, $exp2);
+}
+;
+
+/*------------------STATEMENTS-----------------------*/
 
 statments: %empty {$$ = NULL;} | statments statment {
   $$ = create_node("statments");
@@ -427,9 +463,10 @@ statment_prefix: IF OPEN_P expr_assign CLOSE_P statment_no_dangle ELSE {
   push_child($$, $exp1);
   push_child($$, $exp2);
 }
-| FOR OPEN_P declaration IT CLOSE_P {
+| FOR OPEN_P declaration IT graph_call CLOSE_P {
   $$ = create_node("for_iterator");
   push_child($$, $declaration);
+  push_child($$, $graph_call);
 }
 ;
 
@@ -464,7 +501,7 @@ statment_end: OPEN_BRACE statments CLOSE_BRACE {
 ;
 
 
-/*----------------------EXPRESSOES--------------------------------*/
+/*----------------------EXPRESSIONS--------------------------------*/
 
 expr_assign: id_or_access ASSIGN expr_relational {
   $$ = create_node("expr_assign");
@@ -551,6 +588,7 @@ factor: OPEN_P expr_assign CLOSE_P {
   $$ = $expr_assign;
 }
 | value
+| function_call
 ;
 
 /*-----------------------EXPRESSION SYMBOLS-----------------------------------*/
