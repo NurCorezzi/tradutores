@@ -788,9 +788,9 @@ static const char *const yytname[] =
   "ASSIGN", "END", "OPEN_BRACE", "CLOSE_BRACE", "IT", "SEPARATOR",
   "OPEN_P", "CLOSE_P", "OPEN_BRACKET", "CLOSE_BRACKET", "$accept", "init",
   "program", "function", "params", "function_call", "params_call",
-  "graph_call", "graph_params_call", "statments", "statment",
-  "statment_no_dangle", "dangling_if", "statment_prefix", "block",
-  "statment_end", "expr_assign", "expr_relational", "expr_and", "expr_or",
+  "graph_call", "graph_params_call", "statements", "statement",
+  "statement_no_dangle", "dangling_if", "statement_prefix", "block",
+  "statement_end", "expr_assign", "expr_relational", "expr_and", "expr_or",
   "expr_add", "expr_sub", "expr_mul", "expr_div", "expr_unary", "factor",
   "unary", "and", "or", "add", "sub", "mul", "div", "compare_op",
   "graph_add", "declaration_or_assign", "declaration", "size_specifier",
@@ -1571,7 +1571,7 @@ yydestruct (const char *yymsg, int yytype, YYSTYPE *yyvaluep, YYLTYPE *yylocatio
 #line 1572 "gramatica.tab.c" /* yacc.c:1257  */
         break;
 
-    case 55: /* statments  */
+    case 55: /* statements  */
 #line 309 "gramatica.y" /* yacc.c:1257  */
       { 
   if (error_recovery_mode) {
@@ -1581,7 +1581,7 @@ yydestruct (const char *yymsg, int yytype, YYSTYPE *yyvaluep, YYLTYPE *yylocatio
 #line 1582 "gramatica.tab.c" /* yacc.c:1257  */
         break;
 
-    case 56: /* statment  */
+    case 56: /* statement  */
 #line 309 "gramatica.y" /* yacc.c:1257  */
       { 
   if (error_recovery_mode) {
@@ -1591,7 +1591,7 @@ yydestruct (const char *yymsg, int yytype, YYSTYPE *yyvaluep, YYLTYPE *yylocatio
 #line 1592 "gramatica.tab.c" /* yacc.c:1257  */
         break;
 
-    case 57: /* statment_no_dangle  */
+    case 57: /* statement_no_dangle  */
 #line 309 "gramatica.y" /* yacc.c:1257  */
       { 
   if (error_recovery_mode) {
@@ -1611,7 +1611,7 @@ yydestruct (const char *yymsg, int yytype, YYSTYPE *yyvaluep, YYLTYPE *yylocatio
 #line 1612 "gramatica.tab.c" /* yacc.c:1257  */
         break;
 
-    case 59: /* statment_prefix  */
+    case 59: /* statement_prefix  */
 #line 309 "gramatica.y" /* yacc.c:1257  */
       { 
   if (error_recovery_mode) {
@@ -1631,7 +1631,7 @@ yydestruct (const char *yymsg, int yytype, YYSTYPE *yyvaluep, YYLTYPE *yylocatio
 #line 1632 "gramatica.tab.c" /* yacc.c:1257  */
         break;
 
-    case 61: /* statment_end  */
+    case 61: /* statement_end  */
 #line 309 "gramatica.y" /* yacc.c:1257  */
       { 
   if (error_recovery_mode) {
@@ -2378,7 +2378,7 @@ yyreduce:
   case 18:
 #line 424 "gramatica.y" /* yacc.c:1646  */
     {
-  (yyval.node) = create_node("statments");
+  (yyval.node) = create_node("statements");
 
   if ((yyvsp[-1].node) != NULL) {
     Node *it;
@@ -2764,7 +2764,7 @@ yyreduce:
   case 77:
 #line 652 "gramatica.y" /* yacc.c:1646  */
     {
-  (yyval.node) = create_node("statments");
+  (yyval.node) = create_node("statements");
 
   // Divisao em declaracao e atribuicao
   Node* assign = create_node("assignment");

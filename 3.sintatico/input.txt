@@ -10,16 +10,17 @@ void main() {
 boolean outra(int outro, boolean outro, graph outro) {
     << outro;
     if (a) << outro; else {}
+    return true || false;
 }
 
 float main() {
-    int a =  b = c;
+    int a = b = c;
     if (a) {
     } else if (b >= outro != s){
         while(a) {}
         for (int b;a;a) {}
-        if (a) {}
+        if (a * 10.4) {}
     }
-    for (int a: dfs(a,1,1)) {}
+    for (int a: bfs(a,1,1)) {}
     >> outro[10];
 }

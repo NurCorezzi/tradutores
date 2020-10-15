@@ -295,8 +295,8 @@ void print_tree(Node *node, int isLast) {
 %type<node> ID C_FLOAT C_INT 
 
 %type<node> init program function params function_call params_call graph_call graph_params_call
-%type<node> statments statment
-%type<node> statment_no_dangle statment_prefix statment_end dangling_if block
+%type<node> statements statement
+%type<node> statement_no_dangle statement_prefix statement_end dangling_if block
 
 %type<node> expr_relational expr_and expr_or expr_add expr_sub expr_mul expr_div expr_unary
 %type<node> unary and or add sub mul div factor
@@ -312,8 +312,8 @@ void print_tree(Node *node, int isLast) {
   }
 } 
 init program function params function_call params_call graph_call graph_params_call
-statments statment
-statment_no_dangle statment_prefix statment_end dangling_if block
+statements statement
+statement_no_dangle statement_prefix statement_end dangling_if block
 
 expr_relational expr_and expr_or expr_add expr_sub expr_mul expr_div expr_unary
 unary and or add sub mul div factor
@@ -421,8 +421,8 @@ graph_params_call: OPEN_P id SEPARATOR expr_assign[exp1] SEPARATOR expr_assign[e
 /*------------------STATEMENTS-----------------------*/
 
 
-statments: %empty {$$ = NULL;} | statments statment {
-  $$ = create_node("statments");
+statements: %empty {$$ = NULL;} | statements statement {
+  $$ = create_node("statements");
 
   if ($1 != NULL) {
     Node *it;
@@ -431,19 +431,19 @@ statments: %empty {$$ = NULL;} | statments statment {
     }
     free_node($1);
   }  
-  push_child($$, $statment);
+  push_child($$, $statement);
 }
 ;
 
-statment: statment_prefix statment_end {
-  $$ = $statment_prefix;
-  push_child($$, $statment_end);
+statement: statement_prefix statement_end {
+  $$ = $statement_prefix;
+  push_child($$, $statement_end);
 }
-| statment_prefix dangling_if  {
-  $$ = $statment_prefix;
+| statement_prefix dangling_if  {
+  $$ = $statement_prefix;
   push_child($$, $dangling_if);
 }
-| statment_end {
+| statement_end {
   $$ = $1;
 }
 | dangling_if {
@@ -452,26 +452,26 @@ statment: statment_prefix statment_end {
 | error { error_recovery_mode = 0; $$ = NULL; }
 ;
 
-statment_no_dangle: statment_prefix statment_end {
-  $$ = $statment_prefix;
-  push_child($$, $statment_end);
+statement_no_dangle: statement_prefix statement_end {
+  $$ = $statement_prefix;
+  push_child($$, $statement_end);
 }
-| statment_end {
+| statement_end {
   $$ = $1;
 }
 ;
 
-dangling_if: IF OPEN_P expr_assign CLOSE_P statment {
+dangling_if: IF OPEN_P expr_assign CLOSE_P statement {
   $$ = create_node("if_open");
   push_child($$, $expr_assign);
-  push_child($$, $statment);
+  push_child($$, $statement);
 }
 ;
 
-statment_prefix: IF OPEN_P expr_assign CLOSE_P statment_no_dangle ELSE {
+statement_prefix: IF OPEN_P expr_assign CLOSE_P statement_no_dangle ELSE {
   $$ = create_node("if_else");
   push_child($$, $expr_assign);
-  push_child($$, $statment_no_dangle);
+  push_child($$, $statement_no_dangle);
 } 
 | WHILE OPEN_P expr_assign CLOSE_P {
   $$ = create_node("while");
@@ -490,13 +490,13 @@ statment_prefix: IF OPEN_P expr_assign CLOSE_P statment_no_dangle ELSE {
 }
 ;
 
-block: OPEN_BRACE statments CLOSE_BRACE {
+block: OPEN_BRACE statements CLOSE_BRACE {
   $$ = create_node("block");
-  push_child($$, $statments);
+  push_child($$, $statements);
 }
 ;
 
-statment_end: block
+statement_end: block
 | READ id_or_access END {
   $$ = create_node("read");
   push_child($$, $id_or_access);
@@ -650,7 +650,7 @@ graph_add: id OPEN_BRACKET expr_assign[exp1] TO expr_assign[exp2] CLOSE_BRACKET 
 ;
 
 declaration_or_assign: declaration | declaration ASSIGN expr_assign  {
-  $$ = create_node("statments");
+  $$ = create_node("statements");
 
   // Divisao em declaracao e atribuicao
   Node* assign = create_node("assignment");
