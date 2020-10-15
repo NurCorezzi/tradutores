@@ -11,6 +11,6 @@ float main() {
         for (int b;a;a) {}
         if (a) {}
     }
-    for (int a:) {}
+    for (int a: dfs(a,1,1)) {}
     >> outro[10];
 }

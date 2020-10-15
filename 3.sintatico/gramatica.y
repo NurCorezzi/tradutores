@@ -102,11 +102,14 @@ char* gtype_to_string(int type) {
 /*------------PRINT SYMBOL TABLE---------------*/
 
 void stable_symbol_print(SymbolNode* entry, int isChild) {
-  char default_format[] = "│%-20p├%-20s│%-15s│%-15s│%-15s│\n";
-  char nth_child_format[] = " %-20p├%-20s %-15s %-15s %-15s \n";
-  char last_child_format[] = " %-20p└%-20s %-15s %-15s %-15s \n";
+  char default_format[] = "│%-20p-%-20s│%-15s│%-15s│%-15s│\n";
+  char with_child_format[] = "│%-20p┌%-20s│%-15s│%-15s│%-15s│\n";
+  char nth_child_format[] = "│%-20p├%-20s│%-15s│%-15s│%-15s│\n";
+  char last_child_format[] = "│%-20p└%-20s│%-15s│%-15s│%-15s│\n";
   
   char *format = isChild ? nth_child_format : default_format;
+
+  if (!isChild && entry->matches != NULL) format = with_child_format; 
   if (isChild && entry->matches == NULL) format = last_child_format;
 
   printf(format, 
@@ -293,21 +296,33 @@ void print_tree(Node *node, int isLast) {
 
 %type<node> init program function params function_call params_call graph_call graph_params_call
 %type<node> statments statment
-%type<node> statment_no_dangle statment_prefix statment_end dangling_if
+%type<node> statment_no_dangle statment_prefix statment_end dangling_if block
 
 %type<node> expr_relational expr_and expr_or expr_add expr_sub expr_mul expr_div expr_unary
 %type<node> unary and or add sub mul div factor
 %type<node> compare_op
 
-%type<node> declaration type id
-%type<node> declaration_or_assign id_or_access expr_assign
+%type<node> declaration type id size_specifier
+%type<node> declaration_or_assign id_or_access graph_add expr_assign
 %type<node> value number number_int number_float boolean_const
 
 %destructor { 
   if (error_recovery_mode) {
     free_tree($$);
   }
-} init program function params function_call params_call graph_call graph_params_call statments statment statment_no_dangle statment_prefix statment_end dangling_if expr_relational expr_and expr_or expr_add expr_sub expr_mul expr_div expr_unary unary and or add sub mul div factor compare_op declaration type id declaration_or_assign id_or_access expr_assign value number number_int number_float boolean_const
+} 
+init program function params function_call params_call graph_call graph_params_call
+statments statment
+statment_no_dangle statment_prefix statment_end dangling_if block
+
+expr_relational expr_and expr_or expr_add expr_sub expr_mul expr_div expr_unary
+unary and or add sub mul div factor
+compare_op
+
+declaration type id size_specifier
+declaration_or_assign id_or_access graph_add expr_assign
+value number number_int number_float boolean_const
+
 
 %%
 
@@ -316,7 +331,9 @@ init: program {
 }
 ;
 
+
 /*------------------FUNCTIONS-----------------------*/
+
 
 program: %empty {$$ = NULL;}
   | program function {
@@ -332,14 +349,15 @@ program: %empty {$$ = NULL;}
 }
 ;
 
-function: type id OPEN_P params CLOSE_P OPEN_BRACE statments CLOSE_BRACE {
+function: type id OPEN_P params CLOSE_P block {
   $$ = create_node("function");
   push_child($$, $type);
   push_child($$, $id);
-  if ($params != NULL) {
-    push_child($$, $params);
-  }
-  push_child($$, $statments);
+  push_child($$, $params);
+  push_child($$, $block);
+
+  SymbolNode *entry = stable_create_symbol($id->complement, "NONE", STYPE_FUNCTION, token_to_type($type->t_token), $$);
+  symbol_table = stable_add(symbol_table, entry);
 }
 | error { error_recovery_mode = 0; $$ = NULL; }
 ;
@@ -399,7 +417,9 @@ graph_params_call: OPEN_P id SEPARATOR expr_assign[exp1] SEPARATOR expr_assign[e
 }
 ;
 
+
 /*------------------STATEMENTS-----------------------*/
+
 
 statments: %empty {$$ = NULL;} | statments statment {
   $$ = create_node("statments");
@@ -470,16 +490,13 @@ statment_prefix: IF OPEN_P expr_assign CLOSE_P statment_no_dangle ELSE {
 }
 ;
 
-statment_end: OPEN_BRACE statments CLOSE_BRACE {
+block: OPEN_BRACE statments CLOSE_BRACE {
   $$ = create_node("block");
-  if ($statments != NULL) {
-    Node *it;
-    for (it = $statments->beginChild; it != NULL; it = it->next) {
-      push_child($$, it);
-    }
-    free_node($statments);
-  }  
+  push_child($$, $statments);
 }
+;
+
+statment_end: block
 | READ id_or_access END {
   $$ = create_node("read");
   push_child($$, $id_or_access);
@@ -494,6 +511,9 @@ statment_end: OPEN_BRACE statments CLOSE_BRACE {
 | expr_assign END {
   $$ = $1;
 }
+| graph_add END{
+  $$ = $1;
+}
 | RETURN expr_assign END {
   $$ = create_node("return");
   push_child($$, $expr_assign);
@@ -503,17 +523,18 @@ statment_end: OPEN_BRACE statments CLOSE_BRACE {
 
 /*----------------------EXPRESSIONS--------------------------------*/
 
-expr_assign: id_or_access ASSIGN expr_relational {
+
+expr_assign: expr_relational ASSIGN expr_assign {
   $$ = create_node("expr_assign");
-  push_child($$, $id_or_access);
-  push_child($$, $expr_relational);
+  push_child($$, $1);
+  push_child($$, $3);
 } 
 | expr_relational {  
   $$ = $1;
 }
 ;
 
-expr_relational: expr_relational compare_op expr_and {
+expr_relational: expr_and compare_op expr_relational {
   $$ = create_node("expr_relational");
   push_child($$, $1);
   push_child($$, $2);
@@ -522,7 +543,7 @@ expr_relational: expr_relational compare_op expr_and {
 | expr_and 
 ;
 
-expr_and: expr_and and expr_or {
+expr_and: expr_or and expr_and {
   $$ = create_node("expr_and");
   push_child($$, $1);
   push_child($$, $2);
@@ -531,7 +552,7 @@ expr_and: expr_and and expr_or {
 | expr_or
 ;
 
-expr_or: expr_or or expr_add {
+expr_or: expr_add or expr_or {
   $$ = create_node("expr_or");
   push_child($$, $1);
   push_child($$, $2);
@@ -540,7 +561,7 @@ expr_or: expr_or or expr_add {
 | expr_add
 ;
 
-expr_add: expr_add add expr_sub {
+expr_add: expr_sub add expr_add {
   $$ = create_node("expr_add");
   push_child($$, $1);
   push_child($$, $2);
@@ -549,7 +570,7 @@ expr_add: expr_add add expr_sub {
 | expr_sub
 ;
 
-expr_sub: expr_sub sub expr_mul {
+expr_sub: expr_mul sub expr_sub {
   $$ = create_node("expr_sub");
   push_child($$, $1);
   push_child($$, $2);
@@ -558,7 +579,7 @@ expr_sub: expr_sub sub expr_mul {
 | expr_mul
 ;
 
-expr_mul: expr_mul mul expr_div {
+expr_mul: expr_div mul expr_mul {
   $$ = create_node("expr_mul");
   push_child($$, $1);
   push_child($$, $2);
@@ -567,7 +588,7 @@ expr_mul: expr_mul mul expr_div {
 | expr_div
 ;
 
-expr_div: expr_div div expr_unary {
+expr_div: expr_unary div expr_div {
   $$ = create_node("expr_div");
   push_child($$, $1);
   push_child($$, $2);
@@ -591,7 +612,9 @@ factor: OPEN_P expr_assign CLOSE_P {
 | function_call
 ;
 
+
 /*-----------------------EXPRESSION SYMBOLS-----------------------------------*/
+
 
 unary: NOT  { $$ = create_node(yytname[YYTRANSLATE(yylval.id)]); } 
 | add 
@@ -614,7 +637,17 @@ compare_op: LE  { $$ = create_node(yytname[YYTRANSLATE(yylval.id)]); }
 | NE            { $$ = create_node(yytname[YYTRANSLATE(yylval.id)]); }
 ;
 
+
 /*-----------------------MICRO------------------------------*/
+
+
+graph_add: id OPEN_BRACKET expr_assign[exp1] TO expr_assign[exp2] CLOSE_BRACKET {
+  $$ = create_node("graph_add");
+  push_child($$, $id);
+  push_child($$, $exp1);
+  push_child($$, $exp2);
+}
+;
 
 declaration_or_assign: declaration | declaration ASSIGN expr_assign  {
   $$ = create_node("statments");
@@ -629,13 +662,23 @@ declaration_or_assign: declaration | declaration ASSIGN expr_assign  {
 }
 ;
 
-declaration: type id {
+declaration: type size_specifier id {
   $$ = create_node("declaration");
   push_child($$, $type);
   push_child($$, $id);
 
-  SymbolNode *entry = stable_create_symbol($id->complement, "NONE", STYPE_VARIABLE, token_to_type($type->t_token), $id);
+  if($size_specifier != NULL) {
+    push_child($$, $size_specifier);
+  }
+
+  SymbolNode *entry = stable_create_symbol($id->complement, "NONE", STYPE_VARIABLE, token_to_type($type->t_token), $$);
   symbol_table = stable_add(symbol_table, entry);
+}
+;
+
+size_specifier: %empty {$$ = NULL;}
+| OPEN_BRACKET number_int CLOSE_BRACKET {
+  $$ = $number_int;
 }
 ;
 
