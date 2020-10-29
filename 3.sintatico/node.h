@@ -8,6 +8,7 @@ typedef struct t_node {
     // Proximo termo da lista que termo compoe
     struct t_node *next;
 
+    struct t_symbol_node *sentry;
     char *id;
     char *complement;
     int t_token;

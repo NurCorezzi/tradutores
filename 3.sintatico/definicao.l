@@ -23,7 +23,7 @@
     }
 
     void lexError() {
-        printf("\033[01;33m%d:%d-%d:%d\033[0;0m \033[1;31merror:\033[0;0m syntactic error, unknown character in this context: %s\n", 
+        printf("\033[01;33m%d:%d-%d:%d\033[0;0m \033[1;31merror:\033[0;0m lexical error, unknown character in this context: %s\n", 
             yylloc.first_line, yylloc.first_column,
             yylloc.last_line, yylloc.last_column,
             yytext);

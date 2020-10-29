@@ -12,13 +12,13 @@ check:
 	valgrind -v --tool=memcheck --leak-check=full --show-leak-kinds=all --track-origins=yes ./${prog_name} < ${input_default}
 
 c1:
-	./${prog_name} < ./test/lexico/correto1.txt
+	./${prog_name} < ./test/sintatico/correto1.txt
 c2:
-	./${prog_name} < ./test/lexico/correto2.txt
+	./${prog_name} < ./test/sintatico/correto2.txt
 e1:
-	./${prog_name} < ./test/lexico/errado1.txt
+	./${prog_name} < ./test/sintatico/errado1.txt
 e2: 
-	./${prog_name} < ./test/lexico/errado2.txt
+	./${prog_name} < ./test/sintatico/errado2.txt
 
 clean:
 	rm ./${prog_name} lex.yy.c

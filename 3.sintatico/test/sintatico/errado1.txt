@@ -1,0 +1,10 @@
+main() {
+    int a, b, c;
+}
+
+void main () {
+    int a = 2
+    for (; i; i) {}
+    while(a) a;
+}
+

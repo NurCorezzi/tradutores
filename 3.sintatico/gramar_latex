@@ -1,0 +1,146 @@
+    <init> ::= <program>
+
+     <program> ::= $\epsilon$
+            \alt <program> <function>
+
+     <function> ::= <type> <id> '(' <params> ')' <block>
+
+     <params> ::= $\epsilon$
+           \alt <params> ',' <declaration>
+           \alt <declaration>
+
+     <function-call> ::= <id> '(' <params-call> ')'
+
+    <params-call> ::= $\epsilon$
+               \alt <params-call> ',' <expr-assign>
+               \alt <expr-assign>
+
+    <graph-call> ::= 'dfs' <graph-params-call>
+              \alt 'bfs' <graph-params-call>
+
+    <graph-params-call> ::= '(' <id> ',' <expr-assign> ',' <expr-assign> ')'
+
+    <statements> ::= $\epsilon$
+              \alt <statements> <statement>
+
+    <statement> ::= <statement-prefix> <statement-end>
+             \alt <statement-prefix> <dangling-if>
+             \alt <statement-end>
+             \alt <dangling-if>
+
+    <statement-no-dangle> ::= <statement-prefix> <statement-end>
+                       \alt <statement-end>
+
+    <dangling-if> ::= 'if' '(' <expr-assign> ')' <statement>
+
+    <statement-prefix> ::= 'if' '(' <expr-assign> ')' <statement-no-dangle> 'else'
+                    \alt 'while' '(' <expr-assign> ')'
+                    \alt 'for' '(' <declaration-or-assign> ';' <expr-assign> ';' <expr-assign> ')'
+                    \alt 'for' '(' <declaration> ':' <graph-call> ')'
+
+    <block> ::= '\{' <statements> '\}'
+
+    <statement-end> ::= <block>
+                 \alt '$>>$' <id-or-access> ';'
+                 \alt '\textless\textless' <expr-assign> ';'
+                 \alt <declaration-or-assign> ';'
+                 \alt <expr-assign> ';'
+                 \alt <graph-add> ';'
+                 \alt 'return' <expr-assign> ';'
+
+    <expr-assign> ::= <expr-relational> '=' <expr-assign>
+               \alt <expr-relational>
+
+    <expr-relational> ::= <expr-and> <compare-op> <expr-relational>
+                   \alt <expr-and>
+
+    <expr-and> ::= <expr-or> <and> <expr-and>
+            \alt <expr-or>
+
+    <expr-or> ::= <expr-add> <or> <expr-or>
+           \alt <expr-add>
+
+    <expr-add> ::= <expr-sub> <add> <expr-add>
+            \alt <expr-sub>
+
+    <expr-sub> ::= <expr-mul> <sub> <expr-sub>
+            \alt <expr-mul>
+
+    <expr-mul> ::= <expr-div> <mul> <expr-mul>
+            \alt <expr-div>
+
+    <expr-div> ::= <expr-unary> <div> <expr-div>
+            \alt <expr-unary>
+
+    <expr-unary> ::= <unary> <factor>
+              \alt <factor>
+
+    <factor> ::= '(' <expr-assign> ')'
+          \alt <value>
+          \alt <function-call>
+
+    <unary> ::= '!'
+         \alt <add>
+         \alt <sub>
+
+    <and> ::= '\&\&'
+
+    <or> ::= '||'
+
+    <add> ::= '+'
+
+    <sub> ::= '-'
+
+    <mul> ::= '*'
+
+    <div> ::= '/'
+
+    <compare-op> ::= '\textless' | '\textless=' |'$>$' |'$>$=' | '==' | '!='
+
+    <graph-add> ::= <id> '[' <expr-assign> 'to' <expr-assign> ']'
+
+    <declaration-or-assign> ::= <declaration>
+                         \alt <declaration> '=' <expr-assign>
+
+    <declaration> ::= <type> <size-specifier> <id>
+
+    <size-specifier> ::= $\epsilon$
+                  \alt '[' <number-int> ']'
+
+    <value> ::= <id-or-access>
+         \alt <number>
+         \alt <boolean-const>
+
+    <id-or-access> ::= <id>
+                \alt <id> '[' <number-int> ']'
+
+    <type> ::= 'int'
+        \alt 'boolean'
+        \alt 'float'
+        \alt 'graph'
+        \alt 'void'
+
+    <number> ::= <number-int>
+          \alt <number-float>
+
+    <number-int> ::= <digit> <number-list>
+
+    <number-float> ::= <digit> <number-list> '.' <digit> <number-list>
+
+    <number-list> ::= <number-list> <digit> \alt $\epsilon$ 
+
+    <digit> ::= '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9'
+
+    <boolean-const> ::= 'true'
+                 \alt 'false'
+
+    <id> ::= <letter> <letter-or-digit-list>
+
+    <letter-or-digit-list> ::= <letter-or-digit-list> <letter>
+        \alt <letter-or-digit-list> <digit> 
+        \alt ' ' 
+
+    <letter> ::= 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G' | 'H' | 'I' | 'J' | 'K' | 'L' 
+| 'M' | 'N' | 'O' | 'P' | 'Q' | 'R' | 'S' | 'T' | 'U' | 'V' | 'W' | 'X' | 'Y' | 'Z' 
+| 'a' | 'b' | 'c' | 'd' | 'e' | 'f' | 'g' | 'h' | 'i' | 'j' | 'k' | 'l' | 'm' | 'n' 
+| 'o' | 'p' | 'q' | 'r' | 's' | 't' | 'u' | 'v' | 'w' | 'x' | 'y' | 'z' | '\_'
