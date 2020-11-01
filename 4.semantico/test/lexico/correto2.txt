@@ -1,0 +1,16 @@
+int calc(float a, float b) {
+    return (a * b) + (a / b);
+}
+
+void main() {
+    boolean exec = 1;
+    while(exec) {
+        float a;
+        float b;
+        >> a; >> b;
+        << calc(a, b);
+        if (a == 0) {
+            exec = 0;
+        }
+    }
+}

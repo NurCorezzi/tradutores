@@ -1,0 +1,8 @@
+int main(int[2] n) {
+    boolean[1] a;
+    int b;
+    while(true) {
+        
+    }
+    addv(a,1+2,1);
+}
