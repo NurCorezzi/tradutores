@@ -1,8 +1,12 @@
+int outro(int b) {
+
+}
+
 int main(int[2] n) {
+    int n;
     int b;
-    while(true) {
-        boolean[1] a;
-        int c;
+    for(i = 0; i < 10; i = i + 1) {
+        int s;
     }
     addv(a,1+2,1);
 }

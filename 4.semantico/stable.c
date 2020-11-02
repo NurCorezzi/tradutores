@@ -7,6 +7,45 @@
 
 /*--------------------ESCOPO---------------------*/
 
+
+int scope_sz(Scope* a) {
+  if (a == NULL) {
+    return 0;
+  }
+  return scope_sz(a->child) + 1;
+}
+
+/**
+ * Determina acessibilidade de 'a' por 'b', quanto maior valor melhor o match.
+ */
+int scope_access_rank(Scope* a, Scope *b) {
+  if (a == NULL || b == NULL) {
+    return a == b;
+  }
+
+  int matches = 0;
+  while(a != NULL && b != NULL) {
+    if (a->id != b->id) return -1;
+    matches++;
+    a = a->child;
+    b = b->child;
+  }
+
+  if (a != NULL && b == NULL) {
+    return -1;
+  }
+  return matches;
+}
+
+/**
+ * Determina equivalencia de escopos, true or false. 
+ */
+int scope_eq(Scope* a, Scope *b) {
+  int rank = scope_access_rank(a, b);
+  return rank == scope_sz(b);
+}
+
+
 Scope* scope_create(int id) {
   Scope* scope = (Scope*)calloc(1, sizeof(Scope));
   scope->id = id;
@@ -83,8 +122,6 @@ void scope_push() {
 }
 
 void scope_pop() {
-  print_scope(global_scope);
-
   Scope** base = &global_scope;
   if ((*base) == NULL) {
     return;
@@ -106,33 +143,11 @@ void scope_pop() {
 
 /*-----------------CONVERSION---------------------*/
 
-GrammarType token_to_type(int token) {
-  switch(token) {
-    case BOOLEAN:  return GTYPE_BOOLEAN; 
-    case INT:      return GTYPE_INT; 
-    case FLOAT:    return GTYPE_FLOAT; 
-    case GRAPH:    return GTYPE_GRAPH; 
-    case VOID:     return GTYPE_VOID; 
-    default:       return -1;
-  }
-}
-
 char* stype_to_string(int type) {
   switch(type) {
     case STYPE_FUNCTION:  return "function";
     case STYPE_VARIABLE:  return "variable";
     default:              return "NONE";
-  }
-}
-
-char* gtype_to_string(int type) {
-  switch(type) {
-    case GTYPE_BOOLEAN: return "boolean";
-    case GTYPE_INT:     return "int";
-    case GTYPE_FLOAT:   return "float";
-    case GTYPE_GRAPH:   return "graph";
-    case GTYPE_VOID:    return "void";
-    default:            return "NONE";
   }
 }
 
@@ -154,7 +169,7 @@ void stable_symbol_print(SymbolNode* entry, int isChild) {
     entry->id, 
     entry->scope_str, 
     stype_to_string(entry->stype), 
-    gtype_to_string(entry->gtype)
+    entry->type_str
   );
 }
 
@@ -177,8 +192,11 @@ void stable_print(SymbolNode* table) {
 
 /*-------------SYMBOL TABLE--------------*/
 
-
-SymbolNode* stable_create_symbol(char *id, Scope *scope, SymbolType stype, GrammarType gtype, Node *ast_node) {
+/**
+ * id e scope serão copiados.
+ * type e ast_node esperam que tenham sido criados por fora.
+ */
+SymbolNode* stable_create_symbol(char *id, Scope *scope, SymbolType stype, TypeExpression *type, Node *ast_node) {
   SymbolNode* symbol = (SymbolNode*)calloc(1, sizeof(SymbolNode));
   char *cpy;
 
@@ -187,9 +205,10 @@ SymbolNode* stable_create_symbol(char *id, Scope *scope, SymbolType stype, Gramm
   symbol->id = cpy;
   symbol->scope = cpy_scope(scope);
   symbol->scope_str = scope_to_string(symbol->scope);
+  symbol->type_str = type_to_string(type);
 
   symbol->stype = stype;
-  symbol->gtype = gtype;
+  symbol->type = type;
   symbol->ast_node = ast_node;
 
   return symbol;
@@ -199,6 +218,25 @@ SymbolNode* stable_find(SymbolNode* entry, char *id) {
   if (entry == NULL) return NULL;
   if (strcmp(id, entry->id) == 0) return entry;
   else return stable_find(entry->next, id);
+}
+
+SymbolNode* stable_find_with_scope(SymbolNode* entry, Scope* scope, char *id, SymbolType stype) {
+  if (entry == NULL) return NULL;
+  SymbolNode* match = NULL;
+  SymbolNode* cur = stable_find(entry, id);
+
+  while(cur != NULL) {
+    int rank = scope_access_rank(cur->scope, scope);
+    int is_match = stype == cur->stype;
+    is_match &= rank >= 0;
+
+    if (is_match && (match == NULL || rank > scope_access_rank(match->scope, scope))) {
+      match = cur;
+    }
+    cur = cur->matches;
+  }
+
+  return match;
 }
 
 SymbolNode* stable_add(SymbolNode* table, SymbolNode* entry) {
@@ -231,6 +269,8 @@ void free_symbol_node(SymbolNode* node) {
   if (node->id) free(node->id);
   if (node->scope) free_scope(node->scope);
   if (node->scope_str) free(node->scope_str);
+  if (node->type) free_type(node->type);
+  if (node->type_str) free(node->type_str);
   free(node);
 }
 

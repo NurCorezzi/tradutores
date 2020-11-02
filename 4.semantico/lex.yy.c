@@ -1048,12 +1048,12 @@ YY_RULE_SETUP
 case 39:
 YY_RULE_SETUP
 #line 93 "definicao.l"
-{ buildToken(OPEN_BRACE); scope_push(); return OPEN_BRACE; }
+{ buildToken(OPEN_BRACE); return OPEN_BRACE; }
 	YY_BREAK
 case 40:
 YY_RULE_SETUP
 #line 94 "definicao.l"
-{ buildToken(CLOSE_BRACE); scope_pop(); return CLOSE_BRACE; }
+{ buildToken(CLOSE_BRACE); return CLOSE_BRACE; }
 	YY_BREAK
 case 41:
 YY_RULE_SETUP

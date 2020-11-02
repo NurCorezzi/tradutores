@@ -36,22 +36,25 @@ typedef struct t_scope {
 typedef struct t_symbol_node {
     char *id;
     char *scope_str;
+    char *type_str;
 
-    Scope *scope;
     SymbolType stype;
-    GrammarType gtype;
+    TypeExpression *type;
+    Scope *scope;
     Node *ast_node;
 
     struct t_symbol_node *matches;
     struct t_symbol_node *next;
 } SymbolNode;
 
-void scope_push();
-void scope_pop();
-
 SymbolNode *symbol_table;
 Node *ast;
 Scope *global_scope;
 int scope_count;
+
+char* type_to_string(TypeExpression* type);
+GrammarType token_to_type(int token);
+void scope_push();
+void scope_pop();
 
 #endif

@@ -90,8 +90,8 @@ return          { buildToken(RETURN); return RETURN; }
 "-"				{ buildToken(SUB); return SUB; }
 "="				{ buildToken(ASSIGN); return ASSIGN; }
 ";"				{ buildToken(END); return END; }
-"{"				{ buildToken(OPEN_BRACE); scope_push(); return OPEN_BRACE; }
-"}"				{ buildToken(CLOSE_BRACE); scope_pop(); return CLOSE_BRACE; }
+"{"				{ buildToken(OPEN_BRACE); return OPEN_BRACE; }
+"}"				{ buildToken(CLOSE_BRACE); return CLOSE_BRACE; }
 ":"				{ buildToken(IT); return IT; }
 ","				{ buildToken(SEPARATOR); return SEPARATOR; }
 "("				{ buildToken(OPEN_P); return OPEN_P; }

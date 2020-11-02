@@ -9,14 +9,17 @@
 #include <string.h>
 #include "gramatica.tab.h"
 
+#include "type_expression.c"
 #include "node.h"
 #include "ast.c"
 #include "stable.c"
 
 extern char *yytext;
 int yylex_destroy ( void );
-void yyerror (char const *s);
 int yylex();
+
+void yyerror (char const *s);
+void semantic_error(char const *s);
 int error_recovery_mode;
 
 %}
@@ -99,7 +102,23 @@ program: %empty {$$ = NULL;}
 }
 ;
 
-function: type size_specifier id OPEN_P params CLOSE_P block {
+function: type size_specifier id {
+  // Necessario declarar funcao na tabela de simbolos antes da declaracao de seus parametros para que escopo esteja correto
+  SymbolNode *match = stable_find_with_scope(symbol_table, global_scope, $id->complement, STYPE_FUNCTION);
+  if (match != NULL && scope_eq(global_scope, match->scope)) {
+    semantic_error("function already declared");
+  }
+
+  TypeExpression* type = type_build($type, $size_specifier);
+  SymbolNode *entry = stable_create_symbol($id->complement, global_scope, STYPE_FUNCTION, type, NULL);
+  symbol_table = stable_add(symbol_table, entry);
+
+  scope_push();
+} OPEN_P params CLOSE_P {
+  // Obtencao de parametros para symbol table
+  SymbolNode *entry = stable_find_with_scope(symbol_table, global_scope, $id->complement, STYPE_FUNCTION);  
+  entry->ast_node = $params;
+} OPEN_BRACE statements CLOSE_BRACE {
   $$ = create_node("function");
 
   Node* decl = create_node("declaration");
@@ -109,19 +128,20 @@ function: type size_specifier id OPEN_P params CLOSE_P block {
   }
   push_child(decl, $id);
 
+  Node* block = create_node("block");
+  push_child(block, $statements);
+
   push_child($$, decl);
   push_child($$, $params);
-  push_child($$, $block);
+  push_child($$, block);
 
-  SymbolNode *entry = stable_create_symbol($id->complement, global_scope, STYPE_FUNCTION, token_to_type($type->t_token), $$);
-  $$->sentry = entry;
-  symbol_table = stable_add(symbol_table, entry);
+  scope_pop();
 }
 | error { error_recovery_mode = 0; $$ = NULL; }
 ;
 
 params: %empty {$$ = NULL;}
-|params SEPARATOR declaration {
+| params SEPARATOR declaration {
   $$ = create_node("params");
   
   Node *it;
@@ -235,22 +255,23 @@ statement_prefix: IF OPEN_P expr_assign CLOSE_P statement_no_dangle ELSE {
   $$ = create_node("while");
   push_child($$, $expr_assign);
 }
-| FOR OPEN_P declaration_or_assign END expr_assign[exp1] END expr_assign[exp2] CLOSE_P {
+| FOR OPEN_P expr_assign[exp1] END expr_assign[exp2] END expr_assign[exp3] CLOSE_P {
   $$ = create_node("for");
-  push_child($$, $declaration_or_assign);
   push_child($$, $exp1);
   push_child($$, $exp2);
+  push_child($$, $exp3);
 }
-| FOR OPEN_P declaration IT graph_call CLOSE_P {
+| FOR OPEN_P id_or_access IT graph_call CLOSE_P {
   $$ = create_node("for_iterator");
-  push_child($$, $declaration);
+  push_child($$, $id_or_access);
   push_child($$, $graph_call);
 }
 ;
 
-block: OPEN_BRACE statements CLOSE_BRACE {
+block: OPEN_BRACE { scope_push(); } statements CLOSE_BRACE {
   $$ = create_node("block");
   push_child($$, $statements);
+  scope_pop();
 }
 ;
 
@@ -441,7 +462,8 @@ declaration: type size_specifier id {
     push_child($$, $size_specifier);
   }
 
-  SymbolNode *entry = stable_create_symbol($id->complement, global_scope, STYPE_VARIABLE, token_to_type($type->t_token), $$);
+  TypeExpression* type = type_build($type, $size_specifier);
+  SymbolNode *entry = stable_create_symbol($id->complement, global_scope, STYPE_VARIABLE, type, $$);
   $$->sentry = entry;
   symbol_table = stable_add(symbol_table, entry);
 }
@@ -520,6 +542,13 @@ boolean_const: TRUE { $$ = create_node(yytname[YYTRANSLATE(yylval.id)]); $$->t_t
 void yyerror (char const *s) {
   error_recovery_mode = 1;
   printf("\033[01;33m%d:%d-%d:%d\033[0;0m \033[1;31merror:\033[0;0m %s\n", 
+    yylloc.first_line, yylloc.first_column,
+    yylloc.last_line, yylloc.last_column,
+    s);
+}
+
+void semantic_error(char const *s) {
+  printf("\033[01;33m%d:%d-%d:%d\033[0;0m \033[1;31merror:\033[0;0m semantic: %s\n", 
     yylloc.first_line, yylloc.first_column,
     yylloc.last_line, yylloc.last_column,
     s);
