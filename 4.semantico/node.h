@@ -23,18 +23,6 @@ typedef enum {
     GTYPE_BOOLEAN, GTYPE_INT, GTYPE_FLOAT, GTYPE_GRAPH, GTYPE_VOID, GTYPE_ARRAY
 } GrammarType;
 
-typedef struct t_symbol_node {
-    char *id;
-    char *scope;
-
-    SymbolType stype;
-    GrammarType gtype;
-    Node *ast_node;
-
-    struct t_symbol_node *matches;
-    struct t_symbol_node *next;
-} SymbolNode;
-
 typedef struct t_type_expression {
     int size;
     struct t_type_expression *child;
@@ -45,6 +33,18 @@ typedef struct t_scope {
     int id;
     struct t_scope *child;
 } Scope;
+typedef struct t_symbol_node {
+    char *id;
+    char *scope_str;
+
+    Scope *scope;
+    SymbolType stype;
+    GrammarType gtype;
+    Node *ast_node;
+
+    struct t_symbol_node *matches;
+    struct t_symbol_node *next;
+} SymbolNode;
 
 void scope_push();
 void scope_pop();

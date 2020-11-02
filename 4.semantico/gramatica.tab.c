@@ -2026,7 +2026,7 @@ yyreduce:
   push_child((yyval.node), (yyvsp[-2].node));
   push_child((yyval.node), (yyvsp[0].node));
 
-  SymbolNode *entry = stable_create_symbol((yyvsp[-4].node)->complement, "NONE", STYPE_FUNCTION, token_to_type((yyvsp[-6].node)->t_token), (yyval.node));
+  SymbolNode *entry = stable_create_symbol((yyvsp[-4].node)->complement, global_scope, STYPE_FUNCTION, token_to_type((yyvsp[-6].node)->t_token), (yyval.node));
   (yyval.node)->sentry = entry;
   symbol_table = stable_add(symbol_table, entry);
 }
@@ -2573,7 +2573,7 @@ yyreduce:
     push_child((yyval.node), (yyvsp[-1].node));
   }
 
-  SymbolNode *entry = stable_create_symbol((yyvsp[0].node)->complement, "NONE", STYPE_VARIABLE, token_to_type((yyvsp[-2].node)->t_token), (yyval.node));
+  SymbolNode *entry = stable_create_symbol((yyvsp[0].node)->complement, global_scope, STYPE_VARIABLE, token_to_type((yyvsp[-2].node)->t_token), (yyval.node));
   (yyval.node)->sentry = entry;
   symbol_table = stable_add(symbol_table, entry);
 }
@@ -2957,16 +2957,16 @@ void yyerror (char const *s) {
 }
 
 int main() {
+  scope_push();
   yyparse();
 
-  printf("%d\n", scope_count);
-
   printf("\n>>>>>>>>>>AST<<<<<<<<<<<\n\n");
-  print_tree(ast, 1);
+  // print_tree(ast, 1);
 
   printf("\n>>>>>>>>>>SYMBOL TABLE<<<<<<<<<<<\n\n");
   stable_print(symbol_table);
   
+  free_scope(global_scope);
   free_tree(ast);
   free_stable(symbol_table);
   yylex_destroy();

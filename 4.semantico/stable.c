@@ -7,6 +7,55 @@
 
 /*--------------------ESCOPO---------------------*/
 
+Scope* scope_create(int id) {
+  Scope* scope = (Scope*)calloc(1, sizeof(Scope));
+  scope->id = id;
+  return scope;
+}
+
+Scope* cpy_scope(Scope* scope) {
+  if (scope == NULL) {
+    return NULL;
+  }
+
+  Scope* base = scope_create(scope->id);
+  scope = scope->child;
+  Scope* cur = base;
+  while(scope != NULL) {
+    cur->child = scope_create(scope->id);
+    cur = cur->child;
+    scope = scope->child;
+  }
+  return base;
+}
+
+char* scope_to_string(Scope* scope) {
+  if (scope == NULL) {
+    return NULL;
+  }
+  char buffer[100] = {0};
+  Scope *cur = scope;
+  while(cur != NULL) {
+    char buffer_int[20] = {0};
+    sprintf(buffer_int, "%d#", cur->id);
+    strcat(buffer, buffer_int);
+    cur = cur->child;
+  }
+  return strdup(buffer);
+}
+
+void print_scope(Scope* scope) {
+  if (scope == NULL) {
+    return;
+  }
+  Scope *cur = scope;
+  while(cur != NULL) {
+    printf("%d#", cur->id);
+    cur = cur->child;
+  }
+  printf("\n");
+}
+
 void free_node_scope(Scope* scope) {
   free(scope);
 }
@@ -17,12 +66,6 @@ void free_scope(Scope* scope) {
   }
   free_scope(scope->child);
   free_node_scope(scope);
-}
-
-Scope* scope_create(int id) {
-  Scope* scope = (Scope*)calloc(1, sizeof(Scope));
-  scope->id = id;
-  return scope;
 }
 
 void scope_push() {
@@ -40,6 +83,8 @@ void scope_push() {
 }
 
 void scope_pop() {
+  print_scope(global_scope);
+
   Scope** base = &global_scope;
   if ((*base) == NULL) {
     return;
@@ -50,11 +95,12 @@ void scope_pop() {
     past = cur;
     cur = cur->child;
   }
+  free_scope(cur);
 
   if (past == NULL) {
     (*base) = NULL;
   } else {
-    free_scope(past);
+    past->child = NULL;
   }
 }
 
@@ -106,7 +152,7 @@ void stable_symbol_print(SymbolNode* entry, int isChild) {
   printf(format, 
     entry, 
     entry->id, 
-    entry->scope, 
+    entry->scope_str, 
     stype_to_string(entry->stype), 
     gtype_to_string(entry->gtype)
   );
@@ -132,17 +178,15 @@ void stable_print(SymbolNode* table) {
 /*-------------SYMBOL TABLE--------------*/
 
 
-SymbolNode* stable_create_symbol(char *id, char *scope, SymbolType stype, GrammarType gtype, Node *ast_node) {
+SymbolNode* stable_create_symbol(char *id, Scope *scope, SymbolType stype, GrammarType gtype, Node *ast_node) {
   SymbolNode* symbol = (SymbolNode*)calloc(1, sizeof(SymbolNode));
   char *cpy;
 
   cpy = (char*)malloc(strlen(id) + 1);
   strcpy(cpy, id);
   symbol->id = cpy;
-
-  cpy = (char*)malloc(strlen(scope) + 1);
-  strcpy(cpy, scope);
-  symbol->scope = cpy;
+  symbol->scope = cpy_scope(scope);
+  symbol->scope_str = scope_to_string(symbol->scope);
 
   symbol->stype = stype;
   symbol->gtype = gtype;
@@ -185,7 +229,8 @@ SymbolNode* stable_add(SymbolNode* table, SymbolNode* entry) {
 
 void free_symbol_node(SymbolNode* node) {
   if (node->id) free(node->id);
-  if (node->scope) free(node->scope);
+  if (node->scope) free_scope(node->scope);
+  if (node->scope_str) free(node->scope_str);
   free(node);
 }
 

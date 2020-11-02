@@ -113,7 +113,7 @@ function: type size_specifier id OPEN_P params CLOSE_P block {
   push_child($$, $params);
   push_child($$, $block);
 
-  SymbolNode *entry = stable_create_symbol($id->complement, "NONE", STYPE_FUNCTION, token_to_type($type->t_token), $$);
+  SymbolNode *entry = stable_create_symbol($id->complement, global_scope, STYPE_FUNCTION, token_to_type($type->t_token), $$);
   $$->sentry = entry;
   symbol_table = stable_add(symbol_table, entry);
 }
@@ -441,7 +441,7 @@ declaration: type size_specifier id {
     push_child($$, $size_specifier);
   }
 
-  SymbolNode *entry = stable_create_symbol($id->complement, "NONE", STYPE_VARIABLE, token_to_type($type->t_token), $$);
+  SymbolNode *entry = stable_create_symbol($id->complement, global_scope, STYPE_VARIABLE, token_to_type($type->t_token), $$);
   $$->sentry = entry;
   symbol_table = stable_add(symbol_table, entry);
 }
@@ -526,16 +526,16 @@ void yyerror (char const *s) {
 }
 
 int main() {
+  scope_push();
   yyparse();
 
-  printf("%d\n", scope_count);
-
   printf("\n>>>>>>>>>>AST<<<<<<<<<<<\n\n");
-  print_tree(ast, 1);
+  // print_tree(ast, 1);
 
   printf("\n>>>>>>>>>>SYMBOL TABLE<<<<<<<<<<<\n\n");
   stable_print(symbol_table);
   
+  free_scope(global_scope);
   free_tree(ast);
   free_stable(symbol_table);
   yylex_destroy();
