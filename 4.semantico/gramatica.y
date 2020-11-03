@@ -56,7 +56,7 @@ int error_recovery_mode;
 %type<node> compare_op
 
 %type<node> declaration type id size_specifier
-%type<node> declaration_or_assign id_or_access graph_add expr_assign
+%type<node> declaration_or_assign id_or_access access graph_add expr_assign
 %type<node> value number number_int number_float boolean_const
 
 %destructor { 
@@ -73,7 +73,7 @@ unary and or add sub mul div factor
 compare_op
 
 declaration type id size_specifier
-declaration_or_assign id_or_access graph_add expr_assign
+declaration_or_assign id_or_access access graph_add expr_assign
 value number number_int number_float boolean_const
 
 
@@ -106,7 +106,9 @@ function: type size_specifier id {
   // Necessario declarar funcao na tabela de simbolos antes da declaracao de seus parametros para que escopo esteja correto
   SymbolNode *match = stable_find_with_scope(symbol_table, global_scope, $id->complement, STYPE_FUNCTION);
   if (match != NULL && scope_eq(global_scope, match->scope)) {
-    semantic_error("function already declared");
+    char buffer[300] = {0};
+    sprintf(buffer, "function \"%s\" already declared", $id->complement);
+    semantic_error(buffer);
   }
 
   TypeExpression* type = type_build($type, $size_specifier);
@@ -187,9 +189,9 @@ graph_call: DFS graph_params_call { $$ = create_node("dfs"); push_child($$, $gra
 | BFS  graph_params_call          { $$ = create_node("bfs"); push_child($$, $graph_params_call);}
 ;
 
-graph_params_call: OPEN_P id SEPARATOR expr_assign[exp1] SEPARATOR expr_assign[exp2] CLOSE_P {
+graph_params_call: OPEN_P id_or_access SEPARATOR expr_assign[exp1] SEPARATOR expr_assign[exp2] CLOSE_P {
   $$ = create_node("graph_params");
-  push_child($$, $id);
+  push_child($$, $id_or_access);
   push_child($$, $exp1);
   push_child($$, $exp2);
 }
@@ -420,21 +422,13 @@ compare_op: LE  { $$ = create_node(yytname[YYTRANSLATE(yylval.id)]); }
 /*-----------------------MICRO------------------------------*/
 
 
-graph_add: ADDA OPEN_P id CLOSE_P { 
+graph_add: ADDA OPEN_P id_or_access CLOSE_P { 
   $$ = create_node("adda"); 
-  push_child($$, $id);
+  push_child($$, $id_or_access);
 }
-| ADDV  OPEN_P id SEPARATOR expr_assign[exp1] SEPARATOR expr_assign[exp2] CLOSE_P { 
+| ADDV  OPEN_P id_or_access SEPARATOR expr_assign[exp1] SEPARATOR expr_assign[exp2] CLOSE_P { 
   $$ = create_node("addv"); 
-  push_child($$, $id);
-  push_child($$, $exp1);
-  push_child($$, $exp2);
-}
-;
-
-graph_add: id OPEN_BRACKET expr_assign[exp1] TO expr_assign[exp2] CLOSE_BRACKET {
-  $$ = create_node("graph_add");
-  push_child($$, $id);
+  push_child($$, $id_or_access);
   push_child($$, $exp1);
   push_child($$, $exp2);
 }
@@ -460,6 +454,13 @@ declaration: type size_specifier id {
 
   if($size_specifier != NULL) {
     push_child($$, $size_specifier);
+  }
+
+  SymbolNode *match = stable_find_with_scope(symbol_table, global_scope, $id->complement, STYPE_VARIABLE);
+  if (match != NULL && scope_eq(global_scope, match->scope)) {
+    char buffer[300] = {0};
+    sprintf(buffer, "variable \"%s\" already declared", $id->complement);
+    semantic_error(buffer);
   }
 
   TypeExpression* type = type_build($type, $size_specifier);
@@ -489,10 +490,27 @@ value: id_or_access {
 }
 ;
 
-id_or_access: id | id OPEN_BRACKET number_int CLOSE_BRACKET {
+id_or_access: id access {
+  SymbolNode *match = stable_find_with_scope(symbol_table, global_scope, $id->complement, STYPE_VARIABLE);
+  if (match == NULL) {
+    char buffer[300] = {0};
+    sprintf(buffer, "variable \"%s\" not found in scope", $id->complement);
+    semantic_error(buffer);
+  }
+
   $$ = create_node("access");
   push_child($$, $id);
-  push_child($$, $number_int);
+  if ($access != NULL) {
+    push_child($$, $access);
+  }
+
+  $$->sentry = match;
+} 
+;
+
+access: %empty {$$ = NULL;} 
+| OPEN_BRACKET number_int CLOSE_BRACKET {
+  $$ = $number_int;
 }
 ;
 
