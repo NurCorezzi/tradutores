@@ -56,7 +56,7 @@ int error_recovery_mode;
 %type<node> compare_op
 
 %type<node> declaration type id size_specifier
-%type<node> declaration_or_assign id_or_access access graph_add expr_assign
+%type<node> declaration_or_assign id_or_access graph_add expr_assign
 %type<node> value number number_int number_float boolean_const
 
 %destructor { 
@@ -73,7 +73,7 @@ unary and or add sub mul div factor
 compare_op
 
 declaration type id size_specifier
-declaration_or_assign id_or_access access graph_add expr_assign
+declaration_or_assign id_or_access graph_add expr_assign
 value number number_int number_float boolean_const
 
 
@@ -490,7 +490,7 @@ value: id_or_access {
 }
 ;
 
-id_or_access: id access {
+id_or_access: id size_specifier {
   SymbolNode *match = stable_find_with_scope(symbol_table, global_scope, $id->complement, STYPE_VARIABLE);
   if (match == NULL) {
     char buffer[300] = {0};
@@ -500,18 +500,12 @@ id_or_access: id access {
 
   $$ = create_node("access");
   push_child($$, $id);
-  if ($access != NULL) {
-    push_child($$, $access);
+  if ($size_specifier != NULL) {
+    push_child($$, $size_specifier);
   }
 
   $$->sentry = match;
 } 
-;
-
-access: %empty {$$ = NULL;} 
-| OPEN_BRACKET number_int CLOSE_BRACKET {
-  $$ = $number_int;
-}
 ;
 
 id: ID { 

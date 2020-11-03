@@ -134,28 +134,25 @@ Grammar
    85      | number
    86      | boolean_const
 
-   87 id_or_access: id access
+   87 id_or_access: id size_specifier
 
-   88 access: %empty
-   89       | OPEN_BRACKET number_int CLOSE_BRACKET
+   88 id: ID
 
-   90 id: ID
+   89 type: INT
+   90     | BOOLEAN
+   91     | FLOAT
+   92     | GRAPH
+   93     | VOID
 
-   91 type: INT
-   92     | BOOLEAN
-   93     | FLOAT
-   94     | GRAPH
-   95     | VOID
+   94 number: number_int
+   95       | number_float
 
-   96 number: number_int
-   97       | number_float
+   96 number_int: C_INT
 
-   98 number_int: C_INT
+   97 number_float: C_FLOAT
 
-   99 number_float: C_FLOAT
-
-  100 boolean_const: TRUE
-  101              | FALSE
+   98 boolean_const: TRUE
+   99              | FALSE
 
 
 Terminals, with rules where they appear
@@ -166,17 +163,17 @@ IF (258) 27 28
 ELSE (259) 28
 FOR (260) 30 31
 WHILE (261) 29
-BOOLEAN (262) 92
-INT (263) 91
-FLOAT (264) 93
-GRAPH (265) 94
-VOID (266) 95
+BOOLEAN (262) 90
+INT (263) 89
+FLOAT (264) 91
+GRAPH (265) 92
+VOID (266) 93
 TO (267)
-TRUE (268) 100
-FALSE (269) 101
-ID (270) 90
-C_FLOAT (271) 99
-C_INT (272) 98
+TRUE (268) 98
+FALSE (269) 99
+ID (270) 88
+C_FLOAT (271) 97
+C_INT (272) 96
 READ (273) 35
 WRITE (274) 36
 DFS (275) 15
@@ -205,8 +202,8 @@ IT (297) 31
 SEPARATOR (298) 9 13 17 78
 OPEN_P (299) 6 11 17 27 28 29 30 31 59 77 78
 CLOSE_P (300) 6 11 17 27 28 29 30 31 59 77 78
-OPEN_BRACKET (301) 83 89
-CLOSE_BRACKET (302) 83 89
+OPEN_BRACKET (301) 83
+CLOSE_BRACKET (302) 83
 
 
 Nonterminals, with rules where they appear
@@ -293,25 +290,23 @@ declaration_or_assign (86)
 declaration (87)
     on left: 81, on right: 9 10 79 80
 size_specifier (88)
-    on left: 82 83, on right: 6 81
+    on left: 82 83, on right: 6 81 87
 value (89)
     on left: 84 85 86, on right: 60
 id_or_access (90)
     on left: 87, on right: 17 31 35 77 78 84
-access (91)
-    on left: 88 89, on right: 87
-id (92)
-    on left: 90, on right: 6 11 81 87
-type (93)
-    on left: 91 92 93 94 95, on right: 6 81
-number (94)
-    on left: 96 97, on right: 85
-number_int (95)
-    on left: 98, on right: 83 89 96
-number_float (96)
-    on left: 99, on right: 97
-boolean_const (97)
-    on left: 100 101, on right: 86
+id (91)
+    on left: 88, on right: 6 11 81 87
+type (92)
+    on left: 89 90 91 92 93, on right: 6 81
+number (93)
+    on left: 94 95, on right: 85
+number_int (94)
+    on left: 96, on right: 83 94
+number_float (95)
+    on left: 97, on right: 95
+boolean_const (96)
+    on left: 98 99, on right: 86
 
 
 State 0
@@ -365,37 +360,37 @@ State 4
 
 State 5
 
-   92 type: BOOLEAN .
+   90 type: BOOLEAN .
 
-    $default  reduce using rule 92 (type)
+    $default  reduce using rule 90 (type)
 
 
 State 6
 
-   91 type: INT .
+   89 type: INT .
 
-    $default  reduce using rule 91 (type)
+    $default  reduce using rule 89 (type)
 
 
 State 7
 
-   93 type: FLOAT .
+   91 type: FLOAT .
 
-    $default  reduce using rule 93 (type)
+    $default  reduce using rule 91 (type)
 
 
 State 8
 
-   94 type: GRAPH .
+   92 type: GRAPH .
 
-    $default  reduce using rule 94 (type)
+    $default  reduce using rule 92 (type)
 
 
 State 9
 
-   95 type: VOID .
+   93 type: VOID .
 
-    $default  reduce using rule 95 (type)
+    $default  reduce using rule 93 (type)
 
 
 State 10
@@ -436,9 +431,9 @@ State 13
 
 State 14
 
-   98 number_int: C_INT .
+   96 number_int: C_INT .
 
-    $default  reduce using rule 98 (number_int)
+    $default  reduce using rule 96 (number_int)
 
 
 State 15
@@ -450,9 +445,9 @@ State 15
 
 State 16
 
-   90 id: ID .
+   88 id: ID .
 
-    $default  reduce using rule 90 (id)
+    $default  reduce using rule 88 (id)
 
 
 State 17
@@ -679,23 +674,23 @@ State 35
 
 State 36
 
-  100 boolean_const: TRUE .
+   98 boolean_const: TRUE .
 
-    $default  reduce using rule 100 (boolean_const)
+    $default  reduce using rule 98 (boolean_const)
 
 
 State 37
 
-  101 boolean_const: FALSE .
+   99 boolean_const: FALSE .
 
-    $default  reduce using rule 101 (boolean_const)
+    $default  reduce using rule 99 (boolean_const)
 
 
 State 38
 
-   99 number_float: C_FLOAT .
+   97 number_float: C_FLOAT .
 
-    $default  reduce using rule 99 (number_float)
+    $default  reduce using rule 97 (number_float)
 
 
 State 39
@@ -1152,14 +1147,14 @@ State 73
 State 74
 
    11 function_call: id . OPEN_P params_call CLOSE_P
-   87 id_or_access: id . access
+   87 id_or_access: id . size_specifier
 
     OPEN_P        shift, and go to state 116
-    OPEN_BRACKET  shift, and go to state 117
+    OPEN_BRACKET  shift, and go to state 12
 
-    $default  reduce using rule 88 (access)
+    $default  reduce using rule 82 (size_specifier)
 
-    access  go to state 118
+    size_specifier  go to state 117
 
 
 State 75
@@ -1171,16 +1166,16 @@ State 75
 
 State 76
 
-   96 number: number_int .
+   94 number: number_int .
 
-    $default  reduce using rule 96 (number)
+    $default  reduce using rule 94 (number)
 
 
 State 77
 
-   97 number: number_float .
+   95 number: number_float .
 
-    $default  reduce using rule 97 (number)
+    $default  reduce using rule 95 (number)
 
 
 State 78
@@ -1206,7 +1201,7 @@ State 79
     OPEN_P   shift, and go to state 49
 
     function_call    go to state 50
-    expr_assign      go to state 119
+    expr_assign      go to state 118
     expr_relational  go to state 57
     expr_and         go to state 58
     expr_or          go to state 59
@@ -1244,7 +1239,7 @@ State 80
     OPEN_P   shift, and go to state 49
 
     function_call    go to state 50
-    expr_assign      go to state 120
+    expr_assign      go to state 119
     expr_relational  go to state 57
     expr_and         go to state 58
     expr_or          go to state 59
@@ -1258,7 +1253,7 @@ State 80
     add              go to state 67
     sub              go to state 68
     value            go to state 72
-    id_or_access     go to state 121
+    id_or_access     go to state 120
     id               go to state 74
     number           go to state 75
     number_int       go to state 76
@@ -1281,7 +1276,7 @@ State 81
     OPEN_P   shift, and go to state 49
 
     function_call    go to state 50
-    expr_assign      go to state 122
+    expr_assign      go to state 121
     expr_relational  go to state 57
     expr_and         go to state 58
     expr_or          go to state 59
@@ -1307,25 +1302,25 @@ State 82
 
    35 statement_end: READ id_or_access . END
 
-    END  shift, and go to state 123
+    END  shift, and go to state 122
 
 
 State 83
 
-   87 id_or_access: id . access
+   87 id_or_access: id . size_specifier
 
-    OPEN_BRACKET  shift, and go to state 117
+    OPEN_BRACKET  shift, and go to state 12
 
-    $default  reduce using rule 88 (access)
+    $default  reduce using rule 82 (size_specifier)
 
-    access  go to state 118
+    size_specifier  go to state 117
 
 
 State 84
 
    36 statement_end: WRITE expr_assign . END
 
-    END  shift, and go to state 124
+    END  shift, and go to state 123
 
 
 State 85
@@ -1334,7 +1329,7 @@ State 85
 
     ID  shift, and go to state 16
 
-    id_or_access  go to state 125
+    id_or_access  go to state 124
     id            go to state 83
 
 
@@ -1344,7 +1339,7 @@ State 86
 
     ID  shift, and go to state 16
 
-    id_or_access  go to state 126
+    id_or_access  go to state 125
     id            go to state 83
 
 
@@ -1352,7 +1347,7 @@ State 87
 
    40 statement_end: RETURN expr_assign . END
 
-    END  shift, and go to state 127
+    END  shift, and go to state 126
 
 
 State 88
@@ -1361,21 +1356,21 @@ State 88
 
     $default  reduce using rule 18 (statements)
 
-    statements  go to state 128
+    statements  go to state 127
 
 
 State 89
 
    59 factor: OPEN_P expr_assign . CLOSE_P
 
-    CLOSE_P  shift, and go to state 129
+    CLOSE_P  shift, and go to state 128
 
 
 State 90
 
    27 dangling_if: IF . OPEN_P expr_assign CLOSE_P statement
 
-    OPEN_P  shift, and go to state 130
+    OPEN_P  shift, and go to state 129
 
 
 State 91
@@ -1414,7 +1409,7 @@ State 94
     OPEN_P   shift, and go to state 49
 
     function_call    go to state 50
-    expr_assign      go to state 131
+    expr_assign      go to state 130
     expr_relational  go to state 57
     expr_and         go to state 58
     expr_or          go to state 59
@@ -1493,7 +1488,7 @@ State 101
     OPEN_P   shift, and go to state 49
 
     function_call    go to state 50
-    expr_relational  go to state 132
+    expr_relational  go to state 131
     expr_and         go to state 58
     expr_or          go to state 59
     expr_add         go to state 60
@@ -1536,7 +1531,7 @@ State 103
     OPEN_P   shift, and go to state 49
 
     function_call  go to state 50
-    expr_and       go to state 133
+    expr_and       go to state 132
     expr_or        go to state 59
     expr_add       go to state 60
     expr_sub       go to state 61
@@ -1578,7 +1573,7 @@ State 105
     OPEN_P   shift, and go to state 49
 
     function_call  go to state 50
-    expr_or        go to state 134
+    expr_or        go to state 133
     expr_add       go to state 60
     expr_sub       go to state 61
     expr_mul       go to state 62
@@ -1612,7 +1607,7 @@ State 106
     OPEN_P   shift, and go to state 49
 
     function_call  go to state 50
-    expr_add       go to state 135
+    expr_add       go to state 134
     expr_sub       go to state 61
     expr_mul       go to state 62
     expr_div       go to state 63
@@ -1645,7 +1640,7 @@ State 107
     OPEN_P   shift, and go to state 49
 
     function_call  go to state 50
-    expr_sub       go to state 136
+    expr_sub       go to state 135
     expr_mul       go to state 62
     expr_div       go to state 63
     expr_unary     go to state 64
@@ -1684,7 +1679,7 @@ State 109
     OPEN_P   shift, and go to state 49
 
     function_call  go to state 50
-    expr_mul       go to state 137
+    expr_mul       go to state 136
     expr_div       go to state 63
     expr_unary     go to state 64
     factor         go to state 65
@@ -1722,7 +1717,7 @@ State 111
     OPEN_P   shift, and go to state 49
 
     function_call  go to state 50
-    expr_div       go to state 138
+    expr_div       go to state 137
     expr_unary     go to state 64
     factor         go to state 65
     unary          go to state 66
@@ -1773,7 +1768,7 @@ State 115
     OPEN_P   shift, and go to state 49
 
     function_call    go to state 50
-    expr_assign      go to state 139
+    expr_assign      go to state 138
     expr_relational  go to state 57
     expr_and         go to state 58
     expr_or          go to state 59
@@ -1812,8 +1807,8 @@ State 116
     $default  reduce using rule 12 (params_call)
 
     function_call    go to state 50
-    params_call      go to state 140
-    expr_assign      go to state 141
+    params_call      go to state 139
+    expr_assign      go to state 140
     expr_relational  go to state 57
     expr_and         go to state 58
     expr_or          go to state 59
@@ -1837,88 +1832,79 @@ State 116
 
 State 117
 
-   89 access: OPEN_BRACKET . number_int CLOSE_BRACKET
-
-    C_INT  shift, and go to state 14
-
-    number_int  go to state 142
-
-
-State 118
-
-   87 id_or_access: id access .
+   87 id_or_access: id size_specifier .
 
     $default  reduce using rule 87 (id_or_access)
 
 
-State 119
+State 118
 
    27 dangling_if: IF OPEN_P expr_assign . CLOSE_P statement
    28 statement_prefix: IF OPEN_P expr_assign . CLOSE_P statement_no_dangle ELSE
 
-    CLOSE_P  shift, and go to state 143
+    CLOSE_P  shift, and go to state 141
+
+
+State 119
+
+   30 statement_prefix: FOR OPEN_P expr_assign . END expr_assign END expr_assign CLOSE_P
+
+    END  shift, and go to state 142
 
 
 State 120
 
-   30 statement_prefix: FOR OPEN_P expr_assign . END expr_assign END expr_assign CLOSE_P
-
-    END  shift, and go to state 144
-
-
-State 121
-
    31 statement_prefix: FOR OPEN_P id_or_access . IT graph_call CLOSE_P
    84 value: id_or_access .
 
-    IT  shift, and go to state 145
+    IT  shift, and go to state 143
 
     $default  reduce using rule 84 (value)
 
 
-State 122
+State 121
 
    29 statement_prefix: WHILE OPEN_P expr_assign . CLOSE_P
 
-    CLOSE_P  shift, and go to state 146
+    CLOSE_P  shift, and go to state 144
 
 
-State 123
+State 122
 
    35 statement_end: READ id_or_access END .
 
     $default  reduce using rule 35 (statement_end)
 
 
-State 124
+State 123
 
    36 statement_end: WRITE expr_assign END .
 
     $default  reduce using rule 36 (statement_end)
 
 
-State 125
+State 124
 
    77 graph_add: ADDA OPEN_P id_or_access . CLOSE_P
 
-    CLOSE_P  shift, and go to state 147
+    CLOSE_P  shift, and go to state 145
 
 
-State 126
+State 125
 
    78 graph_add: ADDV OPEN_P id_or_access . SEPARATOR expr_assign SEPARATOR expr_assign CLOSE_P
 
-    SEPARATOR  shift, and go to state 148
+    SEPARATOR  shift, and go to state 146
 
 
-State 127
+State 126
 
    40 statement_end: RETURN expr_assign END .
 
     $default  reduce using rule 40 (statement_end)
 
 
-State 128
+State 127
 
    19 statements: statements . statement
    33 block: OPEN_BRACE $@3 statements . CLOSE_BRACE
@@ -1946,7 +1932,7 @@ State 128
     ADD          shift, and go to state 45
     SUB          shift, and go to state 46
     OPEN_BRACE   shift, and go to state 47
-    CLOSE_BRACE  shift, and go to state 149
+    CLOSE_BRACE  shift, and go to state 147
     OPEN_P       shift, and go to state 49
 
     function_call          go to state 50
@@ -1981,14 +1967,14 @@ State 128
     boolean_const          go to state 78
 
 
-State 129
+State 128
 
    59 factor: OPEN_P expr_assign CLOSE_P .
 
     $default  reduce using rule 59 (factor)
 
 
-State 130
+State 129
 
    27 dangling_if: IF OPEN_P . expr_assign CLOSE_P statement
 
@@ -2003,7 +1989,7 @@ State 130
     OPEN_P   shift, and go to state 49
 
     function_call    go to state 50
-    expr_assign      go to state 150
+    expr_assign      go to state 148
     expr_relational  go to state 57
     expr_and         go to state 58
     expr_or          go to state 59
@@ -2025,93 +2011,86 @@ State 130
     boolean_const    go to state 78
 
 
-State 131
+State 130
 
    41 expr_assign: expr_relational ASSIGN expr_assign .
 
     $default  reduce using rule 41 (expr_assign)
 
 
-State 132
+State 131
 
    43 expr_relational: expr_and compare_op expr_relational .
 
     $default  reduce using rule 43 (expr_relational)
 
 
-State 133
+State 132
 
    45 expr_and: expr_or and expr_and .
 
     $default  reduce using rule 45 (expr_and)
 
 
-State 134
+State 133
 
    47 expr_or: expr_add or expr_or .
 
     $default  reduce using rule 47 (expr_or)
 
 
-State 135
+State 134
 
    49 expr_add: expr_sub add expr_add .
 
     $default  reduce using rule 49 (expr_add)
 
 
-State 136
+State 135
 
    51 expr_sub: expr_mul sub expr_sub .
 
     $default  reduce using rule 51 (expr_sub)
 
 
-State 137
+State 136
 
    53 expr_mul: expr_div mul expr_mul .
 
     $default  reduce using rule 53 (expr_mul)
 
 
-State 138
+State 137
 
    55 expr_div: expr_unary div expr_div .
 
     $default  reduce using rule 55 (expr_div)
 
 
-State 139
+State 138
 
    80 declaration_or_assign: declaration ASSIGN expr_assign .
 
     $default  reduce using rule 80 (declaration_or_assign)
 
 
-State 140
+State 139
 
    11 function_call: id OPEN_P params_call . CLOSE_P
    13 params_call: params_call . SEPARATOR expr_assign
 
-    SEPARATOR  shift, and go to state 151
-    CLOSE_P    shift, and go to state 152
+    SEPARATOR  shift, and go to state 149
+    CLOSE_P    shift, and go to state 150
 
 
-State 141
+State 140
 
    14 params_call: expr_assign .
 
     $default  reduce using rule 14 (params_call)
 
 
-State 142
-
-   89 access: OPEN_BRACKET number_int . CLOSE_BRACKET
-
-    CLOSE_BRACKET  shift, and go to state 153
-
-
-State 143
+State 141
 
    27 dangling_if: IF OPEN_P expr_assign CLOSE_P . statement
    28 statement_prefix: IF OPEN_P expr_assign CLOSE_P . statement_no_dangle ELSE
@@ -2142,12 +2121,12 @@ State 143
     OPEN_P      shift, and go to state 49
 
     function_call          go to state 50
-    statement              go to state 154
-    statement_no_dangle    go to state 155
+    statement              go to state 151
+    statement_no_dangle    go to state 152
     dangling_if            go to state 52
-    statement_prefix       go to state 156
+    statement_prefix       go to state 153
     block                  go to state 54
-    statement_end          go to state 157
+    statement_end          go to state 154
     expr_assign            go to state 56
     expr_relational        go to state 57
     expr_and               go to state 58
@@ -2174,7 +2153,7 @@ State 143
     boolean_const          go to state 78
 
 
-State 144
+State 142
 
    30 statement_prefix: FOR OPEN_P expr_assign END . expr_assign END expr_assign CLOSE_P
 
@@ -2189,7 +2168,7 @@ State 144
     OPEN_P   shift, and go to state 49
 
     function_call    go to state 50
-    expr_assign      go to state 158
+    expr_assign      go to state 155
     expr_relational  go to state 57
     expr_and         go to state 58
     expr_or          go to state 59
@@ -2211,31 +2190,31 @@ State 144
     boolean_const    go to state 78
 
 
-State 145
+State 143
 
    31 statement_prefix: FOR OPEN_P id_or_access IT . graph_call CLOSE_P
 
-    DFS  shift, and go to state 159
-    BFS  shift, and go to state 160
+    DFS  shift, and go to state 156
+    BFS  shift, and go to state 157
 
-    graph_call  go to state 161
+    graph_call  go to state 158
 
 
-State 146
+State 144
 
    29 statement_prefix: WHILE OPEN_P expr_assign CLOSE_P .
 
     $default  reduce using rule 29 (statement_prefix)
 
 
-State 147
+State 145
 
    77 graph_add: ADDA OPEN_P id_or_access CLOSE_P .
 
     $default  reduce using rule 77 (graph_add)
 
 
-State 148
+State 146
 
    78 graph_add: ADDV OPEN_P id_or_access SEPARATOR . expr_assign SEPARATOR expr_assign CLOSE_P
 
@@ -2250,7 +2229,7 @@ State 148
     OPEN_P   shift, and go to state 49
 
     function_call    go to state 50
-    expr_assign      go to state 162
+    expr_assign      go to state 159
     expr_relational  go to state 57
     expr_and         go to state 58
     expr_or          go to state 59
@@ -2272,21 +2251,21 @@ State 148
     boolean_const    go to state 78
 
 
-State 149
+State 147
 
    33 block: OPEN_BRACE $@3 statements CLOSE_BRACE .
 
     $default  reduce using rule 33 (block)
 
 
-State 150
+State 148
 
    27 dangling_if: IF OPEN_P expr_assign . CLOSE_P statement
 
-    CLOSE_P  shift, and go to state 163
+    CLOSE_P  shift, and go to state 160
 
 
-State 151
+State 149
 
    13 params_call: params_call SEPARATOR . expr_assign
 
@@ -2301,7 +2280,7 @@ State 151
     OPEN_P   shift, and go to state 49
 
     function_call    go to state 50
-    expr_assign      go to state 164
+    expr_assign      go to state 161
     expr_relational  go to state 57
     expr_and         go to state 58
     expr_or          go to state 59
@@ -2323,35 +2302,28 @@ State 151
     boolean_const    go to state 78
 
 
-State 152
+State 150
 
    11 function_call: id OPEN_P params_call CLOSE_P .
 
     $default  reduce using rule 11 (function_call)
 
 
-State 153
-
-   89 access: OPEN_BRACKET number_int CLOSE_BRACKET .
-
-    $default  reduce using rule 89 (access)
-
-
-State 154
+State 151
 
    27 dangling_if: IF OPEN_P expr_assign CLOSE_P statement .
 
     $default  reduce using rule 27 (dangling_if)
 
 
-State 155
+State 152
 
    28 statement_prefix: IF OPEN_P expr_assign CLOSE_P statement_no_dangle . ELSE
 
-    ELSE  shift, and go to state 165
+    ELSE  shift, and go to state 162
 
 
-State 156
+State 153
 
    20 statement: statement_prefix . statement_end
    21          | statement_prefix . dangling_if
@@ -2382,7 +2354,7 @@ State 156
     function_call          go to state 50
     dangling_if            go to state 91
     block                  go to state 54
-    statement_end          go to state 166
+    statement_end          go to state 163
     expr_assign            go to state 56
     expr_relational        go to state 57
     expr_and               go to state 58
@@ -2409,7 +2381,7 @@ State 156
     boolean_const          go to state 78
 
 
-State 157
+State 154
 
    22 statement: statement_end .
    26 statement_no_dangle: statement_end .
@@ -2418,46 +2390,46 @@ State 157
     $default  reduce using rule 22 (statement)
 
 
-State 158
+State 155
 
    30 statement_prefix: FOR OPEN_P expr_assign END expr_assign . END expr_assign CLOSE_P
 
-    END  shift, and go to state 167
+    END  shift, and go to state 164
+
+
+State 156
+
+   15 graph_call: DFS . graph_params_call
+
+    OPEN_P  shift, and go to state 165
+
+    graph_params_call  go to state 166
+
+
+State 157
+
+   16 graph_call: BFS . graph_params_call
+
+    OPEN_P  shift, and go to state 165
+
+    graph_params_call  go to state 167
+
+
+State 158
+
+   31 statement_prefix: FOR OPEN_P id_or_access IT graph_call . CLOSE_P
+
+    CLOSE_P  shift, and go to state 168
 
 
 State 159
 
-   15 graph_call: DFS . graph_params_call
+   78 graph_add: ADDV OPEN_P id_or_access SEPARATOR expr_assign . SEPARATOR expr_assign CLOSE_P
 
-    OPEN_P  shift, and go to state 168
-
-    graph_params_call  go to state 169
+    SEPARATOR  shift, and go to state 169
 
 
 State 160
-
-   16 graph_call: BFS . graph_params_call
-
-    OPEN_P  shift, and go to state 168
-
-    graph_params_call  go to state 170
-
-
-State 161
-
-   31 statement_prefix: FOR OPEN_P id_or_access IT graph_call . CLOSE_P
-
-    CLOSE_P  shift, and go to state 171
-
-
-State 162
-
-   78 graph_add: ADDV OPEN_P id_or_access SEPARATOR expr_assign . SEPARATOR expr_assign CLOSE_P
-
-    SEPARATOR  shift, and go to state 172
-
-
-State 163
 
    27 dangling_if: IF OPEN_P expr_assign CLOSE_P . statement
 
@@ -2487,7 +2459,7 @@ State 163
     OPEN_P      shift, and go to state 49
 
     function_call          go to state 50
-    statement              go to state 154
+    statement              go to state 151
     dangling_if            go to state 52
     statement_prefix       go to state 53
     block                  go to state 54
@@ -2518,21 +2490,21 @@ State 163
     boolean_const          go to state 78
 
 
-State 164
+State 161
 
    13 params_call: params_call SEPARATOR expr_assign .
 
     $default  reduce using rule 13 (params_call)
 
 
-State 165
+State 162
 
    28 statement_prefix: IF OPEN_P expr_assign CLOSE_P statement_no_dangle ELSE .
 
     $default  reduce using rule 28 (statement_prefix)
 
 
-State 166
+State 163
 
    20 statement: statement_prefix statement_end .
    25 statement_no_dangle: statement_prefix statement_end .
@@ -2541,7 +2513,7 @@ State 166
     $default  reduce using rule 20 (statement)
 
 
-State 167
+State 164
 
    30 statement_prefix: FOR OPEN_P expr_assign END expr_assign END . expr_assign CLOSE_P
 
@@ -2556,7 +2528,7 @@ State 167
     OPEN_P   shift, and go to state 49
 
     function_call    go to state 50
-    expr_assign      go to state 173
+    expr_assign      go to state 170
     expr_relational  go to state 57
     expr_and         go to state 58
     expr_or          go to state 59
@@ -2578,38 +2550,38 @@ State 167
     boolean_const    go to state 78
 
 
-State 168
+State 165
 
    17 graph_params_call: OPEN_P . id_or_access SEPARATOR expr_assign SEPARATOR expr_assign CLOSE_P
 
     ID  shift, and go to state 16
 
-    id_or_access  go to state 174
+    id_or_access  go to state 171
     id            go to state 83
 
 
-State 169
+State 166
 
    15 graph_call: DFS graph_params_call .
 
     $default  reduce using rule 15 (graph_call)
 
 
-State 170
+State 167
 
    16 graph_call: BFS graph_params_call .
 
     $default  reduce using rule 16 (graph_call)
 
 
-State 171
+State 168
 
    31 statement_prefix: FOR OPEN_P id_or_access IT graph_call CLOSE_P .
 
     $default  reduce using rule 31 (statement_prefix)
 
 
-State 172
+State 169
 
    78 graph_add: ADDV OPEN_P id_or_access SEPARATOR expr_assign SEPARATOR . expr_assign CLOSE_P
 
@@ -2624,7 +2596,7 @@ State 172
     OPEN_P   shift, and go to state 49
 
     function_call    go to state 50
-    expr_assign      go to state 175
+    expr_assign      go to state 172
     expr_relational  go to state 57
     expr_and         go to state 58
     expr_or          go to state 59
@@ -2646,35 +2618,35 @@ State 172
     boolean_const    go to state 78
 
 
-State 173
+State 170
 
    30 statement_prefix: FOR OPEN_P expr_assign END expr_assign END expr_assign . CLOSE_P
 
-    CLOSE_P  shift, and go to state 176
+    CLOSE_P  shift, and go to state 173
 
 
-State 174
+State 171
 
    17 graph_params_call: OPEN_P id_or_access . SEPARATOR expr_assign SEPARATOR expr_assign CLOSE_P
 
-    SEPARATOR  shift, and go to state 177
+    SEPARATOR  shift, and go to state 174
 
 
-State 175
+State 172
 
    78 graph_add: ADDV OPEN_P id_or_access SEPARATOR expr_assign SEPARATOR expr_assign . CLOSE_P
 
-    CLOSE_P  shift, and go to state 178
+    CLOSE_P  shift, and go to state 175
 
 
-State 176
+State 173
 
    30 statement_prefix: FOR OPEN_P expr_assign END expr_assign END expr_assign CLOSE_P .
 
     $default  reduce using rule 30 (statement_prefix)
 
 
-State 177
+State 174
 
    17 graph_params_call: OPEN_P id_or_access SEPARATOR . expr_assign SEPARATOR expr_assign CLOSE_P
 
@@ -2689,7 +2661,58 @@ State 177
     OPEN_P   shift, and go to state 49
 
     function_call    go to state 50
-    expr_assign      go to state 179
+    expr_assign      go to state 176
+    expr_relational  go to state 57
+    expr_and         go to state 58
+    expr_or          go to state 59
+    expr_add         go to state 60
+    expr_sub         go to state 61
+    expr_mul         go to state 62
+    expr_div         go to state 63
+    expr_unary       go to state 64
+    factor           go to state 65
+    unary            go to state 66
+    add              go to state 67
+    sub              go to state 68
+    value            go to state 72
+    id_or_access     go to state 73
+    id               go to state 74
+    number           go to state 75
+    number_int       go to state 76
+    number_float     go to state 77
+    boolean_const    go to state 78
+
+
+State 175
+
+   78 graph_add: ADDV OPEN_P id_or_access SEPARATOR expr_assign SEPARATOR expr_assign CLOSE_P .
+
+    $default  reduce using rule 78 (graph_add)
+
+
+State 176
+
+   17 graph_params_call: OPEN_P id_or_access SEPARATOR expr_assign . SEPARATOR expr_assign CLOSE_P
+
+    SEPARATOR  shift, and go to state 177
+
+
+State 177
+
+   17 graph_params_call: OPEN_P id_or_access SEPARATOR expr_assign SEPARATOR . expr_assign CLOSE_P
+
+    TRUE     shift, and go to state 36
+    FALSE    shift, and go to state 37
+    ID       shift, and go to state 16
+    C_FLOAT  shift, and go to state 38
+    C_INT    shift, and go to state 14
+    NOT      shift, and go to state 44
+    ADD      shift, and go to state 45
+    SUB      shift, and go to state 46
+    OPEN_P   shift, and go to state 49
+
+    function_call    go to state 50
+    expr_assign      go to state 178
     expr_relational  go to state 57
     expr_and         go to state 58
     expr_or          go to state 59
@@ -2713,63 +2736,12 @@ State 177
 
 State 178
 
-   78 graph_add: ADDV OPEN_P id_or_access SEPARATOR expr_assign SEPARATOR expr_assign CLOSE_P .
+   17 graph_params_call: OPEN_P id_or_access SEPARATOR expr_assign SEPARATOR expr_assign . CLOSE_P
 
-    $default  reduce using rule 78 (graph_add)
+    CLOSE_P  shift, and go to state 179
 
 
 State 179
-
-   17 graph_params_call: OPEN_P id_or_access SEPARATOR expr_assign . SEPARATOR expr_assign CLOSE_P
-
-    SEPARATOR  shift, and go to state 180
-
-
-State 180
-
-   17 graph_params_call: OPEN_P id_or_access SEPARATOR expr_assign SEPARATOR . expr_assign CLOSE_P
-
-    TRUE     shift, and go to state 36
-    FALSE    shift, and go to state 37
-    ID       shift, and go to state 16
-    C_FLOAT  shift, and go to state 38
-    C_INT    shift, and go to state 14
-    NOT      shift, and go to state 44
-    ADD      shift, and go to state 45
-    SUB      shift, and go to state 46
-    OPEN_P   shift, and go to state 49
-
-    function_call    go to state 50
-    expr_assign      go to state 181
-    expr_relational  go to state 57
-    expr_and         go to state 58
-    expr_or          go to state 59
-    expr_add         go to state 60
-    expr_sub         go to state 61
-    expr_mul         go to state 62
-    expr_div         go to state 63
-    expr_unary       go to state 64
-    factor           go to state 65
-    unary            go to state 66
-    add              go to state 67
-    sub              go to state 68
-    value            go to state 72
-    id_or_access     go to state 73
-    id               go to state 74
-    number           go to state 75
-    number_int       go to state 76
-    number_float     go to state 77
-    boolean_const    go to state 78
-
-
-State 181
-
-   17 graph_params_call: OPEN_P id_or_access SEPARATOR expr_assign SEPARATOR expr_assign . CLOSE_P
-
-    CLOSE_P  shift, and go to state 182
-
-
-State 182
 
    17 graph_params_call: OPEN_P id_or_access SEPARATOR expr_assign SEPARATOR expr_assign CLOSE_P .
 
