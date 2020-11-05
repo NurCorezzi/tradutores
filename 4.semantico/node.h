@@ -20,7 +20,7 @@ typedef enum {
 } SymbolType;
 
 typedef enum {
-    GTYPE_BOOLEAN, GTYPE_INT, GTYPE_FLOAT, GTYPE_GRAPH, GTYPE_VOID, GTYPE_ARRAY
+    GTYPE_INT, GTYPE_FLOAT, GTYPE_GRAPH, GTYPE_VOID, GTYPE_ARRAY
 } GrammarType;
 
 typedef struct t_type_expression {
@@ -53,7 +53,9 @@ Scope *global_scope;
 int scope_count;
 
 char* type_to_string(TypeExpression* type);
+TypeExpression* type_cpy(TypeExpression* src);
 GrammarType token_to_type(int token);
+
 void scope_push();
 void scope_pop();
 

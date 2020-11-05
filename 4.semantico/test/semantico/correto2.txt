@@ -1,0 +1,18 @@
+
+boolean outra(int a, graph b) {
+    return true || false;
+}
+
+float main() {
+    int a = 0;
+    int[10] b;
+    graph g;
+    outra(a, g);
+    if (a && b) {
+    } else if (b[0] >= 10 != 10){
+        while(a) {}
+    }
+    for (a: bfs(g,1,1)) {
+        >> b[10];
+    }
+}

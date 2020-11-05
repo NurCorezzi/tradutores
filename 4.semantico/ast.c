@@ -18,6 +18,12 @@ Node* create_node(char const *id) {
   return node;
 }
 
+Node* create_node_with_type(char const *id, TypeExpression *type) {
+  Node* node = create_node(id);
+  node->type = type_cpy(type);
+  return node;
+}
+
 void push_child(Node *root, Node *child) {
   if (child == NULL) {
     return;
@@ -35,6 +41,7 @@ void push_child(Node *root, Node *child) {
 void free_node(Node *node) {
   if (node->id != NULL) free(node->id);
   if (node->complement != NULL) free(node->complement);
+  if (node->type != NULL) free_type(node->type);
   free(node);
 }
 
@@ -68,6 +75,10 @@ void print_node_prefix() {
 void print_node_sufix(Node *node) {
   printf("%s", node->id);
   if (node->complement) printf(": %s", node->complement);
+  if (node->type) {
+    printf(" - ");
+    type_print(node->type);
+  }
   printf("\n");
 }
 

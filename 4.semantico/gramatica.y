@@ -165,6 +165,18 @@ function_call: id OPEN_P params_call CLOSE_P {
   if ($params_call != NULL) {
     push_child($$, $params_call);
   }
+
+  SymbolNode *match = stable_find_with_scope(symbol_table, global_scope, $id->complement, STYPE_FUNCTION);
+
+  if (match == NULL) {
+    char buffer[300] = {0};
+    sprintf(buffer, "function \"%s\" not found in scope", $id->complement);
+    semantic_error(buffer);
+
+    // TODO: CHECAR PARAMETROS, FAZER APOS EXPRESSOES
+  } else {
+    $$->type = type_cpy(match->type);
+  } 
 }
 ;
 
@@ -462,46 +474,55 @@ declaration: type size_specifier id {
     sprintf(buffer, "variable \"%s\" already declared", $id->complement);
     semantic_error(buffer);
   }
-
   TypeExpression* type = type_build($type, $size_specifier);
   SymbolNode *entry = stable_create_symbol($id->complement, global_scope, STYPE_VARIABLE, type, $$);
   $$->sentry = entry;
+  $$->type = type_cpy(type);
   symbol_table = stable_add(symbol_table, entry);
 }
 ;
 
 size_specifier: %empty {$$ = NULL;}
 | OPEN_BRACKET number_int CLOSE_BRACKET {
-  $$ = $number_int;
+  // OBS: SE EM ALGUM MOMENTO MAIS DIMENSOES FOREM ADICIONADAS COLOCAR EM BEGIN/END CHILD
+  $$ = create_node("dimension");
+  push_child($$, $number_int);
 }
 ;
 
 value: id_or_access {
-  $$ = create_node("value");
+  $$ = create_node_with_type("value", $1->type);
   push_child($$, $1);
 }
 | number {
-  $$ = create_node("value");
+  $$ = create_node_with_type("value", $1->type);
   push_child($$, $1);
 }
 | boolean_const {
-  $$ = create_node("value");
+  $$ = create_node_with_type("value", $1->type);
   push_child($$, $1);
 }
 ;
 
 id_or_access: id size_specifier {
+  $$ = create_node("access");
+  push_child($$, $id);
+  push_child($$, $size_specifier);
+    
   SymbolNode *match = stable_find_with_scope(symbol_table, global_scope, $id->complement, STYPE_VARIABLE);
+
   if (match == NULL) {
     char buffer[300] = {0};
     sprintf(buffer, "variable \"%s\" not found in scope", $id->complement);
     semantic_error(buffer);
-  }
-
-  $$ = create_node("access");
-  push_child($$, $id);
-  if ($size_specifier != NULL) {
-    push_child($$, $size_specifier);
+  } else {
+    $$->type = type_from_access_lvl(match->type, $size_specifier);
+  
+    if ($$->type == NULL) {
+      char buffer[300] = {0};
+      sprintf(buffer, "access to \"%s\" of incompatible type", $id->complement);
+      semantic_error(buffer);    
+    }
   }
 
   $$->sentry = match;
@@ -533,6 +554,7 @@ number_int: C_INT {
   char *cpy = (char*)malloc(strlen(yytext) + 1);
   strcpy(cpy, yytext);
   $$->complement = cpy;
+  $$->type = type_base(GTYPE_INT);
 }
 ;
 
@@ -542,11 +564,26 @@ number_float: C_FLOAT {
   char *cpy = (char*)malloc(strlen(yytext) + 1);
   strcpy(cpy, yytext);
   $$->complement = cpy;
+  $$->type = type_base(GTYPE_FLOAT);
 }
 ;
 
-boolean_const: TRUE { $$ = create_node(yytname[YYTRANSLATE(yylval.id)]); $$->t_token = yylval.id; }
-| FALSE             { $$ = create_node(yytname[YYTRANSLATE(yylval.id)]); $$->t_token = yylval.id; }
+boolean_const: TRUE { 
+  $$ = create_node(yytname[YYTRANSLATE(yylval.id)]); 
+  $$->t_token = yylval.id; 
+  char *cpy = (char*)malloc(strlen("1") + 1);
+  strcpy(cpy, "1");
+  $$->complement = cpy;
+  $$->type = type_base(GTYPE_INT);
+}
+| FALSE             { 
+  $$ = create_node(yytname[YYTRANSLATE(yylval.id)]); 
+  $$->t_token = yylval.id; 
+  char *cpy = (char*)malloc(strlen("0") + 1);
+  strcpy(cpy, "0");
+  $$->complement = cpy;
+  $$->type = type_base(GTYPE_INT);
+}
 ;
 
 %%
@@ -571,7 +608,7 @@ int main() {
   yyparse();
 
   printf("\n>>>>>>>>>>AST<<<<<<<<<<<\n\n");
-  // print_tree(ast, 1);
+  print_tree(ast, 1);
 
   printf("\n>>>>>>>>>>SYMBOL TABLE<<<<<<<<<<<\n\n");
   stable_print(symbol_table);

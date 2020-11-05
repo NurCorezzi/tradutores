@@ -1,6 +1,7 @@
 void main() {
-    graph[2] g;
-    g[0 to 2];
+    graph g;
+    addv(g);
+    adda(g, 0, 2);
     g[0] = g[2] = 1;
     for (int vertice : dfs(g, 0, 1)) {
         << vertice;

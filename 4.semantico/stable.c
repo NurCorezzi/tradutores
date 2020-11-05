@@ -80,6 +80,7 @@ char* scope_to_string(Scope* scope) {
     strcat(buffer, buffer_int);
     cur = cur->child;
   }
+
   return strdup(buffer);
 }
 

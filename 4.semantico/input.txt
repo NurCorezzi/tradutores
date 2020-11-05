@@ -1,11 +1,4 @@
-int outro(int b) {
-}
-
-int main(int[2] n) {
-    int i;
-    int a;
-    for(i = 0; i < 10; i = i + 1) {
-        int s;
-    }
-    addv(a,1+2,1);
+int main() {
+    int[3] i;
+    main();
 }
