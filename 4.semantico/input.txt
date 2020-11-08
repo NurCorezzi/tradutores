@@ -3,6 +3,5 @@ void outra(graph a, int b) {}
 int main() {
     graph a;
     float[2] b;
-
-    outra(a, b[2]);
+    b[1] = b[2] + 2 * 2.0 && true + false;
 }

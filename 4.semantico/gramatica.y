@@ -334,8 +334,9 @@ expr_assign: expr_relational ASSIGN expr_assign {
       $3->cast = type_get_cast($1->type, $3->type);  
       $$->type = type_cpy($1->type);
   } else {
-    char buffer[300] = {0};
-    sprintf(buffer, "type incompatible with operator \"=\"");
+    char buffer[300] = {0}, buffer1[300] = {0};
+    build_incompatible_types_str(buffer1, $1->type, $3->type);
+    sprintf(buffer, "%s with operator \"ASSIGN\"", buffer1);
     semantic_error(buffer);
   }
 } 
@@ -347,6 +348,7 @@ expr_assign: expr_relational ASSIGN expr_assign {
 expr_relational: expr_and compare_op expr_relational {
   $$ = create_node("expr_relational");
   push_child($$, $1);
+  push_child($$, $2);
   push_child($$, $3);
   check_compare_expression($$, $1, $2, $3);
 }
@@ -358,6 +360,8 @@ expr_and: expr_or and expr_and {
   push_child($$, $1);
   push_child($$, $3);
   check_boolean_expression($$, $1, $2, $3);
+
+  free_tree($2);
 } 
 | expr_or
 ;
@@ -367,6 +371,8 @@ expr_or: expr_add or expr_or {
   push_child($$, $1);
   push_child($$, $3);
   check_boolean_expression($$, $1, $2, $3);
+
+  free_tree($2);
 } 
 | expr_add
 ;
@@ -376,6 +382,8 @@ expr_add: expr_sub add expr_add {
   push_child($$, $1);
   push_child($$, $3);
   check_aritmetic_expression($$, $1, $2, $3);
+
+  free_tree($2);
 } 
 | expr_sub
 ;
@@ -385,6 +393,8 @@ expr_sub: expr_mul sub expr_sub {
   push_child($$, $1);
   push_child($$, $3);
   check_aritmetic_expression($$, $1, $2, $3);
+  
+  free_tree($2);
 } 
 | expr_mul
 ;
@@ -394,6 +404,8 @@ expr_mul: expr_div mul expr_mul {
   push_child($$, $1);
   push_child($$, $3);
   check_aritmetic_expression($$, $1, $2, $3);
+
+  free_tree($2);
 } 
 | expr_div
 ;
@@ -403,6 +415,8 @@ expr_div: expr_unary div expr_div {
   push_child($$, $1);
   push_child($$, $3);
   check_aritmetic_expression($$, $1, $2, $3);
+
+  free_tree($2);
 } 
 | expr_unary
 ;
