@@ -18,6 +18,12 @@ extern char *yytext;
 int yylex_destroy ( void );
 int yylex();
 
+void check_params(char *function_id, Node *param, Node *param_call);
+void check_compare_expression(Node *tgt, Node *op1, Node *operator, Node *op2);
+void check_boolean_expression(Node *tgt, Node *op1, Node *operator, Node *op2);
+void check_aritmetic_expression(Node *tgt, Node *op1, Node *operator, Node *op2);
+
+void build_incompatible_types_str(char* buffer, TypeExpression *a, TypeExpression *b);
 void yyerror (char const *s);
 void semantic_error(char const *s);
 int error_recovery_mode;
@@ -162,9 +168,7 @@ params: %empty {$$ = NULL;}
 function_call: id OPEN_P params_call CLOSE_P {
   $$ = create_node("function_call");
   push_child($$, $id);
-  if ($params_call != NULL) {
-    push_child($$, $params_call);
-  }
+  push_child($$, $params_call);
 
   SymbolNode *match = stable_find_with_scope(symbol_table, global_scope, $id->complement, STYPE_FUNCTION);
 
@@ -172,10 +176,13 @@ function_call: id OPEN_P params_call CLOSE_P {
     char buffer[300] = {0};
     sprintf(buffer, "function \"%s\" not found in scope", $id->complement);
     semantic_error(buffer);
-
-    // TODO: CHECAR PARAMETROS, FAZER APOS EXPRESSOES
   } else {
     $$->type = type_cpy(match->type);
+    check_params(
+      match->id,
+      match->ast_node ? match->ast_node->beginChild : NULL, 
+      $params_call ? $params_call->beginChild : NULL
+    );
   } 
 }
 ;
@@ -321,6 +328,16 @@ expr_assign: expr_relational ASSIGN expr_assign {
   $$ = create_node("expr_assign");
   push_child($$, $1);
   push_child($$, $3);
+
+  TypeExpression *tmax = type_max($1->type, $3->type);
+  if (type_can_assign($1->type) && tmax) {
+      $3->cast = type_get_cast($1->type, $3->type);  
+      $$->type = type_cpy($1->type);
+  } else {
+    char buffer[300] = {0};
+    sprintf(buffer, "type incompatible with operator \"=\"");
+    semantic_error(buffer);
+  }
 } 
 | expr_relational {  
   $$ = $1;
@@ -330,8 +347,8 @@ expr_assign: expr_relational ASSIGN expr_assign {
 expr_relational: expr_and compare_op expr_relational {
   $$ = create_node("expr_relational");
   push_child($$, $1);
-  push_child($$, $2);
   push_child($$, $3);
+  check_compare_expression($$, $1, $2, $3);
 }
 | expr_and 
 ;
@@ -339,8 +356,8 @@ expr_relational: expr_and compare_op expr_relational {
 expr_and: expr_or and expr_and {
   $$ = create_node("expr_and");
   push_child($$, $1);
-  push_child($$, $2);
   push_child($$, $3);
+  check_boolean_expression($$, $1, $2, $3);
 } 
 | expr_or
 ;
@@ -348,8 +365,8 @@ expr_and: expr_or and expr_and {
 expr_or: expr_add or expr_or {
   $$ = create_node("expr_or");
   push_child($$, $1);
-  push_child($$, $2);
   push_child($$, $3);
+  check_boolean_expression($$, $1, $2, $3);
 } 
 | expr_add
 ;
@@ -357,8 +374,8 @@ expr_or: expr_add or expr_or {
 expr_add: expr_sub add expr_add {
   $$ = create_node("expr_add");
   push_child($$, $1);
-  push_child($$, $2);
   push_child($$, $3);
+  check_aritmetic_expression($$, $1, $2, $3);
 } 
 | expr_sub
 ;
@@ -366,8 +383,8 @@ expr_add: expr_sub add expr_add {
 expr_sub: expr_mul sub expr_sub {
   $$ = create_node("expr_sub");
   push_child($$, $1);
-  push_child($$, $2);
   push_child($$, $3);
+  check_aritmetic_expression($$, $1, $2, $3);
 } 
 | expr_mul
 ;
@@ -375,8 +392,8 @@ expr_sub: expr_mul sub expr_sub {
 expr_mul: expr_div mul expr_mul {
   $$ = create_node("expr_mul");
   push_child($$, $1);
-  push_child($$, $2);
   push_child($$, $3);
+  check_aritmetic_expression($$, $1, $2, $3);
 } 
 | expr_div
 ;
@@ -384,8 +401,8 @@ expr_mul: expr_div mul expr_mul {
 expr_div: expr_unary div expr_div {
   $$ = create_node("expr_div");
   push_child($$, $1);
-  push_child($$, $2);
   push_child($$, $3);
+  check_aritmetic_expression($$, $1, $2, $3);
 } 
 | expr_unary
 ;
@@ -606,6 +623,87 @@ boolean_const: TRUE {
 ;
 
 %%
+
+/**
+ * Checa lista de parametros percorrendo sempre next dos nodes passados.
+ */
+void check_params(char *function_id, Node *param, Node *param_call) {
+  if (param == NULL && param_call == NULL) {
+    return;
+  }
+  TypeExpression *tmax = type_max(param->type, param_call->type);
+  if (tmax != NULL) {
+      param_call->cast = type_get_cast(param->type, param_call->type);  
+  } else {
+    char buffer[300] = {0}, buffer1[300] = {0};
+    build_incompatible_types_str(buffer1, param->type, param_call->type);
+    sprintf(buffer, "%s in call \"%s\"", buffer1, function_id);
+    semantic_error(buffer);
+  }
+  check_params(
+    function_id,
+    param ? param->next : NULL, 
+    param_call ? param_call->next : NULL
+  );
+}
+
+void check_compare_expression(Node *tgt, Node *op1, Node *operator, Node *op2) {
+  TypeExpression *tmax = type_max(op1->type, op2->type);
+  if (type_is_aritmetic(tmax)) {
+      op1->cast = type_get_cast(tmax, op1->type);  
+      op2->cast = type_get_cast(tmax, op2->type);  
+      tgt->type = type_cpy(&TYPE_EXPRESSION_BOOLEAN);
+  } else {
+    char buffer[300] = {0}, buffer1[300] = {0};
+    build_incompatible_types_str(buffer1, op1->type, op2->type);
+    sprintf(buffer, "%s with operator \"%s\" ", buffer1, operator->id);
+    semantic_error(buffer);
+  }
+}
+
+void check_boolean_expression(Node *tgt, Node *op1, Node *operator, Node *op2) {
+  TypeExpression *tmax = type_max(op1->type, op2->type);
+  // Verifica se realmente pode ocorrer conversao
+  tmax = type_max(&TYPE_EXPRESSION_BOOLEAN, tmax);
+  if (tmax != NULL) {
+      op1->cast = type_get_cast(&TYPE_EXPRESSION_BOOLEAN, op1->type);  
+      op2->cast = type_get_cast(&TYPE_EXPRESSION_BOOLEAN, op2->type);  
+      tgt->type = type_cpy(&TYPE_EXPRESSION_BOOLEAN);
+  } else {
+    char buffer[300] = {0}, buffer1[300] = {0};
+    build_incompatible_types_str(buffer1, op1->type, op2->type);
+    sprintf(buffer, "%s with operator \"%s\" ", buffer1, operator->id);
+    semantic_error(buffer);
+  }
+}
+
+void check_aritmetic_expression(Node *tgt, Node *op1, Node *operator, Node *op2) {
+  TypeExpression *tmax = type_max(op1->type, op2->type);
+  if (type_is_aritmetic(tmax)) {
+      op1->cast = type_get_cast(tmax, op1->type);  
+      op2->cast = type_get_cast(tmax, op2->type);  
+      tgt->type = type_cpy(tmax);
+  } else {
+    char buffer[300] = {0}, buffer1[300] = {0};
+    build_incompatible_types_str(buffer1, op1->type, op2->type);
+    sprintf(buffer, "%s with operator \"%s\" ", buffer1, operator->id);
+    semantic_error(buffer);
+  }
+}
+
+void build_incompatible_types_str(char* buffer, TypeExpression *a, TypeExpression *b) {
+  char *undefined = "undefined";
+  char *a_str = type_to_string(a);
+  char *b_str = type_to_string(b);
+
+  if (a_str == NULL) a_str = undefined;
+  if (b_str == NULL) b_str = undefined;
+
+  sprintf(buffer, "incompatible types \"%s\" and \"%s\"", a_str, b_str);
+
+  if (a_str != undefined) free(a_str);
+  if (b_str != undefined) free(b_str);
+}
 
 void yyerror (char const *s) {
   error_recovery_mode = 1;

@@ -5,11 +5,14 @@
 #include "gramatica.tab.h"
 #include "node.h"
 
+// Boolean por simplicidade sera transformado em int
+TypeExpression TYPE_EXPRESSION_BOOLEAN = {0, NULL, GTYPE_INT};
 TypeExpression TYPE_EXPRESSION_FLOAT = {0, NULL, GTYPE_FLOAT};
 TypeExpression TYPE_EXPRESSION_INT = {0, NULL, GTYPE_INT};
 
 GrammarType token_to_type(int token) {
   switch(token) {
+    // Boolean por simplicidade sera int
     case BOOLEAN:  return GTYPE_INT; 
     case INT:      return GTYPE_INT; 
     case FLOAT:    return GTYPE_FLOAT; 
@@ -53,17 +56,22 @@ char* type_to_string(TypeExpression* type) {
 void type_print(TypeExpression* type) {
     if (type == NULL) return ;
     char *buffer = type_to_string(type);
+    printf("\033[0;32m");
     printf("%s", buffer);
+    printf("\033[0m"); 
     free(buffer);
 }
 
 void type_print_cast(Cast cast) {
+    // printf("\033[01;33m%d:%d-%d:%d\033[0;0m
+    printf("\033[0;31m");
     switch(cast) {
         case CNONE:         printf("NONE"); break;  
         case CINT_TO_FLOAT: printf("INT -> FLOAT"); break;  
         case CFLOAT_TO_INT: printf("FLOAT -> INT"); break;  
         default:            printf("ERROR CAST NON EXISTENT");
     }
+    printf("\033[0m"); 
 }
 
 TypeExpression* type_array(TypeExpression* type, int size) {
@@ -215,19 +223,22 @@ TypeExpression* type_max(TypeExpression* a, TypeExpression* b) {
                 case GTYPE_FLOAT:   return b;
                 default:            break;
             }
+            break;
         }  
         case GTYPE_FLOAT: {
             switch(b->node_type) {
-                case GTYPE_INT:     return b; 
-                case GTYPE_FLOAT:   return b;  
+                case GTYPE_INT:     return a; 
+                case GTYPE_FLOAT:   return a;  
                 default:            break;
             }
+            break;
         }  
         case GTYPE_GRAPH: {
             switch(b->node_type) {
-                case GTYPE_GRAPH:       return b; 
+                case GTYPE_GRAPH:   return b; 
                 default:            break;
             }
+            break;
         }  
         case GTYPE_ARRAY:   return type_eq(a, b) ? a : NULL;
         case GTYPE_VOID:    break;  
@@ -243,20 +254,36 @@ Cast type_get_cast(TypeExpression* tgt, TypeExpression* src) {
                 case GTYPE_FLOAT:   return CINT_TO_FLOAT;
                 default:            break;
             }
+            break;
         }  
         case GTYPE_FLOAT: {
             switch(tgt->node_type) {
                 case GTYPE_INT:     return CFLOAT_TO_INT;  
                 default:            break;
             }
+            break;
         }
         default: return CNONE;
     }
     return 0;
 }
 
+/**
+ * Verifica se tipo pode receber uma atribuição. 
+ */
+int type_can_assign(TypeExpression *tgt) {
+    if (tgt == NULL) {
+        return 0;
+    }
+    return tgt->node_type == GTYPE_FLOAT || tgt->node_type == GTYPE_FLOAT;
+}
+
 int type_is_aritmetic(TypeExpression *type) {
     return type_max(type, &TYPE_EXPRESSION_FLOAT) || type_max(type, &TYPE_EXPRESSION_INT);
+}
+
+int type_is_boolean(TypeExpression *type) {
+    return type_max(type, &TYPE_EXPRESSION_INT) != NULL;
 }
 
 void free_type(TypeExpression* type) {

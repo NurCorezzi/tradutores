@@ -79,8 +79,9 @@ void print_node_sufix(Node *node) {
     printf(" - ");
     type_print(node->type);
     if (node->cast) {
-      printf(":");
+      printf(":(");
       type_print_cast(node->cast);
+      printf(")");
     }
   }
   printf("\n");
