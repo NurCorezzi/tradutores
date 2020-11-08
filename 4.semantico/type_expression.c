@@ -5,11 +5,8 @@
 #include "gramatica.tab.h"
 #include "node.h"
 
-// typedef struct t_type_expression {
-//     int size;
-//     struct t_type_expression *child;
-//     GrammarType node_type;
-// } TypeExpression;
+TypeExpression TYPE_EXPRESSION_FLOAT = {0, NULL, GTYPE_FLOAT};
+TypeExpression TYPE_EXPRESSION_INT = {0, NULL, GTYPE_INT};
 
 GrammarType token_to_type(int token) {
   switch(token) {
@@ -58,6 +55,15 @@ void type_print(TypeExpression* type) {
     char *buffer = type_to_string(type);
     printf("%s", buffer);
     free(buffer);
+}
+
+void type_print_cast(Cast cast) {
+    switch(cast) {
+        case CNONE:         printf("NONE"); break;  
+        case CINT_TO_FLOAT: printf("INT -> FLOAT"); break;  
+        case CFLOAT_TO_INT: printf("FLOAT -> INT"); break;  
+        default:            printf("ERROR CAST NON EXISTENT");
+    }
 }
 
 TypeExpression* type_array(TypeExpression* type, int size) {
@@ -181,6 +187,76 @@ TypeExpression* type_from_access_lvl(TypeExpression* tgt, Node *size_specifier) 
 
         return type_cpy(tgt);
     }
+}
+
+int type_eq(TypeExpression* a, TypeExpression* b) {
+    if (a == NULL || b == NULL) {
+        return a == b;
+    }
+
+    int eq = a->node_type == b->node_type;
+    eq &= a->size == b->size;
+    return eq && type_eq(a->child, b->child);
+}
+
+
+/**
+ * Retorna tipo maximo entre dois termos, caso nao sejam compativeis retorna null
+ */
+TypeExpression* type_max(TypeExpression* a, TypeExpression* b) {
+    if (a == NULL || b == NULL) {
+        return NULL;
+    }
+    
+    switch(a->node_type) {
+        case GTYPE_INT: {
+            switch(b->node_type) {
+                case GTYPE_INT:     return a; 
+                case GTYPE_FLOAT:   return b;
+                default:            break;
+            }
+        }  
+        case GTYPE_FLOAT: {
+            switch(b->node_type) {
+                case GTYPE_INT:     return b; 
+                case GTYPE_FLOAT:   return b;  
+                default:            break;
+            }
+        }  
+        case GTYPE_GRAPH: {
+            switch(b->node_type) {
+                case GTYPE_GRAPH:       return b; 
+                default:            break;
+            }
+        }  
+        case GTYPE_ARRAY:   return type_eq(a, b) ? a : NULL;
+        case GTYPE_VOID:    break;  
+        default: return NULL;
+    }
+    return NULL;
+}
+
+Cast type_get_cast(TypeExpression* tgt, TypeExpression* src) {
+    switch(src->node_type) {
+        case GTYPE_INT: {
+            switch(tgt->node_type) {
+                case GTYPE_FLOAT:   return CINT_TO_FLOAT;
+                default:            break;
+            }
+        }  
+        case GTYPE_FLOAT: {
+            switch(tgt->node_type) {
+                case GTYPE_INT:     return CFLOAT_TO_INT;  
+                default:            break;
+            }
+        }
+        default: return CNONE;
+    }
+    return 0;
+}
+
+int type_is_aritmetic(TypeExpression *type) {
+    return type_max(type, &TYPE_EXPRESSION_FLOAT) || type_max(type, &TYPE_EXPRESSION_INT);
 }
 
 void free_type(TypeExpression* type) {

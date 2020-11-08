@@ -1,4 +1,4 @@
 int main() {
-    int[3] i;
-    main();
+    float[3] g;
+    g = g[3];
 }

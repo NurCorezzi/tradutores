@@ -392,6 +392,25 @@ expr_div: expr_unary div expr_div {
 
 expr_unary: unary factor {
   $$ = create_node("expr_unary");
+
+  if ($unary == NULL) {
+    $$->type = type_cpy($factor->type);
+  } else {
+    if (type_is_aritmetic($factor->type)) {
+      // Gambiarra da preguiça
+      if (strcmp($unary->id, "NOT") == 0) {
+        $factor->cast = type_get_cast(&TYPE_EXPRESSION_INT, $factor->type);  
+        $$->type = type_cpy(&TYPE_EXPRESSION_INT);
+      } else {
+        $$->type = type_cpy($factor->type);
+      }
+    } else {
+      char buffer[300] = {0};
+      sprintf(buffer, "type incompatible with operator \"%s\" ", $unary->id);
+      semantic_error(buffer);
+    }
+  }
+
   push_child($$, $1);
   push_child($$, $2);
 } 

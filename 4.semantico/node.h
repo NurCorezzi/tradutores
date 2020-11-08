@@ -1,20 +1,6 @@
 #ifndef NODE_H
 #define NODE_H
 
-typedef struct t_node {
-    // Inicio e termino da lista de filhos
-    struct t_node *beginChild;
-    struct t_node *endChild;
-    // Proximo termo da lista que termo compoe
-    struct t_node *next;
-
-    struct t_type_expression *type;
-    struct t_symbol_node *sentry;
-    char *id;
-    char *complement;
-    int t_token;
-} Node;
-
 typedef enum {
     STYPE_FUNCTION, STYPE_VARIABLE
 } SymbolType;
@@ -22,6 +8,25 @@ typedef enum {
 typedef enum {
     GTYPE_INT, GTYPE_FLOAT, GTYPE_GRAPH, GTYPE_VOID, GTYPE_ARRAY
 } GrammarType;
+
+typedef enum {
+    CNONE, CINT_TO_FLOAT, CFLOAT_TO_INT
+} Cast;
+
+typedef struct t_node {
+    // Inicio e termino da lista de filhos
+    struct t_node *beginChild;
+    struct t_node *endChild;
+    // Proximo termo da lista que termo compoe
+    struct t_node *next;
+
+    Cast cast;
+    struct t_type_expression *type;
+    struct t_symbol_node *sentry;
+    char *id;
+    char *complement;
+    int t_token;
+} Node;
 
 typedef struct t_type_expression {
     int size;
