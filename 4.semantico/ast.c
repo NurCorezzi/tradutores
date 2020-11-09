@@ -29,12 +29,12 @@ void push_child(Node *root, Node *child) {
     return;
   }
 
-  if (root->beginChild == NULL) {
-    root->beginChild = child;
-    root->endChild = child;
+  if (root->begin_child == NULL) {
+    root->begin_child = child;
+    root->end_child = child;
   } else {
-    root->endChild->next = child;
-    root->endChild = child;
+    root->end_child->next = child;
+    root->end_child = child;
   }
 }
 
@@ -48,7 +48,7 @@ void free_node(Node *node) {
 void free_tree(Node *root) {
   if (root == NULL) return;
 
-  Node *it = root->beginChild;
+  Node *it = root->begin_child;
   while (it != NULL) {
     Node *next = it->next;
     free_tree(it);
@@ -113,8 +113,8 @@ void print_tree(Node *node, int isLast) {
   print_node(node, isLast);  
   Node *it;
 
-  for (it = node->beginChild; it != NULL; it = it->next) {
-    print_tree(it, it == node->endChild);
+  for (it = node->begin_child; it != NULL; it = it->next) {
+    print_tree(it, it == node->end_child);
   }
   i_prefix -= 3;
 }

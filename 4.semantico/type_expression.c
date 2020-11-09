@@ -85,14 +85,18 @@ TypeExpression* type_array(TypeExpression* type, int size) {
 TypeExpression* type_base(GrammarType tbase) {
     TypeExpression* texpr = (TypeExpression*)calloc(1, sizeof(TypeExpression));
     texpr->node_type = tbase;
+    // Grafos funcionam como um array contendo valores em inteiro
+    if (tbase == GTYPE_GRAPH) {
+        texpr->child = type_base(GTYPE_INT);
+    }
     return texpr;
 }
 
-TypeExpression* type_build(Node *type, Node *size_specifier) {
+TypeExpression* type_build(Node *type, Node *dimension) {
     TypeExpression *build = type_base(token_to_type(type->t_token));
     // Pegar todas as dimensoes
-    if (size_specifier) {
-        Node *cur = size_specifier->beginChild;
+    if (dimension) {
+        Node *cur = dimension->begin_child;
         while(cur != NULL) {
             build = type_array(build, atoi(cur->complement));
             cur = cur->next;
@@ -151,19 +155,18 @@ TypeExpression* type_cpy(TypeExpression* src) {
 
 /**
  * Infere o tipo do nivel de acesso. 
- * 
  * @return tipo sendo acessado ou null se acesso é impossivel.
  */
-TypeExpression* type_from_access_lvl(TypeExpression* tgt, Node *size_specifier) {
+TypeExpression* type_from_access_lvl(TypeExpression* tgt, Node *access_lvl) {
     if (tgt == NULL) {
         return NULL;
     }
 
-    if (size_specifier == NULL) {
+    if (access_lvl == NULL) {
         return type_cpy(tgt);
     }
 
-    Node *cur_access = size_specifier->beginChild;
+    Node *cur_access = access_lvl->begin_child;
     TypeExpression *cur_type = tgt;
     int matches = 0;
 
@@ -175,7 +178,7 @@ TypeExpression* type_from_access_lvl(TypeExpression* tgt, Node *size_specifier) 
         }
         
         // Ainda caso acesso seja mais profundo do que o tipo
-        if (cur_type->node_type == GTYPE_ARRAY) {
+        if (cur_type->node_type == GTYPE_ARRAY || cur_type->node_type == GTYPE_GRAPH) {
             matches++;
         } else {
             matches = 0;
@@ -275,7 +278,7 @@ int type_can_assign(TypeExpression *tgt) {
     if (tgt == NULL) {
         return 0;
     }
-    return tgt->node_type == GTYPE_FLOAT || tgt->node_type == GTYPE_FLOAT;
+    return tgt->node_type == GTYPE_FLOAT || tgt->node_type == GTYPE_INT;
 }
 
 int type_is_aritmetic(TypeExpression *type) {
@@ -284,6 +287,16 @@ int type_is_aritmetic(TypeExpression *type) {
 
 int type_is_boolean(TypeExpression *type) {
     return type_max(type, &TYPE_EXPRESSION_INT) != NULL;
+}
+
+/**
+ * Tipos que podem ser retornados em funcoes
+ */
+int type_can_return(TypeExpression *tgt) {
+    if (tgt == NULL) {
+        return 0;
+    }
+    return tgt->node_type == GTYPE_FLOAT || tgt->node_type == GTYPE_INT || tgt->node_type == GTYPE_VOID;
 }
 
 void free_type(TypeExpression* type) {

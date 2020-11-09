@@ -2073,17 +2073,3 @@ void yyfree (void * ptr )
 
 #line 103 "definicao.l"
 
-
-// int main() {
-//     printf("\n****** LEGENDA: <<IDENTIFICADOR DO TOKEN>, <LEXEMA>> *******\n\n");
-
-//     while(yylex()) {
-//         printf("<%d - %s, \"%s\">\n", current_token.id, token_str[current_token.id], (char*)current_token.value);
-//         free(current_token.value);
-//     }
-
-//     yylex_destroy();
-//     return 0;
-// }
-
-

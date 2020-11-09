@@ -15,8 +15,8 @@ typedef enum {
 
 typedef struct t_node {
     // Inicio e termino da lista de filhos
-    struct t_node *beginChild;
-    struct t_node *endChild;
+    struct t_node *begin_child;
+    struct t_node *end_child;
     // Proximo termo da lista que termo compoe
     struct t_node *next;
 

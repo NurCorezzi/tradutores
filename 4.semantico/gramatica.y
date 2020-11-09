@@ -61,7 +61,7 @@ int error_recovery_mode;
 %type<node> unary and or add sub mul div factor
 %type<node> compare_op
 
-%type<node> declaration type id size_specifier
+%type<node> declaration type id dimension access_lvl
 %type<node> declaration_or_assign id_or_access graph_add expr_assign
 %type<node> value number number_int number_float boolean_const
 
@@ -78,7 +78,7 @@ expr_relational expr_and expr_or expr_add expr_sub expr_mul expr_div expr_unary
 unary and or add sub mul div factor
 compare_op
 
-declaration type id size_specifier
+declaration type id dimension access_lvl
 declaration_or_assign id_or_access graph_add expr_assign
 value number number_int number_float boolean_const
 
@@ -99,7 +99,7 @@ program: %empty {$$ = NULL;}
   $$ = create_node("program");
   if ($1 != NULL) {
     Node *it;
-    for (it = $1->beginChild; it != NULL; it = it->next) {
+    for (it = $1->begin_child; it != NULL; it = it->next) {
       push_child($$, it);
     }
     free_node($1);
@@ -108,7 +108,7 @@ program: %empty {$$ = NULL;}
 }
 ;
 
-function: type size_specifier id {
+function: type dimension id {
   // Necessario declarar funcao na tabela de simbolos antes da declaracao de seus parametros para que escopo esteja correto
   SymbolNode *match = stable_find_with_scope(symbol_table, global_scope, $id->complement, STYPE_FUNCTION);
   if (match != NULL && scope_eq(global_scope, match->scope)) {
@@ -117,9 +117,17 @@ function: type size_specifier id {
     semantic_error(buffer);
   }
 
-  TypeExpression* type = type_build($type, $size_specifier);
+  TypeExpression* type = type_build($type, $dimension);
   SymbolNode *entry = stable_create_symbol($id->complement, global_scope, STYPE_FUNCTION, type, NULL);
   symbol_table = stable_add(symbol_table, entry);
+
+  if (!type_can_return(type)) {
+    char buffer[300] = {0};
+    char *buffer1 = type_to_string(type);
+    sprintf(buffer, "type \"%s\" cannot be a return type", buffer1);
+    free(buffer1);
+    semantic_error(buffer);
+  }
 
   scope_push();
 } OPEN_P params CLOSE_P {
@@ -131,8 +139,8 @@ function: type size_specifier id {
 
   Node* decl = create_node("declaration");
   push_child(decl, $type);
-  if($size_specifier != NULL) {
-    push_child(decl, $size_specifier);
+  if($dimension != NULL) {
+    push_child(decl, $dimension);
   }
   push_child(decl, $id);
 
@@ -153,7 +161,7 @@ params: %empty {$$ = NULL;}
   $$ = create_node("params");
   
   Node *it;
-  for (it = $1->beginChild; it != NULL; it = it->next) {
+  for (it = $1->begin_child; it != NULL; it = it->next) {
     push_child($$, it);
   }
   free_node($1);
@@ -180,8 +188,8 @@ function_call: id OPEN_P params_call CLOSE_P {
     $$->type = type_cpy(match->type);
     check_params(
       match->id,
-      match->ast_node ? match->ast_node->beginChild : NULL, 
-      $params_call ? $params_call->beginChild : NULL
+      match->ast_node ? match->ast_node->begin_child : NULL, 
+      $params_call ? $params_call->begin_child : NULL
     );
   } 
 }
@@ -192,7 +200,7 @@ params_call: %empty {$$ = NULL;}
   $$ = create_node("params_call");
   
   Node *it;
-  for (it = $1->beginChild; it != NULL; it = it->next) {
+  for (it = $1->begin_child; it != NULL; it = it->next) {
     push_child($$, it);
   }
   free_node($1);
@@ -225,7 +233,7 @@ statements: %empty {$$ = NULL;} | statements statement {
 
   if ($1 != NULL) {
     Node *it;
-    for (it = $1->beginChild; it != NULL; it = it->next) {
+    for (it = $1->begin_child; it != NULL; it = it->next) {
       push_child($$, it);
     }
     free_node($1);
@@ -501,7 +509,7 @@ declaration_or_assign: declaration | declaration ASSIGN expr_assign  {
 
   // Divisao em declaracao e atribuicao
   Node* assign = create_node("assignment");
-  push_child(assign, create_node($declaration->endChild->id));
+  push_child(assign, create_node($declaration->end_child->id));
   push_child(assign, $expr_assign);
 
   push_child($$, $declaration);
@@ -509,13 +517,13 @@ declaration_or_assign: declaration | declaration ASSIGN expr_assign  {
 }
 ;
 
-declaration: type size_specifier id {
+declaration: type dimension id {
   $$ = create_node("declaration");
   push_child($$, $type);
   push_child($$, $id);
 
-  if($size_specifier != NULL) {
-    push_child($$, $size_specifier);
+  if($dimension != NULL) {
+    push_child($$, $dimension);
   }
 
   SymbolNode *match = stable_find_with_scope(symbol_table, global_scope, $id->complement, STYPE_VARIABLE);
@@ -524,7 +532,8 @@ declaration: type size_specifier id {
     sprintf(buffer, "variable \"%s\" already declared", $id->complement);
     semantic_error(buffer);
   }
-  TypeExpression* type = type_build($type, $size_specifier);
+
+  TypeExpression* type = type_build($type, $dimension);
   SymbolNode *entry = stable_create_symbol($id->complement, global_scope, STYPE_VARIABLE, type, $$);
   $$->sentry = entry;
   $$->type = type_cpy(type);
@@ -532,7 +541,7 @@ declaration: type size_specifier id {
 }
 ;
 
-size_specifier: %empty {$$ = NULL;}
+dimension: %empty {$$ = NULL;}
 | OPEN_BRACKET number_int CLOSE_BRACKET {
   // OBS: SE EM ALGUM MOMENTO MAIS DIMENSOES FOREM ADICIONADAS COLOCAR EM BEGIN/END CHILD
   $$ = create_node("dimension");
@@ -554,10 +563,10 @@ value: id_or_access {
 }
 ;
 
-id_or_access: id size_specifier {
+id_or_access: id access_lvl {
   $$ = create_node("access");
   push_child($$, $id);
-  push_child($$, $size_specifier);
+  push_child($$, $access_lvl);
     
   SymbolNode *match = stable_find_with_scope(symbol_table, global_scope, $id->complement, STYPE_VARIABLE);
 
@@ -566,7 +575,7 @@ id_or_access: id size_specifier {
     sprintf(buffer, "variable \"%s\" not found in scope", $id->complement);
     semantic_error(buffer);
   } else {
-    $$->type = type_from_access_lvl(match->type, $size_specifier);
+    $$->type = type_from_access_lvl(match->type, $access_lvl);
   
     if ($$->type == NULL) {
       char buffer[300] = {0};
@@ -574,9 +583,16 @@ id_or_access: id size_specifier {
       semantic_error(buffer);    
     }
   }
-
   $$->sentry = match;
 } 
+;
+
+access_lvl: %empty {$$ = NULL;}
+| OPEN_BRACKET expr_assign CLOSE_BRACKET {
+  // OBS: SE EM ALGUM MOMENTO MAIS DIMENSOES FOREM ADICIONADAS COLOCAR EM BEGIN/END CHILD
+  $$ = create_node("access_lvl");
+  push_child($$, $expr_assign);
+}
 ;
 
 id: ID { 
