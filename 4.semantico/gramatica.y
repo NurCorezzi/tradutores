@@ -18,6 +18,9 @@ extern char *yytext;
 int yylex_destroy ( void );
 int yylex();
 
+Node* get_params_graph_call();
+
+void check_graph_call(char *id, Node* graph_params_call);
 void check_params(char *function_id, Node *param, Node *param_call);
 void check_compare_expression(Node *tgt, Node *op1, Node *operator, Node *op2);
 void check_boolean_expression(Node *tgt, Node *op1, Node *operator, Node *op2);
@@ -212,8 +215,16 @@ params_call: %empty {$$ = NULL;}
 }
 ;
 
-graph_call: DFS graph_params_call { $$ = create_node("dfs"); push_child($$, $graph_params_call);}
-| BFS  graph_params_call          { $$ = create_node("bfs"); push_child($$, $graph_params_call);}
+graph_call: DFS graph_params_call { 
+  $$ = create_node("dfs"); 
+  push_child($$, $graph_params_call);
+  check_graph_call($$->id, $graph_params_call);
+}
+| BFS graph_params_call { 
+  $$ = create_node("bfs"); 
+  push_child($$, $graph_params_call);
+  check_graph_call($$->id, $graph_params_call);
+}
 ;
 
 graph_params_call: OPEN_P id_or_access SEPARATOR expr_assign[exp1] SEPARATOR expr_assign[exp2] CLOSE_P {
@@ -294,6 +305,8 @@ statement_prefix: IF OPEN_P expr_assign CLOSE_P statement_no_dangle ELSE {
   $$ = create_node("for_iterator");
   push_child($$, $id_or_access);
   push_child($$, $graph_call);
+
+  // TODO: id deve ser inteiro
 }
 ;
 
@@ -654,6 +667,39 @@ boolean_const: TRUE {
 
 %%
 
+/*-------------------UTILS--------------------------------*/
+
+Node* get_params_graph_call() {
+  Node* params = create_node("standalone_params");
+
+  Node* graph  = create_node("standalone_type"); graph->t_token  = GRAPH; 
+  Node* vertex = create_node("standalone_type"); vertex->t_token = INT; 
+  Node* value  = create_node("standalone_type"); value->t_token  = INT; 
+
+  graph->type  = type_build(graph, NULL);
+  vertex->type = type_build(vertex, NULL);
+  value->type  = type_build(value, NULL);
+
+  push_child(params, graph);
+  push_child(params, vertex);
+  push_child(params, value);
+
+  return params;
+}
+
+
+/*-------------------TYPE CHECK---------------------------*/
+
+void check_graph_call(char *id, Node* graph_params_call) {
+  Node* params = get_params_graph_call();
+  check_params(
+    id,
+    params ? params->begin_child : NULL, 
+    graph_params_call ? graph_params_call->begin_child : NULL
+  );
+  free_tree(params);
+}
+
 /**
  * Checa lista de parametros percorrendo sempre next dos nodes passados.
  */
@@ -720,6 +766,8 @@ void check_aritmetic_expression(Node *tgt, Node *op1, Node *operator, Node *op2)
     semantic_error(buffer);
   }
 }
+
+/*-------------------ERROR/LOG-----------------------------*/
 
 void build_incompatible_types_str(char* buffer, TypeExpression *a, TypeExpression *b) {
   char *undefined = "undefined";
