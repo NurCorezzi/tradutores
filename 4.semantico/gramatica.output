@@ -119,8 +119,8 @@ Grammar
    75           | EQ
    76           | NE
 
-   77 graph_add: ADDA OPEN_P id_or_access CLOSE_P
-   78          | ADDV OPEN_P id_or_access SEPARATOR expr_assign SEPARATOR expr_assign CLOSE_P
+   77 graph_add: ADDV OPEN_P id_or_access CLOSE_P
+   78          | ADDA OPEN_P id_or_access SEPARATOR expr_assign SEPARATOR expr_assign CLOSE_P
 
    79 declaration_or_assign: declaration
    80                      | declaration ASSIGN expr_assign
@@ -181,8 +181,8 @@ READ (273) 35
 WRITE (274) 36
 DFS (275) 15
 BFS (276) 16
-ADDA (277) 77
-ADDV (278) 78
+ADDA (277) 78
+ADDV (278) 77
 RETURN (279) 40
 AND (280) 65
 OR (281) 66
@@ -747,14 +747,14 @@ State 40
 
 State 41
 
-   77 graph_add: ADDA . OPEN_P id_or_access CLOSE_P
+   78 graph_add: ADDA . OPEN_P id_or_access SEPARATOR expr_assign SEPARATOR expr_assign CLOSE_P
 
     OPEN_P  shift, and go to state 85
 
 
 State 42
 
-   78 graph_add: ADDV . OPEN_P id_or_access SEPARATOR expr_assign SEPARATOR expr_assign CLOSE_P
+   77 graph_add: ADDV . OPEN_P id_or_access CLOSE_P
 
     OPEN_P  shift, and go to state 86
 
@@ -1330,7 +1330,7 @@ State 84
 
 State 85
 
-   77 graph_add: ADDA OPEN_P . id_or_access CLOSE_P
+   78 graph_add: ADDA OPEN_P . id_or_access SEPARATOR expr_assign SEPARATOR expr_assign CLOSE_P
 
     ID  shift, and go to state 16
 
@@ -1340,7 +1340,7 @@ State 85
 
 State 86
 
-   78 graph_add: ADDV OPEN_P . id_or_access SEPARATOR expr_assign SEPARATOR expr_assign CLOSE_P
+   77 graph_add: ADDV OPEN_P . id_or_access CLOSE_P
 
     ID  shift, and go to state 16
 
@@ -1927,16 +1927,16 @@ State 124
 
 State 125
 
-   77 graph_add: ADDA OPEN_P id_or_access . CLOSE_P
+   78 graph_add: ADDA OPEN_P id_or_access . SEPARATOR expr_assign SEPARATOR expr_assign CLOSE_P
 
-    CLOSE_P  shift, and go to state 147
+    SEPARATOR  shift, and go to state 147
 
 
 State 126
 
-   78 graph_add: ADDV OPEN_P id_or_access . SEPARATOR expr_assign SEPARATOR expr_assign CLOSE_P
+   77 graph_add: ADDV OPEN_P id_or_access . CLOSE_P
 
-    SEPARATOR  shift, and go to state 148
+    CLOSE_P  shift, and go to state 148
 
 
 State 127
@@ -2258,14 +2258,7 @@ State 146
 
 State 147
 
-   77 graph_add: ADDA OPEN_P id_or_access CLOSE_P .
-
-    $default  reduce using rule 77 (graph_add)
-
-
-State 148
-
-   78 graph_add: ADDV OPEN_P id_or_access SEPARATOR . expr_assign SEPARATOR expr_assign CLOSE_P
+   78 graph_add: ADDA OPEN_P id_or_access SEPARATOR . expr_assign SEPARATOR expr_assign CLOSE_P
 
     TRUE     shift, and go to state 36
     FALSE    shift, and go to state 37
@@ -2298,6 +2291,13 @@ State 148
     number_int       go to state 76
     number_float     go to state 77
     boolean_const    go to state 78
+
+
+State 148
+
+   77 graph_add: ADDV OPEN_P id_or_access CLOSE_P .
+
+    $default  reduce using rule 77 (graph_add)
 
 
 State 149
@@ -2480,7 +2480,7 @@ State 161
 
 State 162
 
-   78 graph_add: ADDV OPEN_P id_or_access SEPARATOR expr_assign . SEPARATOR expr_assign CLOSE_P
+   78 graph_add: ADDA OPEN_P id_or_access SEPARATOR expr_assign . SEPARATOR expr_assign CLOSE_P
 
     SEPARATOR  shift, and go to state 172
 
@@ -2639,7 +2639,7 @@ State 171
 
 State 172
 
-   78 graph_add: ADDV OPEN_P id_or_access SEPARATOR expr_assign SEPARATOR . expr_assign CLOSE_P
+   78 graph_add: ADDA OPEN_P id_or_access SEPARATOR expr_assign SEPARATOR . expr_assign CLOSE_P
 
     TRUE     shift, and go to state 36
     FALSE    shift, and go to state 37
@@ -2690,7 +2690,7 @@ State 174
 
 State 175
 
-   78 graph_add: ADDV OPEN_P id_or_access SEPARATOR expr_assign SEPARATOR expr_assign . CLOSE_P
+   78 graph_add: ADDA OPEN_P id_or_access SEPARATOR expr_assign SEPARATOR expr_assign . CLOSE_P
 
     CLOSE_P  shift, and go to state 178
 
@@ -2741,7 +2741,7 @@ State 177
 
 State 178
 
-   78 graph_add: ADDV OPEN_P id_or_access SEPARATOR expr_assign SEPARATOR expr_assign CLOSE_P .
+   78 graph_add: ADDA OPEN_P id_or_access SEPARATOR expr_assign SEPARATOR expr_assign CLOSE_P .
 
     $default  reduce using rule 78 (graph_add)
 

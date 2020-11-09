@@ -18,6 +18,8 @@ extern char *yytext;
 int yylex_destroy ( void );
 int yylex();
 
+Node* get_params_addv();
+Node* get_params_adda();
 Node* get_params_graph_call();
 
 void check_graph_call(char *id, Node* graph_params_call);
@@ -505,15 +507,31 @@ compare_op: LE  { $$ = create_node(yytname[YYTRANSLATE(yylval.id)]); }
 /*-----------------------MICRO------------------------------*/
 
 
-graph_add: ADDA OPEN_P id_or_access CLOSE_P { 
+graph_add: ADDV OPEN_P id_or_access CLOSE_P { 
   $$ = create_node("adda"); 
   push_child($$, $id_or_access);
+
+  Node* params = get_params_addv();
+  check_params(
+    $$->id,
+    params ? params->begin_child : NULL, 
+    $$ ? $$->begin_child : NULL
+  );
+  free_tree(params);
 }
-| ADDV  OPEN_P id_or_access SEPARATOR expr_assign[exp1] SEPARATOR expr_assign[exp2] CLOSE_P { 
+| ADDA OPEN_P id_or_access SEPARATOR expr_assign[exp1] SEPARATOR expr_assign[exp2] CLOSE_P { 
   $$ = create_node("addv"); 
   push_child($$, $id_or_access);
   push_child($$, $exp1);
   push_child($$, $exp2);
+
+  Node* params = get_params_adda();
+  check_params(
+    $$->id,
+    params ? params->begin_child : NULL, 
+    $$ ? $$->begin_child : NULL
+  );
+  free_tree(params);
 }
 ;
 
@@ -669,6 +687,36 @@ boolean_const: TRUE {
 
 /*-------------------UTILS--------------------------------*/
 
+Node* get_params_addv() {
+  Node* params = create_node("standalone_params");
+
+  Node* graph  = create_node("standalone_type"); graph->t_token  = GRAPH; 
+  graph->type  = type_build(graph, NULL);
+
+  push_child(params, graph);
+
+  return params;
+}
+
+Node* get_params_adda() {
+  Node* params = create_node("standalone_params");
+
+  Node* graph  = create_node("standalone_type"); graph->t_token  = GRAPH; 
+  Node* v_src  = create_node("standalone_type"); v_src->t_token  = INT; 
+  Node* v_dst  = create_node("standalone_type"); v_dst->t_token  = INT; 
+
+  graph->type  = type_build(graph, NULL);
+  v_src->type  = type_build(v_src, NULL);
+  v_dst->type  = type_build(v_dst, NULL);
+
+  push_child(params, graph);
+  push_child(params, v_src);
+  push_child(params, v_dst);
+
+  return params;
+}
+
+
 Node* get_params_graph_call() {
   Node* params = create_node("standalone_params");
 
@@ -707,12 +755,15 @@ void check_params(char *function_id, Node *param, Node *param_call) {
   if (param == NULL && param_call == NULL) {
     return;
   }
-  TypeExpression *tmax = type_max(param->type, param_call->type);
+  TypeExpression *param_type = param ? param->type : NULL;
+  TypeExpression *param_call_type = param_call ? param_call->type : NULL;
+
+  TypeExpression *tmax = type_max(param_type, param_call_type);
   if (tmax != NULL) {
-      param_call->cast = type_get_cast(param->type, param_call->type);  
+      param_call->cast = type_get_cast(param_type, param_call_type);  
   } else {
     char buffer[300] = {0}, buffer1[300] = {0};
-    build_incompatible_types_str(buffer1, param->type, param_call->type);
+    build_incompatible_types_str(buffer1, param_type, param_call_type);
     sprintf(buffer, "%s in call \"%s\"", buffer1, function_id);
     semantic_error(buffer);
   }
