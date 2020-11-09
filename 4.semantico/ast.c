@@ -28,7 +28,6 @@ void push_child(Node *root, Node *child) {
   if (child == NULL) {
     return;
   }
-
   if (root->begin_child == NULL) {
     root->begin_child = child;
     root->end_child = child;

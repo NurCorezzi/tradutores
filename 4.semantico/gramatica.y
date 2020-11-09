@@ -67,7 +67,7 @@ int error_recovery_mode;
 %type<node> compare_op
 
 %type<node> declaration type id dimension access_lvl
-%type<node> declaration_or_assign id_or_access graph_add expr_assign
+%type<node> id_or_access graph_add expr_assign
 %type<node> value number number_int number_float boolean_const
 
 %destructor { 
@@ -84,7 +84,7 @@ unary and or add sub mul div factor
 compare_op
 
 declaration type id dimension access_lvl
-declaration_or_assign id_or_access graph_add expr_assign
+id_or_access graph_add expr_assign
 value number number_int number_float boolean_const
 
 
@@ -308,7 +308,11 @@ statement_prefix: IF OPEN_P expr_assign CLOSE_P statement_no_dangle ELSE {
   push_child($$, $id_or_access);
   push_child($$, $graph_call);
 
-  // TODO: id deve ser inteiro
+  if (!type_eq(&TYPE_EXPRESSION_INT, $id_or_access->type)) {
+    char buffer[300] = {0};
+    sprintf(buffer, "receiving var in for mut be of type int ");
+    semantic_error(buffer);
+  } 
 }
 ;
 
@@ -328,7 +332,7 @@ statement_end: block
   $$ = create_node("write");
   push_child($$, $expr_assign);
 }
-| declaration_or_assign END {
+| declaration END {
   $$ = $1;
 }
 | expr_assign END {
@@ -360,6 +364,12 @@ expr_assign: expr_relational ASSIGN expr_assign {
     char buffer[300] = {0}, buffer1[300] = {0};
     build_incompatible_types_str(buffer1, $1->type, $3->type);
     sprintf(buffer, "%s with operator \"ASSIGN\"", buffer1);
+    semantic_error(buffer);
+  }
+
+  if ($expr_relational->begin_child->value_type != LVALUE) {
+    char buffer[300] = {0};
+    sprintf(buffer, "left side on \"ASSIGN\" must be an lvalue");
     semantic_error(buffer);
   }
 } 
@@ -535,19 +545,6 @@ graph_add: ADDV OPEN_P id_or_access CLOSE_P {
 }
 ;
 
-declaration_or_assign: declaration | declaration ASSIGN expr_assign  {
-  $$ = create_node("statements");
-
-  // Divisao em declaracao e atribuicao
-  Node* assign = create_node("assignment");
-  push_child(assign, create_node($declaration->end_child->id));
-  push_child(assign, $expr_assign);
-
-  push_child($$, $declaration);
-  push_child($$, assign);
-}
-;
-
 declaration: type dimension id {
   $$ = create_node("declaration");
   push_child($$, $type);
@@ -596,6 +593,7 @@ value: id_or_access {
 
 id_or_access: id access_lvl {
   $$ = create_node("access");
+  $$->value_type = LVALUE;
   push_child($$, $id);
   push_child($$, $access_lvl);
     

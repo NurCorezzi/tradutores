@@ -10,6 +10,10 @@ typedef enum {
 } GrammarType;
 
 typedef enum {
+    RVALUE, LVALUE
+} ValueType;
+
+typedef enum {
     CNONE, CINT_TO_FLOAT, CFLOAT_TO_INT
 } Cast;
 
@@ -20,6 +24,7 @@ typedef struct t_node {
     // Proximo termo da lista que termo compoe
     struct t_node *next;
 
+    ValueType value_type;
     Cast cast;
     struct t_type_expression *type;
     struct t_symbol_node *sentry;

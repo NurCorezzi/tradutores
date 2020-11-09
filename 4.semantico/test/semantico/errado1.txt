@@ -1,13 +1,16 @@
 void main() { }
 
-void main () {      // Função redeclarada
-    int a = 2;
-    int a;          // Variável redeclarada
+void main () {      
+    int a;
+    a = 2;
+    int a;        
     {
         int a;
-        outra();    // Função inexistente/fora de escopo
-        b = 2;      // Variável inexistente/fora de escopo
-        graph c = a;// Atribuição entre tipos distintos
+        outra();  
+        b = 2;    
+        graph c;
+        c = a;
+        1 = 1;
     }
 }
 

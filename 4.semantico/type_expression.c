@@ -85,7 +85,7 @@ TypeExpression* type_array(TypeExpression* type, int size) {
 TypeExpression* type_base(GrammarType tbase) {
     TypeExpression* texpr = (TypeExpression*)calloc(1, sizeof(TypeExpression));
     texpr->node_type = tbase;
-    // Grafos funcionam como um array contendo valores em inteiro
+    // Grafos tambem funcionam como um array contendo valores armazenados em vertices como inteiro
     if (tbase == GTYPE_GRAPH) {
         texpr->child = type_base(GTYPE_INT);
     }

@@ -1,10 +1,11 @@
 graph outra(int a) {
-    return a;           // Retorno incompativel
+    return a;
 }
 
 void main() {
     graph g;
-    int a = 1 + g;      // Operação aritmética com tipos incompativeis
-    outra(g);           // Argumentos incompativeis
+    int a; 
+    a = 1 + g;      
+    outra(g);          
 }
 
