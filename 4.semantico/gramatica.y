@@ -24,6 +24,7 @@ Node* get_params_graph_call();
 
 void check_graph_call(char *id, Node* graph_params_call);
 void check_params(char *function_id, Node *param, Node *param_call);
+void check_assign_expression(Node *tgt, TypeExpression *tgt_type, Node *op2);
 void check_compare_expression(Node *tgt, Node *op1, Node *operator, Node *op2);
 void check_boolean_expression(Node *tgt, Node *op1, Node *operator, Node *op2);
 void check_aritmetic_expression(Node *tgt, Node *op1, Node *operator, Node *op2);
@@ -31,6 +32,7 @@ void check_aritmetic_expression(Node *tgt, Node *op1, Node *operator, Node *op2)
 void build_incompatible_types_str(char* buffer, TypeExpression *a, TypeExpression *b);
 void yyerror (char const *s);
 void semantic_error(char const *s);
+void warning(char const *s);
 int error_recovery_mode;
 
 %}
@@ -92,6 +94,10 @@ value number number_int number_float boolean_const
 
 init: program {
   ast = $$ = $1;
+
+  if (!has_main) {
+    warning("no main function identified program will not run");
+  }
 }
 ;
 
@@ -122,6 +128,10 @@ function: type dimension id {
     semantic_error(buffer);
   }
 
+  if (strcmp($id->complement, "main") == 0) {
+    has_main = 1;
+  }
+
   TypeExpression* type = type_build($type, $dimension);
   SymbolNode *entry = stable_create_symbol($id->complement, global_scope, STYPE_FUNCTION, type, NULL);
   symbol_table = stable_add(symbol_table, entry);
@@ -134,7 +144,7 @@ function: type dimension id {
     semantic_error(buffer);
   }
 
-  scope_push();
+  scope_push(entry);
 } OPEN_P params CLOSE_P {
   // Obtencao de parametros para symbol table
   SymbolNode *entry = stable_find_with_scope(symbol_table, global_scope, $id->complement, STYPE_FUNCTION);  
@@ -316,7 +326,7 @@ statement_prefix: IF OPEN_P expr_assign CLOSE_P statement_no_dangle ELSE {
 }
 ;
 
-block: OPEN_BRACE { scope_push(); } statements CLOSE_BRACE {
+block: OPEN_BRACE { scope_push(NULL); } statements CLOSE_BRACE {
   $$ = create_node("block");
   push_child($$, $statements);
   scope_pop();
@@ -344,6 +354,15 @@ statement_end: block
 | RETURN expr_assign END {
   $$ = create_node("return");
   push_child($$, $expr_assign);
+
+  Scope* cur = scope_top();
+  if (cur == NULL || cur->function == NULL) {
+    char buffer[300] = {0};
+    sprintf(buffer, "there is no function for this return statement");
+    semantic_error(buffer);
+  } else {
+    check_assign_expression($$, cur->function->type, $expr_assign);
+  }
 }
 ;
 
@@ -355,17 +374,7 @@ expr_assign: expr_relational ASSIGN expr_assign {
   $$ = create_node("expr_assign");
   push_child($$, $1);
   push_child($$, $3);
-
-  TypeExpression *tmax = type_max($1->type, $3->type);
-  if (type_can_assign($1->type) && tmax) {
-      $3->cast = type_get_cast($1->type, $3->type);  
-      $$->type = type_cpy($1->type);
-  } else {
-    char buffer[300] = {0}, buffer1[300] = {0};
-    build_incompatible_types_str(buffer1, $1->type, $3->type);
-    sprintf(buffer, "%s with operator \"ASSIGN\"", buffer1);
-    semantic_error(buffer);
-  }
+  check_assign_expression($$, $1->type, $3);
 
   if ($expr_relational->begin_child->value_type != LVALUE) {
     char buffer[300] = {0};
@@ -561,6 +570,13 @@ declaration: type dimension id {
     semantic_error(buffer);
   }
 
+  if ($type->t_token == VOID) {
+    char buffer[300] = {0};
+    sprintf(buffer, "\"VOID\" cannot be a type");
+    semantic_error(buffer);
+  }
+
+
   TypeExpression* type = type_build($type, $dimension);
   SymbolNode *entry = stable_create_symbol($id->complement, global_scope, STYPE_VARIABLE, type, $$);
   $$->sentry = entry;
@@ -617,10 +633,18 @@ id_or_access: id access_lvl {
 ;
 
 access_lvl: %empty {$$ = NULL;}
-| OPEN_BRACKET expr_assign CLOSE_BRACKET {
+| OPEN_BRACKET expr_assign CLOSE_BRACKET access_lvl[next_access] {
   // OBS: SE EM ALGUM MOMENTO MAIS DIMENSOES FOREM ADICIONADAS COLOCAR EM BEGIN/END CHILD
   $$ = create_node("access_lvl");
   push_child($$, $expr_assign);
+
+  if ($next_access) {
+    Node *it;
+    for (it = $next_access->begin_child; it != NULL; it = it->next) {
+      push_child($$, it);
+    }
+    free_node($next_access);
+  }
 }
 ;
 
@@ -772,6 +796,22 @@ void check_params(char *function_id, Node *param, Node *param_call) {
   );
 }
 
+/**
+ * Também usado para checar tipo em return statement.
+ */
+void check_assign_expression(Node *tgt, TypeExpression *tgt_type, Node *op2) {
+  TypeExpression *tmax = type_max(tgt_type, op2->type);
+  if (type_can_assign(tgt_type) && tmax) {
+      op2->cast = type_get_cast(tgt_type, op2->type);  
+      tgt->type = type_cpy(tgt_type);
+  } else {
+    char buffer[300] = {0}, buffer1[300] = {0};
+    build_incompatible_types_str(buffer1, tgt_type, op2->type);
+    sprintf(buffer, "%s with operator \"ASSIGN/RETURN\"", buffer1);
+    semantic_error(buffer);
+  }
+}
+
 void check_compare_expression(Node *tgt, Node *op1, Node *operator, Node *op2) {
   TypeExpression *tmax = type_max(op1->type, op2->type);
   if (type_is_aritmetic(tmax)) {
@@ -847,8 +887,12 @@ void semantic_error(char const *s) {
     s);
 }
 
+void warning(char const *s) {
+  printf("\033[01;33mwarning\033[0;0m: %s\n", s);
+}
+
 int main() {
-  scope_push();
+  scope_push(NULL);
   yyparse();
 
   printf("\n>>>>>>>>>>AST<<<<<<<<<<<\n\n");

@@ -41,6 +41,7 @@ typedef struct t_type_expression {
 
 typedef struct t_scope {
     int id;
+    struct t_symbol_node *function;
     struct t_scope *child;
 } Scope;
 typedef struct t_symbol_node {
@@ -61,12 +62,13 @@ SymbolNode *symbol_table;
 Node *ast;
 Scope *global_scope;
 int scope_count;
+int has_main;
 
 char* type_to_string(TypeExpression* type);
 TypeExpression* type_cpy(TypeExpression* src);
 GrammarType token_to_type(int token);
 
-void scope_push();
+void scope_push(SymbolNode *function);
 void scope_pop();
 
 #endif

@@ -26,10 +26,10 @@ char* gtype_to_string(TypeExpression* type) {
     char buffer[200] = {0};
     
     switch(type->node_type) {
-        case GTYPE_INT:     sprintf(buffer, "%s", "int"); break;  
-        case GTYPE_FLOAT:   sprintf(buffer, "%s", "float"); break;  
+        case GTYPE_INT:     sprintf(buffer, "%s", "<int>"); break;  
+        case GTYPE_FLOAT:   sprintf(buffer, "%s", "<float>"); break;  
         case GTYPE_GRAPH:   sprintf(buffer, "%s", "graph"); break;  
-        case GTYPE_VOID:    sprintf(buffer, "%s", "void"); break;  
+        case GTYPE_VOID:    sprintf(buffer, "%s", "<void>"); break;  
         case GTYPE_ARRAY:   sprintf(buffer, "[%d]", type->size); break;
         default:            sprintf(buffer, "%s", "NONE");
     }

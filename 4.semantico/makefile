@@ -4,7 +4,7 @@ input_default=input.txt
 all:
 	bison -d -Wempty-rule -Wconflicts-sr --verbose gramatica.y
 	flex definicao.l
-	gcc -g -Wall lex.yy.c gramatica.tab.c -o ${prog_name}
+	gcc -g -Wall -Wextra lex.yy.c gramatica.tab.c -o ${prog_name}
 
 r:
 	./${prog_name} < ${input_default}
