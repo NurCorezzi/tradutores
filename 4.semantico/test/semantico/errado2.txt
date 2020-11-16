@@ -1,11 +1,12 @@
-graph outra(int a) {
-    return a;
+graph outra(int a) {    
+    return a;           
 }
 
-void main() {
+void main() {           
     graph g;
     int a; 
-    a = 1 + g;      
-    outra(g);          
+    a = 1 + g;          
+    outra(g);           
+    outra();            
 }
 

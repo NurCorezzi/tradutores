@@ -6,13 +6,18 @@ boolean outra(int outro, boolean outro, graph outro) {
 }
 
 float main() {
-    int a = b = c;
+    int a;
+    int b;
+    int c;
+    int[10] outro;
+    a = b = c;
     if (a && b) {
-    } else if (b >= outro != s){
+    } else if (b >= outro[2] != c){
         while(a) {}
-        for (int b;a;a) {}
+        for (b;a;a) {}
         if (a * 10.4) {}
     }
-    for (int a: bfs(a,1,1)) {}
+    int a;
+    for (a: bfs(a,1,1)) {}
     >> outro[10];
 }

@@ -1,3 +1,4 @@
-int main() {
-    graph p;
+void main() {
+    int[10] a;
+    a[1] = a[2];
 }

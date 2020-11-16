@@ -1,9 +1,9 @@
-    <init> ::= <program>
+   <init> ::= <program>
 
      <program> ::= $\epsilon$
             \alt <program> <function>
 
-     <function> ::= <type> <id> '(' <params> ')' <block>
+     <function> ::= <type> <dimension> <id> '(' <params> ')' <block>
 
      <params> ::= $\epsilon$
            \alt <params> ',' <declaration>
@@ -35,7 +35,7 @@
 
     <statement-prefix> ::= 'if' '(' <expr-assign> ')' <statement-no-dangle> 'else'
                     \alt 'while' '(' <expr-assign> ')'
-                    \alt 'for' '(' <declaration-or-assign> ';' <expr-assign> ';' <expr-assign> ')'
+                    \alt 'for' '(' <declaration> ';' <expr-assign> ';' <expr-assign> ')'
                     \alt 'for' '(' <declaration> ':' <graph-call> ')'
 
     <block> ::= '\{' <statements> '\}'
@@ -43,7 +43,7 @@
     <statement-end> ::= <block>
                  \alt '$>>$' <id-or-access> ';'
                  \alt '\textless\textless' <expr-assign> ';'
-                 \alt <declaration-or-assign> ';'
+                 \alt <declaration> ';'
                  \alt <expr-assign> ';'
                  \alt <graph-add> ';'
                  \alt 'return' <expr-assign> ';'
@@ -97,14 +97,12 @@
 
     <compare-op> ::= '\textless' | '\textless=' |'$>$' |'$>$=' | '==' | '!='
 
-    <graph-add> ::= <id> '[' <expr-assign> 'to' <expr-assign> ']'
+    <graph-add> ::= 'addv' '(' <id-or-access> ')'
+        \alt 'adda' '(' <id-or-access> ',' <expr-assign> ',' <expr-assign> ')'
 
-    <declaration-or-assign> ::= <declaration>
-                         \alt <declaration> '=' <expr-assign>
+    <declaration> ::= <type> <dimension> <id>
 
-    <declaration> ::= <type> <size-specifier> <id>
-
-    <size-specifier> ::= $\epsilon$
+    <dimension> ::= $\epsilon$
                   \alt '[' <number-int> ']'
 
     <value> ::= <id-or-access>
@@ -112,7 +110,10 @@
          \alt <boolean-const>
 
     <id-or-access> ::= <id>
-                \alt <id> '[' <number-int> ']'
+                \alt <id> <access-lvl>
+
+    <access-lvl> ::= $\epsilon$
+                  \alt '[' <expr-assign> ']' <access-lvl>
 
     <type> ::= 'int'
         \alt 'boolean'

@@ -784,7 +784,7 @@ void check_params(char *function_id, Node *param, Node *param_call) {
   if (tmax != NULL) {
       param_call->cast = type_get_cast(param_type, param_call_type);  
   } else {
-    char buffer[300] = {0}, buffer1[300] = {0};
+    char buffer[400] = {0}, buffer1[300] = {0};
     build_incompatible_types_str(buffer1, param_type, param_call_type);
     sprintf(buffer, "%s in call \"%s\"", buffer1, function_id);
     semantic_error(buffer);
@@ -805,7 +805,7 @@ void check_assign_expression(Node *tgt, TypeExpression *tgt_type, Node *op2) {
       op2->cast = type_get_cast(tgt_type, op2->type);  
       tgt->type = type_cpy(tgt_type);
   } else {
-    char buffer[300] = {0}, buffer1[300] = {0};
+    char buffer[400] = {0}, buffer1[300] = {0};
     build_incompatible_types_str(buffer1, tgt_type, op2->type);
     sprintf(buffer, "%s with operator \"ASSIGN/RETURN\"", buffer1);
     semantic_error(buffer);
@@ -819,7 +819,7 @@ void check_compare_expression(Node *tgt, Node *op1, Node *operator, Node *op2) {
       op2->cast = type_get_cast(tmax, op2->type);  
       tgt->type = type_cpy(&TYPE_EXPRESSION_BOOLEAN);
   } else {
-    char buffer[300] = {0}, buffer1[300] = {0};
+    char buffer[400] = {0}, buffer1[300] = {0};
     build_incompatible_types_str(buffer1, op1->type, op2->type);
     sprintf(buffer, "%s with operator \"%s\" ", buffer1, operator->id);
     semantic_error(buffer);
@@ -835,7 +835,7 @@ void check_boolean_expression(Node *tgt, Node *op1, Node *operator, Node *op2) {
       op2->cast = type_get_cast(&TYPE_EXPRESSION_BOOLEAN, op2->type);  
       tgt->type = type_cpy(&TYPE_EXPRESSION_BOOLEAN);
   } else {
-    char buffer[300] = {0}, buffer1[300] = {0};
+    char buffer[400] = {0}, buffer1[300] = {0};
     build_incompatible_types_str(buffer1, op1->type, op2->type);
     sprintf(buffer, "%s with operator \"%s\" ", buffer1, operator->id);
     semantic_error(buffer);
@@ -849,7 +849,7 @@ void check_aritmetic_expression(Node *tgt, Node *op1, Node *operator, Node *op2)
       op2->cast = type_get_cast(tmax, op2->type);  
       tgt->type = type_cpy(tmax);
   } else {
-    char buffer[300] = {0}, buffer1[300] = {0};
+    char buffer[400] = {0}, buffer1[300] = {0};
     build_incompatible_types_str(buffer1, op1->type, op2->type);
     sprintf(buffer, "%s with operator \"%s\" ", buffer1, operator->id);
     semantic_error(buffer);
