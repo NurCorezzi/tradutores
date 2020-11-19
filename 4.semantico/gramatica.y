@@ -18,6 +18,12 @@ extern char *yytext;
 int yylex_destroy ( void );
 int yylex();
 
+SymbolNode *symbol_table;
+Node *ast;
+Scope *global_scope;
+int scope_count;
+int has_main;
+
 Node* get_params_addv();
 Node* get_params_adda();
 Node* get_params_graph_call();
@@ -144,7 +150,7 @@ function: type dimension id {
     semantic_error(buffer);
   }
 
-  scope_push(entry);
+  scope_push(&global_scope, &scope_count, entry);
 } OPEN_P params CLOSE_P {
   // Obtencao de parametros para symbol table
   SymbolNode *entry = stable_find_with_scope(symbol_table, global_scope, $id->complement, STYPE_FUNCTION);  
@@ -166,7 +172,7 @@ function: type dimension id {
   push_child($$, $params);
   push_child($$, block);
 
-  scope_pop();
+  scope_pop(&global_scope);
 }
 | error { error_recovery_mode = 0; $$ = NULL; }
 ;
@@ -326,10 +332,12 @@ statement_prefix: IF OPEN_P expr_assign CLOSE_P statement_no_dangle ELSE {
 }
 ;
 
-block: OPEN_BRACE { scope_push(NULL); } statements CLOSE_BRACE {
+block: OPEN_BRACE {  
+  scope_push(&global_scope, &scope_count, NULL); 
+} statements CLOSE_BRACE {
   $$ = create_node("block");
   push_child($$, $statements);
-  scope_pop();
+  scope_pop(&global_scope);
 }
 ;
 
@@ -355,7 +363,7 @@ statement_end: block
   $$ = create_node("return");
   push_child($$, $expr_assign);
 
-  Scope* cur = scope_top();
+  Scope* cur = scope_top(global_scope);
   if (cur == NULL || cur->function == NULL) {
     char buffer[300] = {0};
     sprintf(buffer, "there is no function for this return statement");
@@ -892,7 +900,7 @@ void warning(char const *s) {
 }
 
 int main() {
-  scope_push(NULL);
+  scope_push(&global_scope, &scope_count, NULL);
   yyparse();
 
   printf("\n>>>>>>>>>>AST<<<<<<<<<<<\n\n");

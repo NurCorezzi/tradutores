@@ -58,17 +58,11 @@ typedef struct t_symbol_node {
     struct t_symbol_node *next;
 } SymbolNode;
 
-SymbolNode *symbol_table;
-Node *ast;
-Scope *global_scope;
-int scope_count;
-int has_main;
-
 char* type_to_string(TypeExpression* type);
 TypeExpression* type_cpy(TypeExpression* src);
 GrammarType token_to_type(int token);
 
-void scope_push(SymbolNode *function);
-void scope_pop();
+void scope_push(Scope **global_scope, int *scope_count, SymbolNode *function);
+void scope_pop(Scope **global_scope);
 
 #endif

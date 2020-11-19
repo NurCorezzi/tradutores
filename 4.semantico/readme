@@ -1,5 +1,6 @@
-Versão flex: flex 2.6.4
-Versão GCC: gcc (Ubuntu 7.5.0-3ubuntu1~18.04) 7.5.0
+Versão flex:    flex 2.6.4
+Versão GCC:     gcc (Ubuntu 7.5.0-3ubuntu1~18.04) 7.5.0
+Versão Bison:   bison (GNU Bison) 3.0.4
 
 - Para compilar utilize comando "make" na pasta contendo arquivo makefile.
 - Para executar os arquivos utilize o comando "./tradutor.out < <nome do arquivo>" para redirecionar stdin.

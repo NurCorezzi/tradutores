@@ -108,9 +108,9 @@ void free_scope(Scope* scope) {
   free_node_scope(scope);
 }
 
-void scope_push(SymbolNode *function) {
-  Scope** base = &global_scope;
-  Scope *child = scope_create(scope_count++);
+void scope_push(Scope **global_scope, int *scope_count, SymbolNode *function) {
+  Scope** base = global_scope;
+  Scope *child = scope_create((*scope_count)++);
   child->function = function;
   if ((*base) == NULL) {
     (*base) = child;
@@ -127,8 +127,8 @@ void scope_push(SymbolNode *function) {
   cur->child = child;
 }
 
-void scope_pop() {
-  Scope** base = &global_scope;
+void scope_pop(Scope **global_scope) {
+  Scope** base = global_scope;
   if ((*base) == NULL) {
     return;
   }
@@ -147,7 +147,7 @@ void scope_pop() {
   }
 }
 
-Scope* scope_top() {
+Scope* scope_top(Scope *global_scope) {
   Scope* base = global_scope;
   if (base == NULL) {
     return NULL;
