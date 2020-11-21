@@ -58,7 +58,6 @@ int				{ buildToken(INT); return INT; }
 float			{ buildToken(FLOAT); return FLOAT; }
 void			{ buildToken(VOID); return VOID; }
 graph			{ buildToken(GRAPH); return GRAPH; }
-to              { buildToken(TO); return TO; }
 
 true            { buildToken(TRUE); return TRUE; }
 false           { buildToken(FALSE); return FALSE; }

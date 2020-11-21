@@ -49,7 +49,7 @@ int error_recovery_mode;
 
 %token IF ELSE FOR WHILE 
 %token BOOLEAN INT FLOAT GRAPH VOID
-%token TO TRUE FALSE
+%token TRUE FALSE
 %token ID C_FLOAT C_INT
 %token READ WRITE 
 %token DFS BFS ADDA ADDV RETURN
@@ -395,7 +395,7 @@ expr_assign: expr_relational ASSIGN expr_assign {
 }
 ;
 
-expr_relational: expr_and compare_op expr_relational {
+expr_relational: expr_relational compare_op expr_and {
   $$ = create_node("expr_relational");
   push_child($$, $1);
   push_child($$, $2);
@@ -405,7 +405,7 @@ expr_relational: expr_and compare_op expr_relational {
 | expr_and 
 ;
 
-expr_and: expr_or and expr_and {
+expr_and: expr_and and expr_or {
   $$ = create_node("expr_and");
   push_child($$, $1);
   push_child($$, $3);
@@ -416,7 +416,7 @@ expr_and: expr_or and expr_and {
 | expr_or
 ;
 
-expr_or: expr_add or expr_or {
+expr_or: expr_or or expr_add {
   $$ = create_node("expr_or");
   push_child($$, $1);
   push_child($$, $3);
@@ -427,7 +427,7 @@ expr_or: expr_add or expr_or {
 | expr_add
 ;
 
-expr_add: expr_sub add expr_add {
+expr_add: expr_add add expr_sub {
   $$ = create_node("expr_add");
   push_child($$, $1);
   push_child($$, $3);
@@ -438,7 +438,7 @@ expr_add: expr_sub add expr_add {
 | expr_sub
 ;
 
-expr_sub: expr_mul sub expr_sub {
+expr_sub: expr_sub sub expr_mul {
   $$ = create_node("expr_sub");
   push_child($$, $1);
   push_child($$, $3);
@@ -449,7 +449,7 @@ expr_sub: expr_mul sub expr_sub {
 | expr_mul
 ;
 
-expr_mul: expr_div mul expr_mul {
+expr_mul: expr_mul mul expr_div {
   $$ = create_node("expr_mul");
   push_child($$, $1);
   push_child($$, $3);
@@ -460,7 +460,7 @@ expr_mul: expr_div mul expr_mul {
 | expr_div
 ;
 
-expr_div: expr_unary div expr_div {
+expr_div: expr_div div expr_unary {
   $$ = create_node("expr_div");
   push_child($$, $1);
   push_child($$, $3);
