@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        .non-term {
+            font-style: italic;
+            font-weight: bold;
+            text-align:end; 
+            width: 170px;
+        }
+
+        .rule {
+            display: flex; 
+            align-items: center;
+        }
+
+        .rule-group {
+            padding-bottom: 20px;
+        }
+
+        .row {
+            display: flex;
+        }
+        
+    </style>
+</head>
+<body>
+    <div class="row">
+        <div class="column">
+            <div class="rule-group">
+                <div class="rule">
+                    <div class="non-term" >ws</div>    
+                    <div class="arrow" style="text-align:end; font-size: 20px;padding: 0px 10px;">→</div>    
+                    <div class="rules" style="text-align:end">[ \t\n]</div>    
+                </div>
+                <div class="rule">
+                    <div class="non-term" >letter</div>    
+                    <div class="arrow" style="text-align:end; font-size: 20px;padding: 0px 10px;">→</div>    
+                    <div class="rules" style="text-align:end">[A-Za-z]</div>    
+                </div>
+                <div class="rule">
+                    <div class="non-term" >digit</div>    
+                    <div class="arrow" style="text-align:end; font-size: 20px;padding: 0px 10px;">→</div>    
+                    <div class="rules" style="text-align:end">[0-9]</div>    
+                </div>
+            </div>
+        
+            <div class="rule-group">
+                <div class="rule">
+                    <div class="non-term" >if</div>    
+                    <div class="arrow" style="text-align:end; font-size: 20px;padding: 0px 10px;">→</div>    
+                    <div class="rules" style="text-align:end">if</div>    
+                </div>
+                <div class="rule">
+                    <div class="non-term" >else</div>    
+                    <div class="arrow" style="text-align:end; font-size: 20px;padding: 0px 10px;">→</div>    
+                    <div class="rules" style="text-align:end">else</div>    
+                </div>
+                <div class="rule">
+                    <div class="non-term" >for</div>    
+                    <div class="arrow" style="text-align:end; font-size: 20px;padding: 0px 10px;">→</div>    
+                    <div class="rules" style="text-align:end">for</div>    
+                </div>
+                <div class="rule">
+                    <div class="non-term" >while</div>    
+                    <div class="arrow" style="text-align:end; font-size: 20px;padding: 0px 10px;">→</div>    
+                    <div class="rules" style="text-align:end">while</div>    
+                </div>
+            </div>
+        
+            <div class="rule-group">
+                <div class="rule">
+                    <div class="non-term" >boolean</div>    
+                    <div class="arrow" style="text-align:end; font-size: 20px;padding: 0px 10px;">→</div>    
+                    <div class="rules" style="text-align:end">boolean</div>    
+                </div>
+                <div class="rule">
+                    <div class="non-term" >int</div>    
+                    <div class="arrow" style="text-align:end; font-size: 20px;padding: 0px 10px;">→</div>    
+                    <div class="rules" style="text-align:end">int</div>    
+                </div>
+                <div class="rule">
+                    <div class="non-term" >float</div>    
+                    <div class="arrow" style="text-align:end; font-size: 20px;padding: 0px 10px;">→</div>    
+                    <div class="rules" style="text-align:end">float</div>    
+                </div>
+                <div class="rule">
+                    <div class="non-term" >void</div>    
+                    <div class="arrow" style="text-align:end; font-size: 20px;padding: 0px 10px;">→</div>    
+                    <div class="rules" style="text-align:end">void</div>    
+                </div>
+                <div class="rule">
+                    <div class="non-term" >graph</div>    
+                    <div class="arrow" style="text-align:end; font-size: 20px;padding: 0px 10px;">→</div>    
+                    <div class="rules" style="text-align:end">graph</div>    
+                </div>
+                <div class="rule">
+                    <div class="non-term" >to</div>    
+                    <div class="arrow" style="text-align:end; font-size: 20px;padding: 0px 10px;">→</div>    
+                    <div class="rules" style="text-align:end">to</div>    
+                </div>    
+            </div>
+        
+            <div class="rule-group">
+                <div class="rule">
+                    <div class="non-term" >true</div>    
+                    <div class="arrow" style="text-align:end; font-size: 20px;padding: 0px 10px;">→</div>    
+                    <div class="rules" style="text-align:end">true</div>    
+                </div>
+                <div class="rule">
+                    <div class="non-term" >false</div>    
+                    <div class="arrow" style="text-align:end; font-size: 20px;padding: 0px 10px;">→</div>    
+                    <div class="rules" style="text-align:end">false</div>    
+                </div>    
+            </div>
+        
+            <div class="rule-group">
+                <div class="rule">
+                    <div class="non-term" >dfs</div>    
+                    <div class="arrow" style="text-align:end; font-size: 20px;padding: 0px 10px;">→</div>    
+                    <div class="rules" style="text-align:end">dfs</div>    
+                </div>
+                <div class="rule">
+                    <div class="non-term" >bfs</div>    
+                    <div class="arrow" style="text-align:end; font-size: 20px;padding: 0px 10px;">→</div>    
+                    <div class="rules" style="text-align:end">bfs</div>    
+                </div>
+                <div class="rule">
+                    <div class="non-term" >return</div>    
+                    <div class="arrow" style="text-align:end; font-size: 20px;padding: 0px 10px;">→</div>    
+                    <div class="rules" style="text-align:end">return</div>    
+                </div>    
+            </div>
+        
+            <div class="rule-group">
+                <div class="rule">
+                    <div class="non-term" >id</div>    
+                    <div class="arrow" style="text-align:end; font-size: 20px;padding: 0px 10px;">→</div>    
+                    <div class="rules" style="text-align:end">(<span class="non-term">letter</span>) (<span class="non-term">letter</span> | <span class="non-term">digit</span> | _ )*</div>    
+                </div>
+                <div class="rule">
+                    <div class="non-term" >number</div>    
+                    <div class="arrow" style="text-align:end; font-size: 20px;padding: 0px 10px;">→</div>    
+                    <div class="rules" style="text-align:end">(<span class="non-term">digit</span>)+ (. <span class="non-term">digit</span>+)?</div>    
+                </div>    
+            </div>
+        </div>
+        
+        <div class="column">
+            <div class="rule">
+                <div class="non-term" >read</div>    
+                <div class="arrow" style="text-align:end; font-size: 20px;padding: 0px 10px;">→</div>    
+                <div class="rules" style="text-align:end">>></div>    
+            </div>
+            <div class="rule">
+                <div class="non-term" >write</div>    
+                <div class="arrow" style="text-align:end; font-size: 20px;padding: 0px 10px;">→</div>    
+                <div class="rules" style="text-align:end"><<</div>    
+            </div>
+            <div class="rule">
+                <div class="non-term" >and</div>    
+                <div class="arrow" style="text-align:end; font-size: 20px;padding: 0px 10px;">→</div>    
+                <div class="rules" style="text-align:end">&&</div>    
+            </div>
+            <div class="rule">
+                <div class="non-term" >or</div>    
+                <div class="arrow" style="text-align:end; font-size: 20px;padding: 0px 10px;">→</div>    
+                <div class="rules" style="text-align:end">||</div>    
+            </div>
+            <div class="rule">
+                <div class="non-term" >le</div>    
+                <div class="arrow" style="text-align:end; font-size: 20px;padding: 0px 10px;">→</div>    
+                <div class="rules" style="text-align:end"><=</div>    
+            </div>
+            <div class="rule">
+                <div class="non-term" >ge</div>    
+                <div class="arrow" style="text-align:end; font-size: 20px;padding: 0px 10px;">→</div>    
+                <div class="rules" style="text-align:end">>=</div>    
+            </div>
+            <div class="rule">
+                <div class="non-term" >less</div>    
+                <div class="arrow" style="text-align:end; font-size: 20px;padding: 0px 10px;">→</div>    
+                <div class="rules" style="text-align:end"><</div>    
+            </div>
+            <div class="rule">
+                <div class="non-term" >greater</div>    
+                <div class="arrow" style="text-align:end; font-size: 20px;padding: 0px 10px;">→</div>    
+                <div class="rules" style="text-align:end">></div>    
+            </div>
+            <div class="rule">
+                <div class="non-term" >eq</div>    
+                <div class="arrow" style="text-align:end; font-size: 20px;padding: 0px 10px;">→</div>    
+                <div class="rules" style="text-align:end">==</div>    
+            </div>
+            <div class="rule">
+                <div class="non-term" >ne</div>    
+                <div class="arrow" style="text-align:end; font-size: 20px;padding: 0px 10px;">→</div>    
+                <div class="rules" style="text-align:end">!=</div>    
+            </div>
+            <div class="rule">
+                <div class="non-term" >not</div>    
+                <div class="arrow" style="text-align:end; font-size: 20px;padding: 0px 10px;">→</div>    
+                <div class="rules" style="text-align:end">!</div>    
+            </div>
+            <div class="rule">
+                <div class="non-term" >mul</div>    
+                <div class="arrow" style="text-align:end; font-size: 20px;padding: 0px 10px;">→</div>    
+                <div class="rules" style="text-align:end">*</div>    
+            </div>
+            <div class="rule">
+                <div class="non-term" >div/</div>    
+                <div class="arrow" style="text-align:end; font-size: 20px;padding: 0px 10px;">→</div>    
+                <div class="rules" style="text-align:end">/</div>    
+            </div>
+            <div class="rule">
+                <div class="non-term" >sum</div>    
+                <div class="arrow" style="text-align:end; font-size: 20px;padding: 0px 10px;">→</div>    
+                <div class="rules" style="text-align:end">+</div>    
+            </div>
+            <div class="rule">
+                <div class="non-term" >sub</div>    
+                <div class="arrow" style="text-align:end; font-size: 20px;padding: 0px 10px;">→</div>    
+                <div class="rules" style="text-align:end">-</div>    
+            </div>
+            <div class="rule">
+                <div class="non-term" >assign</div>    
+                <div class="arrow" style="text-align:end; font-size: 20px;padding: 0px 10px;">→</div>    
+                <div class="rules" style="text-align:end">=</div>    
+            </div>
+            <div class="rule">
+                <div class="non-term" >end</div>    
+                <div class="arrow" style="text-align:end; font-size: 20px;padding: 0px 10px;">→</div>    
+                <div class="rules" style="text-align:end">;</div>    
+            </div>
+            <div class="rule">
+                <div class="non-term" >open_brace</div>    
+                <div class="arrow" style="text-align:end; font-size: 20px;padding: 0px 10px;">→</div>    
+                <div class="rules" style="text-align:end">{</div>    
+            </div>
+            <div class="rule">
+                <div class="non-term" >close_brace</div>    
+                <div class="arrow" style="text-align:end; font-size: 20px;padding: 0px 10px;">→</div>    
+                <div class="rules" style="text-align:end">}</div>    
+            </div>
+            <div class="rule">
+                <div class="non-term" >it</div>    
+                <div class="arrow" style="text-align:end; font-size: 20px;padding: 0px 10px;">→</div>    
+                <div class="rules" style="text-align:end">:</div>    
+            </div>
+            <div class="rule">
+                <div class="non-term" >separator</div>    
+                <div class="arrow" style="text-align:end; font-size: 20px;padding: 0px 10px;">→</div>    
+                <div class="rules" style="text-align:end">,</div>    
+            </div>
+            <div class="rule">
+                <div class="non-term" >open_p</div>    
+                <div class="arrow" style="text-align:end; font-size: 20px;padding: 0px 10px;">→</div>    
+                <div class="rules" style="text-align:end">(</div>    
+            </div>
+            <div class="rule">
+                <div class="non-term" >close_p</div>    
+                <div class="arrow" style="text-align:end; font-size: 20px;padding: 0px 10px;">→</div>    
+                <div class="rules" style="text-align:end">)</div>    
+            </div>
+            <div class="rule">
+                <div class="non-term" >open_bracket</div>    
+                <div class="arrow" style="text-align:end; font-size: 20px;padding: 0px 10px;">→</div>    
+                <div class="rules" style="text-align:end">[</div>    
+            </div>
+            <div class="rule">
+                <div class="non-term" >close_bracket</div>    
+                <div class="arrow" style="text-align:end; font-size: 20px;padding: 0px 10px;">→</div>    
+                <div class="rules" style="text-align:end">]</div>    
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

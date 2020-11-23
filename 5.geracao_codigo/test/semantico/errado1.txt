@@ -1,0 +1,17 @@
+void main() { }
+
+void main () {      
+    int a;
+    a = 2;          
+    int a;          
+    {
+        int a;      
+        outra();    
+        b = 2;      
+        graph c;   
+        c = a;      
+        1 = 1;     
+    }
+    int b;
+}
+

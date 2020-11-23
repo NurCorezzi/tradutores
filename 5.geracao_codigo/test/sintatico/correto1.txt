@@ -1,0 +1,10 @@
+void main() {
+    graph g;
+    addv(g);
+    adda(g, 0, 2);
+    g[0] = g[2] = 1;
+    int vertice;
+    for (vertice : dfs(g, 0, 1)) {
+        << vertice;
+    }
+}

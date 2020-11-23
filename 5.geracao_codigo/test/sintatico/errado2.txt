@@ -1,0 +1,9 @@
+void main() {
+    >>;
+    for (int i : vdsf(a, 1, 2)) {
+
+    }
+    if () {}
+    g[1.2];
+}
+

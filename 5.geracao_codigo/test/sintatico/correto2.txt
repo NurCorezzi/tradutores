@@ -1,0 +1,23 @@
+
+boolean outra(int outro, boolean outro, graph outro) {
+    << outro;
+    if (a) << outro; else {}
+    return true || false;
+}
+
+float main() {
+    int a;
+    int b;
+    int c;
+    int[10] outro;
+    a = b = c;
+    if (a && b) {
+    } else if (b >= outro[2] != c){
+        while(a) {}
+        for (b;a;a) {}
+        if (a * 10.4) {}
+    }
+    int a;
+    for (a: bfs(a,1,1)) {}
+    >> outro[10];
+}
