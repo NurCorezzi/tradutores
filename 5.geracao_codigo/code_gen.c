@@ -160,12 +160,12 @@ void print_inst(Instruction *inst) {
         sprintf(label, "%s:\n", inst->label->value);
 
     switch (inst->inst_code) {
-        case TAC_ADD:     sprintf(buffer, "add");                                                           break;
-        case TAC_SUB:     sprintf(buffer, "sub");                                                           break;
-        case TAC_MUL:     sprintf(buffer, "mul");                                                           break;
+        case TAC_ADD:     sprintf(buffer, "%sadd %s, %s, %s", label, field[0], field[1], field[2]);         break;
+        case TAC_SUB:     sprintf(buffer, "%ssub %s, %s, %s", label, field[0], field[1], field[2]);         break;
+        case TAC_MUL:     sprintf(buffer, "%smul %s, %s, %s", label, field[0], field[1], field[2]);         break;
         case TAC_DIV:     sprintf(buffer, "%sdiv %s, %s, %s", label, field[0], field[1], field[2]);         break;
-        case TAC_AND:     sprintf(buffer, "and");                                                           break;
-        case TAC_OR:      sprintf(buffer, "or");                                                            break;
+        case TAC_AND:     sprintf(buffer, "%sand %s, %s, %s", label, field[0], field[1], field[2]);         break;
+        case TAC_OR:      sprintf(buffer, "%sor %s, %s, %s",  label, field[0], field[1], field[2]);         break;
         case TAC_MINUS:   sprintf(buffer, "minus");                                                         break;
         case TAC_NOT:     sprintf(buffer, "not");                                                           break;
         case TAC_SEQ:     sprintf(buffer, "seq");                                                           break;

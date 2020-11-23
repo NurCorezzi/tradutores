@@ -38,11 +38,14 @@ int has_main;
 /*-------UTILS-------*/
 
 void normalize_to_list(Node *dst, Node *tree);
-void concat_code_children(Node *node);
 
 Node* get_params_addv();
 Node* get_params_adda();
 Node* get_params_graph_call();
+
+void concat_code_children(Node *node);
+void build_expression_code(Node *$$, Node *$1, Node *$3, InstCode code);
+void build_const_code(Node *$$, OperandType type, int ival, float fval);
 
 void check_graph_call(char *id, Node* graph_params_call);
 void check_params(char *function_id, Node *param, Node *param_call);
@@ -416,32 +419,34 @@ expr_assign: expr_relational ASSIGN expr_assign {
 }
 ;
 
-expr_relational: expr_relational compare_op expr_and {
+expr_relational: expr_relational compare_op expr_or {
   $$ = create_node("expr_relational");
   push_child($$, $1);
   push_child($$, $2);
   push_child($$, $3);
   check_compare_expression($$, $1, $2, $3);
 }
-| expr_and 
+| expr_or 
 ;
 
-expr_and: expr_and and expr_or {
-  $$ = create_node("expr_and");
-  push_child($$, $1);
-  push_child($$, $3);
-  check_boolean_expression($$, $1, $2, $3);
-
-  free_tree($2);
-} 
-| expr_or
-;
-
-expr_or: expr_or or expr_add {
+expr_or: expr_or or expr_and {
   $$ = create_node("expr_or");
   push_child($$, $1);
   push_child($$, $3);
   check_boolean_expression($$, $1, $2, $3);
+  build_expression_code($$, $1, $3, TAC_OR);
+
+  free_tree($2);
+} 
+| expr_and
+;
+
+expr_and: expr_and and expr_add {
+  $$ = create_node("expr_and");
+  push_child($$, $1);
+  push_child($$, $3);
+  check_boolean_expression($$, $1, $2, $3);
+  build_expression_code($$, $1, $3, TAC_AND);
 
   free_tree($2);
 } 
@@ -453,6 +458,7 @@ expr_add: expr_add add expr_sub {
   push_child($$, $1);
   push_child($$, $3);
   check_aritmetic_expression($$, $1, $2, $3);
+  build_expression_code($$, $1, $3, TAC_ADD);
 
   free_tree($2);
 } 
@@ -464,7 +470,8 @@ expr_sub: expr_sub sub expr_mul {
   push_child($$, $1);
   push_child($$, $3);
   check_aritmetic_expression($$, $1, $2, $3);
-  
+  build_expression_code($$, $1, $3, TAC_SUB);
+
   free_tree($2);
 } 
 | expr_mul
@@ -475,6 +482,7 @@ expr_mul: expr_mul mul expr_div {
   push_child($$, $1);
   push_child($$, $3);
   check_aritmetic_expression($$, $1, $2, $3);
+  build_expression_code($$, $1, $3, TAC_MUL);
 
   free_tree($2);
 } 
@@ -486,22 +494,7 @@ expr_div: expr_div div expr_unary {
   push_child($$, $1);
   push_child($$, $3);
   check_aritmetic_expression($$, $1, $2, $3);
-
-  if (!invalid) {
-    cgen_append(
-      &($$->code),
-      cgen_instr(
-        NULL,
-        TAC_DIV,
-        cgen_field(get_value_ival(temp_inst_count++), TAC_OPTYPE_TEMP),
-        cgen_last_inst($1->code)->fields[0],
-        cgen_last_inst($3->code)->fields[0]
-      )
-    );  
-    cgen_append(&($1->code), $3->code);
-    cgen_append(&($1->code), $$->code);
-    $$->code = $1->code;
-  }
+  build_expression_code($$, $1, $3, TAC_DIV);
 
   free_tree($2);
 } 
@@ -640,6 +633,7 @@ dimension: %empty {$$ = NULL;}
 value: id_or_access {
   $$ = create_node_with_type("value", $1->type);
   push_child($$, $1);
+  $$->code = $1->code;
 }
 | number {
   $$ = create_node_with_type("value", $1->type);
@@ -649,10 +643,12 @@ value: id_or_access {
 | boolean_const {
   $$ = create_node_with_type("value", $1->type);
   push_child($$, $1);
+  $$->code = $1->code;
 }
 | function_call {
   $$ = create_node_with_type("value", $1->type);
   push_child($$, $1);
+  $$->code = $1->code;
 }
 ;
 
@@ -723,19 +719,7 @@ number_int: C_INT {
   strcpy(cpy, yytext);
   $$->complement = cpy;
   $$->type = type_base(GTYPE_INT);
-
-  if (!invalid) {
-    cgen_append(
-      &($$->code),
-      cgen_instr(
-        NULL,
-        TAC_MOVVV,
-        cgen_field(get_value_ival(temp_inst_count++), TAC_OPTYPE_TEMP),
-        cgen_field(get_value_ival(atoi($$->complement)) , TAC_OPTYPE_INT),
-        NULL
-      )
-    );
-  }
+  build_const_code($$, TAC_OPTYPE_INT, atoi($$->complement), 0.0);
 }
 ;
 
@@ -746,6 +730,7 @@ number_float: C_FLOAT {
   strcpy(cpy, yytext);
   $$->complement = cpy;
   $$->type = type_base(GTYPE_FLOAT);
+  build_const_code($$, TAC_OPTYPE_FLOAT, 0, atof($$->complement));
 }
 ;
 
@@ -756,6 +741,7 @@ boolean_const: TRUE {
   strcpy(cpy, "1");
   $$->complement = cpy;
   $$->type = type_base(GTYPE_INT);
+  build_const_code($$, TAC_OPTYPE_INT, 1, 0);
 }
 | FALSE             { 
   $$ = create_node(yytname[YYTRANSLATE(yylval.id)]); 
@@ -764,6 +750,7 @@ boolean_const: TRUE {
   strcpy(cpy, "0");
   $$->complement = cpy;
   $$->type = type_base(GTYPE_INT);
+  build_const_code($$, TAC_OPTYPE_INT, 0, 0);
 }
 ;
 
@@ -780,18 +767,6 @@ void normalize_to_list(Node *dst, Node *tree) {
   for (it = tree->begin_child; it != NULL; it = it->next) {
     push_child(dst, it);
   }
-}
-
-void concat_code_children(Node *node) {
-  if (invalid || node == NULL) {
-    return;
-  }
-  Node *it = NULL;
-  Instruction *inst = NULL;
-  for (it = node->begin_child; it != NULL; it = it->next) {
-    cgen_append(&inst, it->code);
-  }
-  node->code = inst;
 }
 
 Node* get_params_addv() {
@@ -840,6 +815,61 @@ Node* get_params_graph_call() {
   push_child(params, value);
 
   return params;
+}
+
+
+/*--------------------CODE GEN----------------------------*/
+
+void build_const_code(Node *$$, OperandType type, int ival, float fval) {
+  if (!invalid) {
+    Field *field;
+    if (type == TAC_OPTYPE_INT) {
+      field = cgen_field(get_value_ival(ival) , type);
+    } else {
+      field = cgen_field(get_value_fval(fval) , type);
+    }
+
+    cgen_append(
+      &($$->code),
+      cgen_instr(
+        NULL,
+        TAC_MOVVV,
+        cgen_field(get_value_ival(temp_inst_count++), TAC_OPTYPE_TEMP),
+        field,
+        NULL
+      )
+    );
+  }
+}
+
+void build_expression_code(Node *$$, Node *$1, Node *$3, InstCode code) {
+  if (!invalid) {
+    cgen_append(
+      &($$->code),
+      cgen_instr(
+        NULL,
+        code,
+        cgen_field(get_value_ival(temp_inst_count++), TAC_OPTYPE_TEMP),
+        cgen_last_inst($1->code)->fields[0],
+        cgen_last_inst($3->code)->fields[0]
+      )
+    );  
+    cgen_append(&($1->code), $3->code);
+    cgen_append(&($1->code), $$->code);
+    $$->code = $1->code;
+  }
+}
+
+void concat_code_children(Node *node) {
+  if (invalid || node == NULL) {
+    return;
+  }
+  Node *it = NULL;
+  Instruction *inst = NULL;
+  for (it = node->begin_child; it != NULL; it = it->next) {
+    cgen_append(&inst, it->code);
+  }
+  node->code = inst;
 }
 
 
