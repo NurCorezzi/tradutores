@@ -35,7 +35,10 @@ int temp_inst_count;
 
 int has_main;
 
-/*--------------*/
+/*-------UTILS-------*/
+
+void normalize_to_list(Node *dst, Node *tree);
+void concat_code_children(Node *node);
 
 Node* get_params_addv();
 Node* get_params_adda();
@@ -129,13 +132,11 @@ program: %empty {$$ = NULL;}
   | program function {
   $$ = create_node("program");
   if ($1 != NULL) {
-    Node *it;
-    for (it = $1->begin_child; it != NULL; it = it->next) {
-      push_child($$, it);
-    }
+    normalize_to_list($$, $1);
     free_node($1);
   }
   push_child($$, $function);
+  concat_code_children($$);
 }
 ;
 
@@ -171,6 +172,14 @@ function: type dimension id {
   entry->ast_node = $params;
 } OPEN_BRACE statements CLOSE_BRACE {
   $$ = create_node("function");
+  if ($statements != NULL) {
+    $$->code = $statements->code;
+    if ($$->code->label == NULL) {
+      $$->code->label = cgen_label($id->complement, 1);
+    } else{
+      replace_label_value($$->code->label, $id->complement);  
+    }
+  }
 
   Node* decl = create_node("declaration");
   push_child(decl, $type);
@@ -275,13 +284,11 @@ statements: %empty {$$ = NULL;} | statements statement {
   $$ = create_node("statements");
 
   if ($1 != NULL) {
-    Node *it;
-    for (it = $1->begin_child; it != NULL; it = it->next) {
-      push_child($$, it);
-    }
+    normalize_to_list($$, $1);
     free_node($1);
   }  
   push_child($$, $statement);
+  concat_code_children($$);
 }
 ;
 
@@ -494,7 +501,6 @@ expr_div: expr_div div expr_unary {
     cgen_append(&($1->code), $3->code);
     cgen_append(&($1->code), $$->code);
     $$->code = $1->code;
-    print_code($$->code);
   }
 
   free_tree($2);
@@ -765,6 +771,29 @@ boolean_const: TRUE {
 
 /*-------------------UTILS--------------------------------*/
 
+void normalize_to_list(Node *dst, Node *tree) {
+  if (dst == NULL || tree == NULL) {
+    return;
+  }
+
+  Node *it;
+  for (it = tree->begin_child; it != NULL; it = it->next) {
+    push_child(dst, it);
+  }
+}
+
+void concat_code_children(Node *node) {
+  if (invalid || node == NULL) {
+    return;
+  }
+  Node *it = NULL;
+  Instruction *inst = NULL;
+  for (it = node->begin_child; it != NULL; it = it->next) {
+    cgen_append(&inst, it->code);
+  }
+  node->code = inst;
+}
+
 Node* get_params_addv() {
   Node* params = create_node("standalone_params");
 
@@ -958,9 +987,14 @@ int main() {
 
   printf("\n>>>>>>>>>>SYMBOL TABLE<<<<<<<<<<<\n\n");
   stable_print(symbol_table);
+
+  printf("\n>>>>>>>>>>TAC<<<<<<<<<<<\n\n");
+  print_code(ast->code);
   
   free_scope(global_scope);
   free_tree(ast);
   free_stable(symbol_table);
+  free_cgen();
+
   yylex_destroy();
 }

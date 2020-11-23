@@ -6,27 +6,7 @@
 
 extern int next_instruction;
 
-Label* cgen_label(char *value, int is_user_label) {
-    Label* label = (Label*)calloc(1, sizeof(Label));
-
-    if (is_user_label) {
-        label->value = strdup(value);
-    } else {
-        char* l_value = (char*)malloc(strlen(value) + 1);
-        strcpy(l_value, "_");
-        strcat(l_value, value);
-        label->value = l_value;
-    }
-
-    return label;
-}
-
-Field *cgen_field(union Value value, OperandType type) {
-    Field* field = (Field*)calloc(1, sizeof(Field));
-    field->value = value;
-    field->type = type;
-    return field;
-}
+GenericList *alloc;
 
 union Value get_value_label(Label *label) {
     union Value v;
@@ -46,8 +26,56 @@ union Value get_value_fval(float fval) {
     return v;
 }
 
+void push_alloc(void *obj) {
+    GenericList* cur = (GenericList*)calloc(1, sizeof(GenericList));
+    cur->cur = obj;
+    if (alloc == NULL) {
+        alloc = cur;
+    } else {
+        alloc->next = cur;
+        cur->previous = alloc;
+        alloc = cur;
+    }
+}
+
+void replace_label_value(Label* label, char *value) {
+    if (label == NULL || value == NULL) {
+        return;
+    }
+    label->value = strdup(value);
+    push_alloc((void*)label->value);
+}
+
+Label* cgen_label(char *value, int is_user_label) {
+    Label* label = (Label*)calloc(1, sizeof(Label));
+    push_alloc((void*)label);
+
+    if (is_user_label) {
+        label->value = strdup(value);
+        push_alloc((void*)label->value);
+    } else {
+        char* l_value = (char*)malloc(strlen(value) + 1);
+        strcpy(l_value, "_");
+        strcat(l_value, value);
+        label->value = l_value;
+        push_alloc((void*)l_value);
+    }
+
+    return label;
+}
+
+Field *cgen_field(union Value value, OperandType type) {
+    Field* field = (Field*)calloc(1, sizeof(Field));
+    push_alloc((void*)field);
+    field->value = value;
+    field->type = type;
+    return field;
+}
+
 Instruction* cgen_instr(Label* label, InstCode inst_code, Field* f0, Field* f1, Field *f2) {
     Instruction* inst = (Instruction*)calloc(1, sizeof(Instruction));
+    push_alloc((void*)inst);
+
     inst->label = label;
     inst->inst_code = inst_code;
     inst->fields[0] = f0;
@@ -62,7 +90,6 @@ void cgen_append(Instruction **codea, Instruction *codeb) {
     Instruction** base = codea;
     if ((*base) == NULL) {
         (*base) = codeb;
-        next_instruction++;
         return;
     }
     
@@ -82,6 +109,17 @@ Instruction* cgen_last_inst(Instruction *inst) {
     return cur;
 }
 
+/*----------------------------------------------*/
+
+void free_cgen() {
+    GenericList *cur = alloc;
+    while(cur) {
+        GenericList* next = cur->previous;
+        free(cur->cur);
+        free(cur);
+        cur = next;
+    }
+}
 
 /*--------------------PRINT CODE------------------------*/
 
@@ -119,7 +157,7 @@ void print_inst(Instruction *inst) {
     };
 
     if (inst->label != NULL) 
-        sprintf(label, "%s:", inst->label->value);
+        sprintf(label, "%s:\n", inst->label->value);
 
     switch (inst->inst_code) {
         case TAC_ADD:     sprintf(buffer, "add");                                                           break;
@@ -187,6 +225,7 @@ void print_inst(Instruction *inst) {
 }
 
 void print_code(Instruction *code) {
+    printf(".code\n");
     Instruction *cur = code;
     while(cur) {
         print_inst(cur);

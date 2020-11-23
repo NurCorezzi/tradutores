@@ -46,4 +46,11 @@ typedef struct t_instruction {
     Field *fields[3];
 } Instruction;
 
+typedef struct t_generic_list {
+    struct t_generic_list *previous;
+    void *cur;
+    struct t_generic_list *next;
+} GenericList;
+
+
 #endif
