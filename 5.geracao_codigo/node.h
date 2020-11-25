@@ -66,6 +66,7 @@ typedef struct t_symbol_node {
 
     SymbolType stype;
     TypeExpression *type;
+    Field *tac_ref;              // Campo com valor de endereco para regiao inicial de memoria do simbolo
     Scope *scope;
     Node *ast_node;
 

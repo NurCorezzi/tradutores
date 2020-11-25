@@ -3,6 +3,7 @@
 #include <string.h>
 
 #include "code_gen.h"
+#include "node.h"
 
 extern int next_instruction;
 
@@ -96,8 +97,7 @@ void cgen_append(Instruction **codea, Instruction *codeb) {
     Instruction *cur = *base;
     while(cur->next != NULL) {
         cur = cur->next;
-    }
-    
+    }    
     cur->next = codeb;
 }
 
@@ -109,7 +109,104 @@ Instruction* cgen_last_inst(Instruction *inst) {
     return cur;
 }
 
-/*----------------------------------------------*/
+/*---------------------HELPER-------------------------*/
+
+/**
+ * Calcula quantas unidades de memoria que o tipo deve ocupar levando em consideracao o destino traduzido como TAC, 
+*/
+int type_mem_sz(TypeExpression *type) {
+    switch(type->node_type) {
+        case GTYPE_INT:     return 1;  
+        case GTYPE_FLOAT:   return 1;  
+        case GTYPE_GRAPH:   return 3; // sz, *valores_vertices, *arestas    
+        case GTYPE_ARRAY:   return type_mem_sz(type->child) * type->size;
+        default: return 0;
+    }
+}
+
+Instruction* cgen_fill_mem(Field* field, TypeExpression *type, int position) {
+    Instruction *inst = NULL;
+    
+    switch(type->node_type) {
+        case GTYPE_INT: {
+            inst = cgen_instr(NULL, TAC_MOVIV, 
+                field,
+                cgen_field(get_value_ival(position), TAC_OPTYPE_INT), 
+                cgen_field(get_value_ival(0), TAC_OPTYPE_INT));
+            break;
+        }
+        case GTYPE_FLOAT: {
+            inst = cgen_instr(NULL, TAC_MOVIV, 
+                field,
+                cgen_field(get_value_ival(position), TAC_OPTYPE_INT), 
+                cgen_field(get_value_fval(0), TAC_OPTYPE_FLOAT));
+            break;
+        }  
+        case GTYPE_GRAPH: {
+            // Possui 3 campos inicias porem apenas e necessesario inicializar tamanho para zero
+            inst = cgen_instr(NULL, TAC_MOVIV, 
+                field,
+                cgen_field(get_value_ival(position), TAC_OPTYPE_INT), 
+                cgen_field(get_value_ival(0), TAC_OPTYPE_INT));
+            break;
+        }    
+        case GTYPE_ARRAY: {
+            int i;
+            int sz = type_mem_sz(type->child);
+            for (i = 0; i < type->size; ++i) {
+                Instruction *next = cgen_fill_mem(field, type->child, position + sz*i);
+                if (inst == NULL) {
+                    inst = next;
+                } else {
+                    cgen_append(&inst, next);
+                }
+            }
+            break;
+        }
+        default: 
+            printf("ERRO: type not found in mem filling");
+            exit(0);
+    }
+    return inst;
+}
+
+Instruction* cgen_declaration(SymbolNode *sym, int *temp_inst_count) {
+    int sz = type_mem_sz(sym->type);
+
+    if (sz == 0) {
+        return NULL;
+    }
+
+    Instruction *inst = NULL;
+
+    switch(sym->type->node_type) {
+        case GTYPE_FLOAT:   
+        case GTYPE_GRAPH:     
+        case GTYPE_ARRAY: 
+        case GTYPE_INT: {
+            inst = cgen_instr(
+                cgen_label(sym->id, 0), 
+                TAC_MEMA, 
+                cgen_field(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP), 
+                cgen_field(get_value_ival(sz), TAC_OPTYPE_INT), NULL);
+
+            sym->tac_ref = inst->fields[0];
+            cgen_append(&inst, cgen_fill_mem(inst->fields[0], sym->type, 0));
+            break;
+        }
+        default: 
+            printf("ERRO: type not found in declaration");
+            exit(0);
+    }
+
+    // nop de referencia
+    cgen_append(&inst, cgen_instr(NULL, TAC_NOP, NULL, NULL, NULL));
+
+    return inst;
+}
+
+
+/*---------------------FREE-------------------------*/
 
 void free_cgen() {
     GenericList *cur = alloc;
@@ -192,7 +289,7 @@ void print_inst(Instruction *inst) {
         case TAC_MOVDD:   sprintf(buffer, "movdd");                                                         break;
         case TAC_MOVDA:   sprintf(buffer, "movda");                                                         break;
         case TAC_MOVDI:   sprintf(buffer, "movdi");                                                         break;
-        case TAC_MOVIV:   sprintf(buffer, "moviv");                                                         break;
+        case TAC_MOVIV:   sprintf(buffer, "%smov %s[%s], %s", label, field[0], field[1], field[2]);         break;
         case TAC_MOVID:   sprintf(buffer, "movid");                                                         break;
         case TAC_MOVIA:   sprintf(buffer, "movia");                                                         break;
         case TAC_POP:     sprintf(buffer, "pop");                                                           break;
@@ -206,7 +303,7 @@ void print_inst(Instruction *inst) {
         case TAC_SCANI:   sprintf(buffer, "scani");                                                         break;
         case TAC_SCANF:   sprintf(buffer, "scanf");                                                         break;
         case TAC_RAND:    sprintf(buffer, "rand");                                                          break;
-        case TAC_MEMA:    sprintf(buffer, "mema");                                                          break;
+        case TAC_MEMA:    sprintf(buffer, "%smema %s, %s", label, field[0], field[1]);                      break;
         case TAC_MEMF:    sprintf(buffer, "memf");                                                          break;
         case TAC_CALL:    sprintf(buffer, "call");                                                          break;
         case TAC_RETURN:  sprintf(buffer, "return");                                                        break;

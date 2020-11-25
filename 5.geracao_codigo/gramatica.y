@@ -43,7 +43,6 @@ Node* get_params_addv();
 Node* get_params_adda();
 Node* get_params_graph_call();
 
-void concat_code_children(Node *node);
 void build_expression_code(Node *$$, Node *$1, Node *$3, InstCode code);
 void build_const_code(Node *$$, OperandType type, int ival, float fval);
 
@@ -136,10 +135,11 @@ program: %empty {$$ = NULL;}
   $$ = create_node("program");
   if ($1 != NULL) {
     normalize_to_list($$, $1);
+    $$->code = $1->code;
     free_node($1);
   }
   push_child($$, $function);
-  concat_code_children($$);
+  cgen_append(&($$->code), $function->code);
 }
 ;
 
@@ -175,6 +175,7 @@ function: type dimension id {
   entry->ast_node = $params;
 } OPEN_BRACE statements CLOSE_BRACE {
   $$ = create_node("function");
+
   if ($statements != NULL) {
     $$->code = $statements->code;
     if ($$->code->label == NULL) {
@@ -288,10 +289,11 @@ statements: %empty {$$ = NULL;} | statements statement {
 
   if ($1 != NULL) {
     normalize_to_list($$, $1);
+    $$->code = $1->code;
     free_node($1);
-  }  
+  } 
   push_child($$, $statement);
-  concat_code_children($$);
+  cgen_append(&($$->code), $statement->code);
 }
 ;
 
@@ -613,12 +615,24 @@ declaration: type dimension id {
     semantic_error(buffer);
   }
 
-
   TypeExpression* type = type_build($type, $dimension);
+  if (type && $dimension && type->size == 0) {
+    char buffer[300] = {0};
+    sprintf(buffer, "variable \"%s\" should not be a zero sized array", $id->complement);
+    semantic_error(buffer);  
+  }
+
   SymbolNode *entry = stable_create_symbol($id->complement, global_scope, STYPE_VARIABLE, type, $$);
   $$->sentry = entry;
   $$->type = type_cpy(type);
   symbol_table = stable_add(symbol_table, entry);
+
+  if (!invalid) {
+    cgen_append(
+      &($$->code),
+      cgen_declaration(entry, &temp_inst_count)
+    );
+  }
 }
 ;
 
@@ -763,9 +777,11 @@ void normalize_to_list(Node *dst, Node *tree) {
     return;
   }
 
-  Node *it;
-  for (it = tree->begin_child; it != NULL; it = it->next) {
+  Node *it = tree->begin_child;
+  while (it != NULL) {
+    Node *tmp = it->next;
     push_child(dst, it);
+    it = tmp;
   }
 }
 
@@ -859,19 +875,6 @@ void build_expression_code(Node *$$, Node *$1, Node *$3, InstCode code) {
     $$->code = $1->code;
   }
 }
-
-void concat_code_children(Node *node) {
-  if (invalid || node == NULL) {
-    return;
-  }
-  Node *it = NULL;
-  Instruction *inst = NULL;
-  for (it = node->begin_child; it != NULL; it = it->next) {
-    cgen_append(&inst, it->code);
-  }
-  node->code = inst;
-}
-
 
 /*-------------------TYPE CHECK---------------------------*/
 

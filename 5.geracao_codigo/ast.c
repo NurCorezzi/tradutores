@@ -35,6 +35,7 @@ void push_child(Node *root, Node *child) {
     root->end_child->next = child;
     root->end_child = child;
   }
+  child->next = NULL;
 }
 
 void free_node(Node *node) {
