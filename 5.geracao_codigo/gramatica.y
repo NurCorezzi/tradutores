@@ -43,6 +43,7 @@ Node* get_params_addv();
 Node* get_params_adda();
 Node* get_params_graph_call();
 
+Instruction* derref_lvalue(Node *node);
 void build_expression_code(Node *$$, Node *$1, Node *$3, InstCode code);
 void build_const_code(Node *$$, OperandType type, int ival, float fval);
 
@@ -176,15 +177,6 @@ function: type dimension id {
 } OPEN_BRACE statements CLOSE_BRACE {
   $$ = create_node("function");
 
-  if ($statements != NULL) {
-    $$->code = $statements->code;
-    if ($$->code->label == NULL) {
-      $$->code->label = cgen_label($id->complement, 1);
-    } else{
-      replace_label_value($$->code->label, $id->complement);  
-    }
-  }
-
   Node* decl = create_node("declaration");
   push_child(decl, $type);
   if($dimension != NULL) {
@@ -200,6 +192,25 @@ function: type dimension id {
   push_child($$, block);
 
   scope_pop(&global_scope);
+
+  if (!invalid) {
+    if ($statements != NULL) {
+      $$->code = $statements->code;
+    }
+
+    if (strcmp($id->complement, "main") != 0) {
+      cgen_append(
+        &($$->code),
+        cgen_instr(NULL, TAC_RETURN, NULL, NULL, NULL)
+      );
+    }
+
+    if ($$->code->label == NULL) {
+      $$->code->label = cgen_label($id->complement, 1);
+    } else{
+      replace_label_value($$->code->label, $id->complement);  
+    }
+  }
 }
 | error { error_recovery_mode = 0; $$ = NULL; }
 ;
@@ -406,6 +417,7 @@ statement_end: block
 
 expr_assign: expr_relational ASSIGN expr_assign {
   $$ = create_node("expr_assign");
+  $$->value_type = LVALUE;
   push_child($$, $1);
   push_child($$, $3);
   check_assign_expression($$, $1->type, $3);
@@ -415,6 +427,25 @@ expr_assign: expr_relational ASSIGN expr_assign {
     sprintf(buffer, "left side on \"ASSIGN\" must be an lvalue");
     semantic_error(buffer);
   }
+
+  if (!invalid) {
+    cgen_append(&($3->code), derref_lvalue($3));
+    cgen_append(
+      &($$->code),
+      cgen_instr(
+        NULL,
+        TAC_MOVDV,
+        cgen_last_inst($1->code)->fields[0],
+        cgen_last_inst($3->code)->fields[0],
+        NULL
+      )
+    );
+
+    cgen_append(&($1->code), $3->code);
+    cgen_append(&($1->code), $$->code);
+    $$->code = $1->code;
+  }
+
 } 
 | expr_relational {  
   $$ = $1;
@@ -628,6 +659,7 @@ declaration: type dimension id {
   symbol_table = stable_add(symbol_table, entry);
 
   if (!invalid) {
+    cgen_append(&($$->code), $dimension->code);
     cgen_append(
       &($$->code),
       cgen_declaration(entry, &temp_inst_count)
@@ -641,6 +673,7 @@ dimension: %empty {$$ = NULL;}
   // OBS: SE EM ALGUM MOMENTO MAIS DIMENSOES FOREM ADICIONADAS COLOCAR EM BEGIN/END CHILD
   $$ = create_node("dimension");
   push_child($$, $number_int);
+  $$->code = $number_int->code;
 }
 ;
 
@@ -648,6 +681,7 @@ value: id_or_access {
   $$ = create_node_with_type("value", $1->type);
   push_child($$, $1);
   $$->code = $1->code;
+  $$->value_type = $1->value_type;
 }
 | number {
   $$ = create_node_with_type("value", $1->type);
@@ -686,6 +720,14 @@ id_or_access: id access_lvl {
       sprintf(buffer, "access to \"%s\" of incompatible type", $id->complement);
       semantic_error(buffer);    
     }
+
+    if (!invalid) {
+      Node *access = $access_lvl == NULL ? NULL : $access_lvl->begin_child;
+      cgen_append(
+        &($$->code),
+        cgen_var_access(match, access, &temp_inst_count)
+      );
+    }
   }
   $$->sentry = match;
 } 
@@ -698,10 +740,7 @@ access_lvl: %empty {$$ = NULL;}
   push_child($$, $expr_assign);
 
   if ($next_access) {
-    Node *it;
-    for (it = $next_access->begin_child; it != NULL; it = it->next) {
-      push_child($$, it);
-    }
+    normalize_to_list($$, $next_access);
     free_node($next_access);
   }
 }
@@ -837,6 +876,8 @@ Node* get_params_graph_call() {
 /*--------------------CODE GEN----------------------------*/
 
 void build_const_code(Node *$$, OperandType type, int ival, float fval) {
+    printf("%d", temp_inst_count);
+
   if (!invalid) {
     Field *field;
     if (type == TAC_OPTYPE_INT) {
@@ -858,8 +899,26 @@ void build_const_code(Node *$$, OperandType type, int ival, float fval) {
   }
 }
 
+Instruction* derref_lvalue(Node *node) {
+  if (node->value_type == LVALUE) {
+    printf("adas\n");
+    return cgen_instr(
+      NULL,
+      TAC_MOVVD,
+      cgen_field(get_value_ival(temp_inst_count++), TAC_OPTYPE_TEMP),
+      cgen_last_inst(node->code)->fields[0],
+      NULL
+    );
+  } else {
+    return NULL;
+  }
+}
+
 void build_expression_code(Node *$$, Node *$1, Node *$3, InstCode code) {
   if (!invalid) {
+    cgen_append(&($1->code), derref_lvalue($1));
+    cgen_append(&($3->code), derref_lvalue($3));
+
     cgen_append(
       &($$->code),
       cgen_instr(

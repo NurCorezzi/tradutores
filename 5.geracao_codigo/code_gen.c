@@ -55,7 +55,7 @@ Label* cgen_label(char *value, int is_user_label) {
         label->value = strdup(value);
         push_alloc((void*)label->value);
     } else {
-        char* l_value = (char*)malloc(strlen(value) + 1);
+        char* l_value = (char*)malloc(strlen(value) + 2);
         strcpy(l_value, "_");
         strcat(l_value, value);
         label->value = l_value;
@@ -143,7 +143,7 @@ Instruction* cgen_fill_mem(Field* field, TypeExpression *type, int position) {
             break;
         }  
         case GTYPE_GRAPH: {
-            // Possui 3 campos inicias porem apenas e necessesario inicializar tamanho para zero
+            // Possui 3 campos inicias porem apenas e necessario inicializar tamanho para zero
             inst = cgen_instr(NULL, TAC_MOVIV, 
                 field,
                 cgen_field(get_value_ival(position), TAC_OPTYPE_INT), 
@@ -179,19 +179,28 @@ Instruction* cgen_declaration(SymbolNode *sym, int *temp_inst_count) {
 
     Instruction *inst = NULL;
 
+    // nop de referencia
+    cgen_append(&inst, cgen_instr(NULL, TAC_NOP, NULL, NULL, NULL));
+
     switch(sym->type->node_type) {
         case GTYPE_FLOAT:   
         case GTYPE_GRAPH:     
         case GTYPE_ARRAY: 
         case GTYPE_INT: {
-            inst = cgen_instr(
-                cgen_label(sym->id, 0), 
-                TAC_MEMA, 
-                cgen_field(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP), 
-                cgen_field(get_value_ival(sz), TAC_OPTYPE_INT), NULL);
+            Field *var_adress = cgen_field(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP);
+            cgen_append(
+                &inst,
+                cgen_instr(
+                    cgen_label(sym->id, 0), 
+                    TAC_MEMA, 
+                    var_adress, 
+                    cgen_field(get_value_ival(sz), TAC_OPTYPE_INT), 
+                    NULL
+                )
+            );
 
-            sym->tac_ref = inst->fields[0];
-            cgen_append(&inst, cgen_fill_mem(inst->fields[0], sym->type, 0));
+            sym->tac_ref = var_adress;
+            cgen_append(&inst, cgen_fill_mem(var_adress, sym->type, 0));
             break;
         }
         default: 
@@ -201,6 +210,112 @@ Instruction* cgen_declaration(SymbolNode *sym, int *temp_inst_count) {
 
     // nop de referencia
     cgen_append(&inst, cgen_instr(NULL, TAC_NOP, NULL, NULL, NULL));
+
+    return inst;
+}
+
+/**
+ * Assume-se que e um acesso valido na hierarquia do simbolo passado, dimensões possuem código gerado para indice de acesso
+*/
+Instruction *cgen_var_access(SymbolNode *sym, Node *dimension, int *temp_inst_count) {
+    Node *cur_access = dimension;
+    TypeExpression *cur_type = sym->type;
+    Instruction *inst = NULL;
+
+    // Estrategia assume que resultado sempre sera extraido de um endereco inicial
+    inst = cgen_instr(
+        NULL, 
+        TAC_MOVVV, 
+        cgen_field(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP), 
+        sym->tac_ref, NULL);
+
+    while (cur_access) {
+        switch(cur_type->node_type) {
+            case GTYPE_INT:     break;
+            case GTYPE_FLOAT:   break;
+            case GTYPE_GRAPH:
+            case GTYPE_ARRAY: {
+                // Graph entra aqui para reaproveitar processamento de array
+                if (cur_type->node_type == GTYPE_GRAPH) {
+                     // Valor de vertices do grafo estara na segunda posicao [sz][ponteiro vertice com valores][ponteiro para array de arestas]
+                    Field *graph_adress = cgen_last_inst(inst)->fields[0];
+
+                    cgen_append(
+                        &inst,
+                        cgen_instr(
+                            NULL, 
+                            TAC_MOVVI, 
+                            cgen_field(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP), 
+                            graph_adress,
+                            cgen_field(get_value_ival(1), TAC_OPTYPE_INT)     
+                        )
+                    );
+                }
+               
+                // Calcular tamanho das dimensoes restantes esquema ROW-MAJOR
+                Field *array_adress = cgen_last_inst(inst)->fields[0];
+                Field *user_index = cgen_last_inst(cur_access->code)->fields[0]; 
+                Field *tac_index = cgen_field(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP); 
+                int type_contained_sz = type_mem_sz(cur_type->child);
+
+                cgen_append(&inst, cur_access->code);
+                cgen_append(
+                    &inst,
+                    cgen_instr(
+                        NULL, 
+                        TAC_MUL, 
+                        tac_index, 
+                        user_index,
+                        cgen_field(get_value_ival(type_contained_sz), TAC_OPTYPE_INT)     
+                    )
+                );
+
+                cgen_append(
+                    &inst,
+                    cgen_instr(
+                        NULL, 
+                        TAC_ADD, 
+                        cgen_field(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP), 
+                        array_adress,
+                        tac_index     
+                    )
+                );
+
+                break;
+            }
+            default: 
+                printf("ERRO: type not found for access");
+                exit(0);
+        }
+
+        cur_access = cur_access->next;
+        cur_type = cur_type->child;
+    }
+
+    // switch(cur_type->node_type) {
+    //     case GTYPE_INT:
+    //     case GTYPE_FLOAT: {
+    //         Field *adress = cgen_last_inst(inst)->fields[0];
+            
+    //         cgen_append(
+    //             &inst,
+    //             cgen_instr(
+    //                 NULL, 
+    //                 TAC_MOVVI, 
+    //                 cgen_field(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP), 
+    //                 adress,
+    //                 cgen_field(get_value_ival(0), TAC_OPTYPE_INT)    
+    //             )
+    //         );
+            
+    //         break;
+    //     }
+    //     case GTYPE_GRAPH:   break;
+    //     case GTYPE_ARRAY:   break;
+    //     default: 
+    //         printf("ERRO: type not found for access");
+    //         exit(0);
+    // }
 
     return inst;
 }
@@ -222,7 +337,7 @@ void free_cgen() {
 
 char* field_toa(Field *field) {
     if (field == NULL) {
-        return NULL;
+        return strdup("");
     }
 
     char buffer[300] = {0};
@@ -282,10 +397,10 @@ void print_inst(Instruction *inst) {
         case TAC_FLTOCH:  sprintf(buffer, "fltoch");                                                        break;
         case TAC_FLTOINT: sprintf(buffer, "fltoint");                                                       break;
         case TAC_MOVVV:   sprintf(buffer, "%smov %s, %s", label, field[0], field[1]);                       break;
-        case TAC_MOVVD:   sprintf(buffer, "movvd");                                                         break;
+        case TAC_MOVVD:   sprintf(buffer, "%smov %s, *%s", label, field[0], field[1]);                      break;
         case TAC_MOVVA:   sprintf(buffer, "movva");                                                         break;
-        case TAC_MOVVI:   sprintf(buffer, "movvi");                                                         break;
-        case TAC_MOVDV:   sprintf(buffer, "movdv");                                                         break;
+        case TAC_MOVVI:   sprintf(buffer, "%smov %s, %s[%s]", label, field[0], field[1], field[2]);         break;
+        case TAC_MOVDV:   sprintf(buffer, "%smov *%s, %s", label, field[0], field[1]);                      break;
         case TAC_MOVDD:   sprintf(buffer, "movdd");                                                         break;
         case TAC_MOVDA:   sprintf(buffer, "movda");                                                         break;
         case TAC_MOVDI:   sprintf(buffer, "movdi");                                                         break;
@@ -306,7 +421,7 @@ void print_inst(Instruction *inst) {
         case TAC_MEMA:    sprintf(buffer, "%smema %s, %s", label, field[0], field[1]);                      break;
         case TAC_MEMF:    sprintf(buffer, "memf");                                                          break;
         case TAC_CALL:    sprintf(buffer, "call");                                                          break;
-        case TAC_RETURN:  sprintf(buffer, "return");                                                        break;
+        case TAC_RETURN:  sprintf(buffer, "%sreturn %s", label, field[0]);                                  break;
         case TAC_PUSH:    sprintf(buffer, "push");                                                          break;
         case TAC_NOP:     sprintf(buffer, "nop");                                                           break;
         default:
