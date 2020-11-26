@@ -119,12 +119,16 @@ int type_mem_sz(TypeExpression *type) {
         case GTYPE_INT:     return 1;  
         case GTYPE_FLOAT:   return 1;  
         case GTYPE_GRAPH:   return 3; // sz, *valores_vertices, *arestas    
-        case GTYPE_ARRAY:   return type_mem_sz(type->child) * type->size;
+        case GTYPE_ARRAY:   return type_mem_sz(type->child) * type->size + 1; // tamanho total + 1 para o tamanho do array
         default: return 0;
     }
 }
 
-Instruction* cgen_fill_mem(Field* field, TypeExpression *type, int position) {
+
+/**
+ * Value serve para atualizar o tamanho 
+*/
+Instruction* cgen_fill_mem(Field* field, TypeExpression *type, int position, int value) {
     Instruction *inst = NULL;
     
     switch(type->node_type) {
@@ -132,7 +136,7 @@ Instruction* cgen_fill_mem(Field* field, TypeExpression *type, int position) {
             inst = cgen_instr(NULL, TAC_MOVIV, 
                 field,
                 cgen_field(get_value_ival(position), TAC_OPTYPE_INT), 
-                cgen_field(get_value_ival(0), TAC_OPTYPE_INT));
+                cgen_field(get_value_ival(value), TAC_OPTYPE_INT));
             break;
         }
         case GTYPE_FLOAT: {
@@ -153,13 +157,14 @@ Instruction* cgen_fill_mem(Field* field, TypeExpression *type, int position) {
         case GTYPE_ARRAY: {
             int i;
             int sz = type_mem_sz(type->child);
+
+            // Atualizar tamanho aramazenado no inicio do array
+            TypeExpression TYPE_EXPRESSION_INT = {0, NULL, GTYPE_INT};
+            inst = cgen_fill_mem(field, &TYPE_EXPRESSION_INT, 0, type->size);
+
             for (i = 0; i < type->size; ++i) {
-                Instruction *next = cgen_fill_mem(field, type->child, position + sz*i);
-                if (inst == NULL) {
-                    inst = next;
-                } else {
-                    cgen_append(&inst, next);
-                }
+                Instruction *next = cgen_fill_mem(field, type->child, position + sz*i + 1, 0);
+                cgen_append(&inst, next);
             }
             break;
         }
@@ -200,7 +205,7 @@ Instruction* cgen_declaration(SymbolNode *sym, int *temp_inst_count) {
             );
 
             sym->tac_ref = var_adress;
-            cgen_append(&inst, cgen_fill_mem(var_adress, sym->type, 0));
+            cgen_append(&inst, cgen_fill_mem(var_adress, sym->type, 0, 0));
             break;
         }
         default: 
@@ -281,6 +286,18 @@ Instruction *cgen_var_access(SymbolNode *sym, Node *dimension, int *temp_inst_co
                     )
                 );
 
+                // Adicionar 1 por causa do offset de tamanho adicionado no inicio do array
+                cgen_append(
+                    &inst,
+                    cgen_instr(
+                        NULL, 
+                        TAC_ADD, 
+                        cgen_last_inst(inst)->fields[0],
+                        cgen_last_inst(inst)->fields[0],
+                        cgen_field(get_value_ival(1), TAC_OPTYPE_INT)                        
+                    )
+                );
+
                 break;
             }
             default: 
@@ -292,30 +309,42 @@ Instruction *cgen_var_access(SymbolNode *sym, Node *dimension, int *temp_inst_co
         cur_type = cur_type->child;
     }
 
-    // switch(cur_type->node_type) {
-    //     case GTYPE_INT:
-    //     case GTYPE_FLOAT: {
-    //         Field *adress = cgen_last_inst(inst)->fields[0];
-            
-    //         cgen_append(
-    //             &inst,
-    //             cgen_instr(
-    //                 NULL, 
-    //                 TAC_MOVVI, 
-    //                 cgen_field(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP), 
-    //                 adress,
-    //                 cgen_field(get_value_ival(0), TAC_OPTYPE_INT)    
-    //             )
-    //         );
-            
-    //         break;
-    //     }
-    //     case GTYPE_GRAPH:   break;
-    //     case GTYPE_ARRAY:   break;
-    //     default: 
-    //         printf("ERRO: type not found for access");
-    //         exit(0);
-    // }
+    return inst;
+}
+
+Instruction* cgen_derref_lvalue(Field *field, ValueType vtype, int *temp_inst_count) {
+    if (vtype == LVALUE) {
+        return cgen_instr(
+            NULL,
+            TAC_MOVVD,
+            cgen_field(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP),
+            field,
+            NULL
+        );
+    } else {
+        return NULL;
+    }
+}
+
+Instruction *cgen_write(TypeExpression *type, Instruction *code, ValueType vtype, int *temp_inst_count) {
+    Instruction *inst = NULL;
+    switch(type->node_type) {
+        case GTYPE_INT:     
+        case GTYPE_FLOAT: {
+            // Derreferenciar caso seja variavel
+            cgen_append(
+                &inst,
+                cgen_derref_lvalue(cgen_last_inst(inst)->fields[0], vtype, temp_inst_count)
+            );
+            cgen_append(
+                &inst,
+                cgen_instr(NULL, TAC_PRINT, cgen_last_inst(inst)->fields[0], NULL, NULL)
+            );
+        }
+        case GTYPE_GRAPH:
+        case GTYPE_ARRAY: 
+        default: break;
+    }   
 
     return inst;
 }
@@ -412,7 +441,7 @@ void print_inst(Instruction *inst) {
         case TAC_BRNZ:    sprintf(buffer, "brnz");                                                          break;
         case TAC_JUMP:    sprintf(buffer, "jump");                                                          break;
         case TAC_PARAM:   sprintf(buffer, "param");                                                         break;
-        case TAC_PRINT:   sprintf(buffer, "print");                                                         break;
+        case TAC_PRINT:   sprintf(buffer, "%sprint %s", label, field[0]);                                   break;
         case TAC_PRINTLN: sprintf(buffer, "println");                                                       break;
         case TAC_SCANC:   sprintf(buffer, "scanc");                                                         break;
         case TAC_SCANI:   sprintf(buffer, "scani");                                                         break;
@@ -438,6 +467,11 @@ void print_inst(Instruction *inst) {
 
 void print_code(Instruction *code) {
     printf(".code\n");
+
+    if (code == NULL) {
+        return;
+    }
+
     Instruction *cur = code;
     while(cur) {
         print_inst(cur);

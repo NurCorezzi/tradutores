@@ -1,5 +1,5 @@
 prog_name=tradutor.out
-input_default=input.txt
+input_default=input_test.txt
 
 prog_c1=./test/semantico/correto1.txt
 prog_c2=./test/semantico/correto2.txt
@@ -13,6 +13,9 @@ all:
 
 r:
 	./${prog_name} < ${input_default}
+
+tac:
+	../../tac-master/tac ./out.tac
 
 check:
 	valgrind -v --tool=memcheck --leak-check=full --show-leak-kinds=all --track-origins=yes ./${prog_name} < ${input_default}
@@ -35,4 +38,4 @@ e2:
 	./${prog_name} < ${prog_e2}
 
 clean:
-	rm ./${prog_name} lex.yy.c
+	rm ./${prog_name} lex.yy.c 

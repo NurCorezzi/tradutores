@@ -43,7 +43,6 @@ Node* get_params_addv();
 Node* get_params_adda();
 Node* get_params_graph_call();
 
-Instruction* derref_lvalue(Node *node);
 void build_expression_code(Node *$$, Node *$1, Node *$3, InstCode code);
 void build_const_code(Node *$$, OperandType type, int ival, float fval);
 
@@ -205,10 +204,12 @@ function: type dimension id {
       );
     }
 
-    if ($$->code->label == NULL) {
-      $$->code->label = cgen_label($id->complement, 1);
-    } else{
-      replace_label_value($$->code->label, $id->complement);  
+    if ($$->code) {
+      if ($$->code->label == NULL) {
+        $$->code->label = cgen_label($id->complement, 1);
+      } else{
+        replace_label_value($$->code->label, $id->complement);  
+      }
     }
   }
 }
@@ -386,6 +387,11 @@ statement_end: block
 | WRITE expr_assign END {
   $$ = create_node("write");
   push_child($$, $expr_assign);
+
+  if (!invalid) {
+    cgen_append(&($$->code), $expr_assign->code);  
+    cgen_append(&($$->code), cgen_write($expr_assign->type, $expr_assign->code, $expr_assign->value_type , &temp_inst_count));
+  }
 }
 | declaration END {
   $$ = $1;
@@ -429,7 +435,7 @@ expr_assign: expr_relational ASSIGN expr_assign {
   }
 
   if (!invalid) {
-    cgen_append(&($3->code), derref_lvalue($3));
+    cgen_append(&($3->code), cgen_derref_lvalue(cgen_last_inst($3->code)->fields[0], $3->value_type, &temp_inst_count));
     cgen_append(
       &($$->code),
       cgen_instr(
@@ -659,12 +665,16 @@ declaration: type dimension id {
   symbol_table = stable_add(symbol_table, entry);
 
   if (!invalid) {
-    cgen_append(&($$->code), $dimension->code);
+    if ($dimension != NULL) {
+      cgen_append(&($$->code), $dimension->code);
+    }
+
     cgen_append(
       &($$->code),
       cgen_declaration(entry, &temp_inst_count)
     );
   }
+
 }
 ;
 
@@ -899,25 +909,10 @@ void build_const_code(Node *$$, OperandType type, int ival, float fval) {
   }
 }
 
-Instruction* derref_lvalue(Node *node) {
-  if (node->value_type == LVALUE) {
-    printf("adas\n");
-    return cgen_instr(
-      NULL,
-      TAC_MOVVD,
-      cgen_field(get_value_ival(temp_inst_count++), TAC_OPTYPE_TEMP),
-      cgen_last_inst(node->code)->fields[0],
-      NULL
-    );
-  } else {
-    return NULL;
-  }
-}
-
 void build_expression_code(Node *$$, Node *$1, Node *$3, InstCode code) {
   if (!invalid) {
-    cgen_append(&($1->code), derref_lvalue($1));
-    cgen_append(&($3->code), derref_lvalue($3));
+    cgen_append(&($1->code), cgen_derref_lvalue(cgen_last_inst($1->code)->fields[0], $1->value_type, &temp_inst_count));
+    cgen_append(&($3->code), cgen_derref_lvalue(cgen_last_inst($3->code)->fields[0], $3->value_type, &temp_inst_count));
 
     cgen_append(
       &($$->code),
@@ -1080,8 +1075,15 @@ int main() {
   printf("\n>>>>>>>>>>SYMBOL TABLE<<<<<<<<<<<\n\n");
   stable_print(symbol_table);
 
-  printf("\n>>>>>>>>>>TAC<<<<<<<<<<<\n\n");
-  print_code(ast->code);
+  if (!invalid && ast) {
+    printf("\n>>>>>>>>>>TAC<<<<<<<<<<< (EM ARQUIVO \"out.tac\")\n\n");
+    print_code(ast->code);
+
+    fflush(stdout);
+    FILE* tac_f = freopen("out.tac", "w", stdout);
+    print_code(ast->code);
+    fclose(tac_f);
+  }
   
   free_scope(global_scope);
   free_tree(ast);
@@ -1089,4 +1091,6 @@ int main() {
   free_cgen();
 
   yylex_destroy();
+
+  return 0;
 }
