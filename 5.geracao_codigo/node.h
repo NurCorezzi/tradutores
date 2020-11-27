@@ -17,11 +17,6 @@ typedef enum {
 } GrammarType;
 
 typedef enum {
-    RVALUE,
-    LVALUE
-} ValueType;
-
-typedef enum {
     CNONE,
     CINT_TO_FLOAT,
     CFLOAT_TO_INT

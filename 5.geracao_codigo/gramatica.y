@@ -32,6 +32,7 @@ int scope_count;
 Instruction *cgen;
 int next_instruction;
 int temp_inst_count;
+int label_count;
 
 int has_main;
 
@@ -390,7 +391,8 @@ statement_end: block
 
   if (!invalid) {
     cgen_append(&($$->code), $expr_assign->code);  
-    cgen_append(&($$->code), cgen_write($expr_assign->type, $expr_assign->code, $expr_assign->value_type , &temp_inst_count));
+    cgen_append(&($$->code), cgen_write($expr_assign->type, $expr_assign->code, &temp_inst_count));
+    cgen_append(&($$->code), cgen_instr(NULL, TAC_PRINTLN, NULL, NULL, NULL));  
   }
 }
 | declaration END {
@@ -435,15 +437,15 @@ expr_assign: expr_relational ASSIGN expr_assign {
   }
 
   if (!invalid) {
-    cgen_append(&($3->code), cgen_derref_lvalue(cgen_last_inst($3->code)->fields[0], $3->value_type, &temp_inst_count));
+    cgen_append(&($3->code), cgen_derref_lvalue(cgen_last_inst($3->code)->fields[0], &temp_inst_count));
     cgen_append(
       &($$->code),
       cgen_instr(
         NULL,
-        TAC_MOVDV,
+        TAC_MOVIV,
         cgen_last_inst($1->code)->fields[0],
-        cgen_last_inst($3->code)->fields[0],
-        NULL
+        cgen_last_inst($1->code)->fields[0]->adress_index,
+        cgen_last_inst($3->code)->fields[0]
       )
     );
 
@@ -911,8 +913,8 @@ void build_const_code(Node *$$, OperandType type, int ival, float fval) {
 
 void build_expression_code(Node *$$, Node *$1, Node *$3, InstCode code) {
   if (!invalid) {
-    cgen_append(&($1->code), cgen_derref_lvalue(cgen_last_inst($1->code)->fields[0], $1->value_type, &temp_inst_count));
-    cgen_append(&($3->code), cgen_derref_lvalue(cgen_last_inst($3->code)->fields[0], $3->value_type, &temp_inst_count));
+    cgen_append(&($1->code), cgen_derref_lvalue(cgen_last_inst($1->code)->fields[0], &temp_inst_count));
+    cgen_append(&($3->code), cgen_derref_lvalue(cgen_last_inst($3->code)->fields[0], &temp_inst_count));
 
     cgen_append(
       &($$->code),

@@ -23,6 +23,11 @@ typedef enum {
     TAC_OPTYPE_LABEL
 } OperandType;
 
+typedef enum {
+    RVALUE,
+    LVALUE
+} ValueType;
+
 typedef struct t_label {
     char* value;
 } Label;
@@ -34,8 +39,11 @@ union Value {
 };
 
 typedef struct t_field {
-    union Value value;
-    OperandType type;
+    union Value value;      
+    OperandType type;               // Representa como campo deve ser printado em uma instrucao
+    
+    struct t_field *adress_index;   // Caso seja adress possui referencia para field com indice 
+    ValueType value_type;           // Como esta sendo trabalhado este valor no tac endereco ou valor
 } Field;
 
 typedef struct t_instruction {
@@ -51,6 +59,5 @@ typedef struct t_generic_list {
     void *cur;
     struct t_generic_list *next;
 } GenericList;
-
 
 #endif

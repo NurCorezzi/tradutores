@@ -6,7 +6,10 @@
 #include "node.h"
 
 extern int next_instruction;
+extern int label_count;
 
+// GAMIARRA: evitar dependencia circular que tambem ocorreria em code_gen.h
+Instruction *cgen_write(TypeExpression *type, Instruction *code, int *temp_inst_count);
 GenericList *alloc;
 
 union Value get_value_label(Label *label) {
@@ -65,11 +68,26 @@ Label* cgen_label(char *value, int is_user_label) {
     return label;
 }
 
+Label* cgen_label_by_counter() {    
+    char buffer[300];
+    sprintf(buffer, "L%d", label_count++);
+    return cgen_label(buffer, 0);
+}
+
+
 Field *cgen_field(union Value value, OperandType type) {
     Field* field = (Field*)calloc(1, sizeof(Field));
     push_alloc((void*)field);
     field->value = value;
     field->type = type;
+    field->value_type = RVALUE;
+    return field;
+}
+
+Field *cgen_field_adress(union Value value, OperandType type, Field *index) {
+    Field* field = cgen_field(value, type);
+    field->adress_index = index;
+    field->value_type = LVALUE;
     return field;
 }
 
@@ -228,11 +246,9 @@ Instruction *cgen_var_access(SymbolNode *sym, Node *dimension, int *temp_inst_co
     Instruction *inst = NULL;
 
     // Estrategia assume que resultado sempre sera extraido de um endereco inicial
-    inst = cgen_instr(
-        NULL, 
-        TAC_MOVVV, 
-        cgen_field(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP), 
-        sym->tac_ref, NULL);
+    Field *adress_index = cgen_field(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP);
+    cgen_append(&inst, cgen_instr(NULL, TAC_MOVVV, adress_index, cgen_field(get_value_ival(0), TAC_OPTYPE_INT), NULL));
+    cgen_append(&inst, cgen_instr(NULL, TAC_MOVVV, cgen_field_adress(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP, adress_index), sym->tac_ref, NULL));
 
     while (cur_access) {
         switch(cur_type->node_type) {
@@ -243,58 +259,38 @@ Instruction *cgen_var_access(SymbolNode *sym, Node *dimension, int *temp_inst_co
                 // Graph entra aqui para reaproveitar processamento de array
                 if (cur_type->node_type == GTYPE_GRAPH) {
                      // Valor de vertices do grafo estara na segunda posicao [sz][ponteiro vertice com valores][ponteiro para array de arestas]
-                    Field *graph_adress = cgen_last_inst(inst)->fields[0];
+                    Field *adress = cgen_last_inst(inst)->fields[0];
+                    Field *adress_index = cgen_field(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP);
+                    Field *array_index = cgen_field(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP);
 
-                    cgen_append(
-                        &inst,
-                        cgen_instr(
-                            NULL, 
-                            TAC_MOVVI, 
-                            cgen_field(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP), 
-                            graph_adress,
-                            cgen_field(get_value_ival(1), TAC_OPTYPE_INT)     
-                        )
-                    );
+                    // Endereco informado + 1 para acessar variavel que guarda endereco de array
+                    cgen_append(&inst, cgen_instr(NULL, TAC_ADD, adress_index, adress->adress_index, cgen_field(get_value_ival(1), TAC_OPTYPE_INT)));
+                    cgen_append(&inst, cgen_instr(NULL, TAC_MOVVV, array_index, cgen_field(get_value_ival(0), TAC_OPTYPE_INT), NULL));
+                    // Array sera colocado aqui com index de acesso em zero
+                    cgen_append(&inst, cgen_instr(NULL, TAC_MOVVI, cgen_field_adress(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP, array_index), adress, adress_index));
                 }
                
                 // Calcular tamanho das dimensoes restantes esquema ROW-MAJOR
-                Field *array_adress = cgen_last_inst(inst)->fields[0];
-                Field *user_index = cgen_last_inst(cur_access->code)->fields[0]; 
-                Field *tac_index = cgen_field(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP); 
-                int type_contained_sz = type_mem_sz(cur_type->child);
+                Field *adress           = cgen_last_inst(inst)->fields[0];
+                Field *user_index       = cgen_last_inst(cur_access->code)->fields[0]; 
+                Field *offset           = cgen_field(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP); 
+                Field *adress_index     = cgen_field(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP); 
+                int type_contained_sz   = type_mem_sz(cur_type->child);
 
                 cgen_append(&inst, cur_access->code);
-                cgen_append(
-                    &inst,
-                    cgen_instr(
-                        NULL, 
-                        TAC_MUL, 
-                        tac_index, 
-                        user_index,
-                        cgen_field(get_value_ival(type_contained_sz), TAC_OPTYPE_INT)     
-                    )
-                );
-
-                cgen_append(
-                    &inst,
-                    cgen_instr(
-                        NULL, 
-                        TAC_ADD, 
-                        cgen_field(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP), 
-                        array_adress,
-                        tac_index     
-                    )
-                );
-
+                // copia para nao zuar com indice anterior
+                cgen_append(&inst, cgen_instr(NULL, TAC_MOVVV, adress_index, adress->adress_index, NULL));
+                cgen_append(&inst, cgen_instr(NULL, TAC_MUL, offset, user_index, cgen_field(get_value_ival(type_contained_sz), TAC_OPTYPE_INT)));
                 // Adicionar 1 por causa do offset de tamanho adicionado no inicio do array
+                cgen_append(&inst, cgen_instr(NULL, TAC_ADD, adress_index, offset, cgen_field(get_value_ival(1), TAC_OPTYPE_INT)));                
                 cgen_append(
-                    &inst,
+                    &inst, 
                     cgen_instr(
                         NULL, 
-                        TAC_ADD, 
-                        cgen_last_inst(inst)->fields[0],
-                        cgen_last_inst(inst)->fields[0],
-                        cgen_field(get_value_ival(1), TAC_OPTYPE_INT)                        
+                        TAC_MOVVV, 
+                        cgen_field_adress(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP, adress_index), 
+                        adress, 
+                        NULL
                     )
                 );
 
@@ -312,37 +308,99 @@ Instruction *cgen_var_access(SymbolNode *sym, Node *dimension, int *temp_inst_co
     return inst;
 }
 
-Instruction* cgen_derref_lvalue(Field *field, ValueType vtype, int *temp_inst_count) {
-    if (vtype == LVALUE) {
+Instruction* cgen_derref_lvalue(Field *field, int *temp_inst_count) {
+    if (field->value_type == LVALUE) {
         return cgen_instr(
-            NULL,
-            TAC_MOVVD,
-            cgen_field(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP),
-            field,
-            NULL
-        );
+                NULL, 
+                TAC_MOVVI, 
+                cgen_field(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP), 
+                field, 
+                field->adress_index
+            );     
     } else {
         return NULL;
     }
 }
 
-Instruction *cgen_write(TypeExpression *type, Instruction *code, ValueType vtype, int *temp_inst_count) {
+/**
+ * @param code contem codigo com field inicial sendo o destino a ser printado, pode ser lval ou rval
+*/
+Instruction *cgen_write_array(TypeExpression *type, Instruction *code, int *temp_inst_count) {
+    if (type->node_type == GTYPE_ARRAY) {
+        Instruction *inst = NULL;
+        cgen_append(
+            &inst,
+            cgen_instr(NULL, TAC_PRINT, cgen_field(get_value_label(cgen_label("'['", 1)), TAC_OPTYPE_LABEL), NULL, NULL)
+        );
+
+        Field *sz = cgen_field(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP);
+        Field *base_adress = cgen_field(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP);
+        Field *index = cgen_field(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP); 
+                      
+        cgen_append(&inst, cgen_instr(NULL, TAC_MOVVD, sz, cgen_last_inst(code)->fields[0], NULL));
+        cgen_append(&inst, cgen_instr(NULL, TAC_ADD, base_adress, cgen_last_inst(code)->fields[0], cgen_field(get_value_ival(1), TAC_OPTYPE_INT)));
+        cgen_append(&inst, cgen_instr(NULL, TAC_MOVVV, index, cgen_field(get_value_ival(0), TAC_OPTYPE_INT), NULL));
+
+        Label* loop_init = cgen_label_by_counter();
+        Label* loop_end = cgen_label_by_counter();
+        
+        // TODO: faltou levar em consideracao o tamanho dos tipos armazenados no array
+        cgen_append(&inst, cgen_instr(loop_init, TAC_BRZ, cgen_field(get_value_label(loop_end), TAC_OPTYPE_LABEL), sz, NULL));
+        cgen_append(&inst, cgen_instr(NULL, TAC_ADD, cgen_field(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP), base_adress, index));
+        cgen_append(&inst, cgen_write(type->child, inst, temp_inst_count));
+        cgen_append(&inst, cgen_instr(NULL, TAC_ADD, index, index, cgen_field(get_value_ival(1), TAC_OPTYPE_INT)));
+        cgen_append(&inst, cgen_instr(NULL, TAC_SUB, sz, sz, cgen_field(get_value_ival(1), TAC_OPTYPE_INT)));
+        cgen_append(&inst, cgen_instr(NULL, TAC_JUMP, cgen_field(get_value_label(loop_init), TAC_OPTYPE_LABEL), NULL, NULL));
+
+        cgen_append(
+            &inst,
+            cgen_instr(loop_end, TAC_PRINT, cgen_field(get_value_label(cgen_label("']'", 1)), TAC_OPTYPE_LABEL), NULL, NULL)
+        );
+
+        return inst;
+    } else {
+        printf("ERRO: type must be array");
+        exit(0);
+        return NULL;
+    }
+}
+
+/**
+ * @param code contem codigo com field inicial sendo o destino a ser printado, pode ser lval ou rval
+*/
+Instruction *cgen_write(TypeExpression *type, Instruction *code, int *temp_inst_count) {
     Instruction *inst = NULL;
     switch(type->node_type) {
         case GTYPE_INT:     
         case GTYPE_FLOAT: {
-            // Derreferenciar caso seja variavel
             cgen_append(
                 &inst,
-                cgen_derref_lvalue(cgen_last_inst(inst)->fields[0], vtype, temp_inst_count)
+                cgen_derref_lvalue(cgen_last_inst(code)->fields[0], temp_inst_count)
             );
+
+            // caso seja lvalue sera derreferenciado para novo temporario do tac
+            Field *value = inst == NULL ?
+                cgen_last_inst(code)->fields[0] :
+                cgen_last_inst(inst)->fields[0] ;
+
             cgen_append(
                 &inst,
-                cgen_instr(NULL, TAC_PRINT, cgen_last_inst(inst)->fields[0], NULL, NULL)
+                cgen_instr(NULL, TAC_PRINT, value, NULL, NULL)
             );
+
+            break;
         }
-        case GTYPE_GRAPH:
-        case GTYPE_ARRAY: 
+        case GTYPE_GRAPH: {
+            break;
+        }
+        case GTYPE_ARRAY: {
+            cgen_append(
+                &inst,
+                cgen_write_array(type, code, temp_inst_count)
+            );
+            
+            break;  
+        } 
         default: break;
     }   
 
@@ -437,12 +495,12 @@ void print_inst(Instruction *inst) {
         case TAC_MOVID:   sprintf(buffer, "movid");                                                         break;
         case TAC_MOVIA:   sprintf(buffer, "movia");                                                         break;
         case TAC_POP:     sprintf(buffer, "pop");                                                           break;
-        case TAC_BRZ:     sprintf(buffer, "brz");                                                           break;
-        case TAC_BRNZ:    sprintf(buffer, "brnz");                                                          break;
-        case TAC_JUMP:    sprintf(buffer, "jump");                                                          break;
+        case TAC_BRZ:     sprintf(buffer, "%sbrz %s, %s", label, field[0], field[1]);                                                           break;
+        case TAC_BRNZ:    sprintf(buffer, "%sbrnz %s, %s", label, field[0], field[1]);                      break;
+        case TAC_JUMP:    sprintf(buffer, "%sjump %s", label, field[0]);                                    break;
         case TAC_PARAM:   sprintf(buffer, "param");                                                         break;
         case TAC_PRINT:   sprintf(buffer, "%sprint %s", label, field[0]);                                   break;
-        case TAC_PRINTLN: sprintf(buffer, "println");                                                       break;
+        case TAC_PRINTLN: sprintf(buffer, "%sprintln %s", label, field[0]);                                 break;
         case TAC_SCANC:   sprintf(buffer, "scanc");                                                         break;
         case TAC_SCANI:   sprintf(buffer, "scani");                                                         break;
         case TAC_SCANF:   sprintf(buffer, "scanf");                                                         break;

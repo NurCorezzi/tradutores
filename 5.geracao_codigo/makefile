@@ -14,7 +14,7 @@ all:
 r:
 	./${prog_name} < ${input_default}
 
-tac:
+tac: r
 	../../tac-master/tac ./out.tac
 
 check:
