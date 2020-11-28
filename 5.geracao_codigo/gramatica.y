@@ -194,16 +194,15 @@ function: type dimension id {
   scope_pop(&global_scope);
 
   if (!invalid) {
-    if ($statements != NULL) {
-      $$->code = $statements->code;
-    }
+    if ($params != NULL)      cgen_append(&($$->code), $params->code);
+    if ($statements != NULL)  cgen_append(&($$->code), $statements->code);
 
     if (strcmp($id->complement, "main") != 0) {
-      cgen_append(
-        &($$->code),
-        cgen_instr(NULL, TAC_RETURN, NULL, NULL, NULL)
-      );
+      cgen_append(&($$->code), cgen_instr(NULL, TAC_RETURN, NULL, NULL, NULL));
     }
+
+    // nop para sempre gerar funcao com label inicial
+    cgen_append(&($$->code), cgen_instr(NULL, TAC_NOP, NULL, NULL, NULL));
 
     if ($$->code) {
       if ($$->code->label == NULL) {
@@ -221,16 +220,18 @@ params: %empty {$$ = NULL;}
 | params SEPARATOR declaration {
   $$ = create_node("params");
   
-  Node *it;
-  for (it = $1->begin_child; it != NULL; it = it->next) {
-    push_child($$, it);
-  }
-  free_node($1);
+  if ($1 != NULL) {
+    normalize_to_list($$, $1);
+    $$->code = $1->code;
+    free_node($1);
+  } 
   push_child($$, $declaration);
+  cgen_append(&($$->code), $declaration->code);
 }
 | declaration {
   $$ = create_node("params");
   push_child($$, $declaration);
+  cgen_append(&($$->code), $declaration->code);
 }
 ;
 

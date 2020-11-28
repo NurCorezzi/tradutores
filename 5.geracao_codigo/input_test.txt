@@ -1,9 +1,2 @@
-void main() {
-    float[10] i;
-    i[0] = 1.2;
-    << i;
-    << i;
-    i[2] = 1.5;
-    << i;
-    << i[2];
+void main(int i) {
 }

@@ -520,7 +520,7 @@ void print_inst(Instruction *inst) {
         case TAC_CALL:    sprintf(buffer, "call");                                                          break;
         case TAC_RETURN:  sprintf(buffer, "%sreturn %s", label, field[0]);                                  break;
         case TAC_PUSH:    sprintf(buffer, "push");                                                          break;
-        case TAC_NOP:     sprintf(buffer, "nop");                                                           break;
+        case TAC_NOP:     sprintf(buffer, "%snop", label);                                                  break;
         default:
             printf("ERROR: tac instruction not identified\n");
             exit(0);
