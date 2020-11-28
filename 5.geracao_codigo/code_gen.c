@@ -333,29 +333,39 @@ Instruction *cgen_write_array(TypeExpression *type, Instruction *code, int *temp
             cgen_instr(NULL, TAC_PRINT, cgen_field(get_value_label(cgen_label("'['", 1)), TAC_OPTYPE_LABEL), NULL, NULL)
         );
 
-        Field *sz = cgen_field(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP);
-        Field *base_adress = cgen_field(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP);
-        Field *index = cgen_field(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP); 
-                      
-        cgen_append(&inst, cgen_instr(NULL, TAC_MOVVD, sz, cgen_last_inst(code)->fields[0], NULL));
-        cgen_append(&inst, cgen_instr(NULL, TAC_ADD, base_adress, cgen_last_inst(code)->fields[0], cgen_field(get_value_ival(1), TAC_OPTYPE_INT)));
-        cgen_append(&inst, cgen_instr(NULL, TAC_MOVVV, index, cgen_field(get_value_ival(0), TAC_OPTYPE_INT), NULL));
-
-        Label* loop_init = cgen_label_by_counter();
-        Label* loop_end = cgen_label_by_counter();
+        Field *sz           = cgen_field(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP);
+        Field *index        = cgen_field(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP); 
+        Field *base_adress  = cgen_field_adress(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP, index);
         
-        // TODO: faltou levar em consideracao o tamanho dos tipos armazenados no array
-        cgen_append(&inst, cgen_instr(loop_init, TAC_BRZ, cgen_field(get_value_label(loop_end), TAC_OPTYPE_LABEL), sz, NULL));
-        cgen_append(&inst, cgen_instr(NULL, TAC_ADD, cgen_field(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP), base_adress, index));
-        cgen_append(&inst, cgen_write(type->child, inst, temp_inst_count));
+        cgen_append(&inst, cgen_instr(NULL, TAC_MOVVV, base_adress, cgen_last_inst(code)->fields[0], NULL));
+        cgen_append(&inst, cgen_instr(NULL, TAC_MOVVI, sz, base_adress, cgen_field(get_value_ival(0), TAC_OPTYPE_INT)));
+        cgen_append(&inst, cgen_instr(NULL, TAC_MOVVV, index, cgen_last_inst(code)->fields[0]->adress_index, NULL));
+        // Adicionar 1 para pular o sz
         cgen_append(&inst, cgen_instr(NULL, TAC_ADD, index, index, cgen_field(get_value_ival(1), TAC_OPTYPE_INT)));
-        cgen_append(&inst, cgen_instr(NULL, TAC_SUB, sz, sz, cgen_field(get_value_ival(1), TAC_OPTYPE_INT)));
-        cgen_append(&inst, cgen_instr(NULL, TAC_JUMP, cgen_field(get_value_label(loop_init), TAC_OPTYPE_LABEL), NULL, NULL));
 
-        cgen_append(
-            &inst,
-            cgen_instr(loop_end, TAC_PRINT, cgen_field(get_value_label(cgen_label("']'", 1)), TAC_OPTYPE_LABEL), NULL, NULL)
-        );
+        Field *offset           = cgen_field(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP); 
+        int type_contained_sz   = type_mem_sz(type->child);
+
+        cgen_append(&inst, cgen_instr(NULL, TAC_MOVVV, offset, cgen_field(get_value_ival(type_contained_sz), TAC_OPTYPE_INT), NULL));      
+
+        Label* loop_init_label = cgen_label_by_counter();
+        Label* loop_end_label = cgen_label_by_counter();
+        
+        {
+            cgen_append(&inst, cgen_instr(loop_init_label, TAC_BRZ, cgen_field(get_value_label(loop_end_label), TAC_OPTYPE_LABEL), sz, NULL));
+            cgen_append(&inst, cgen_instr(NULL, TAC_MOVVV, base_adress, base_adress, NULL));
+
+            cgen_append(&inst, cgen_write(type->child, inst, temp_inst_count));
+
+            cgen_append(&inst, cgen_instr(NULL, TAC_PRINT, cgen_field(get_value_label(cgen_label("','", 1)), TAC_OPTYPE_LABEL), NULL, NULL));
+            cgen_append(&inst, cgen_instr(NULL, TAC_PRINT, cgen_field(get_value_label(cgen_label("' '", 1)), TAC_OPTYPE_LABEL), NULL, NULL));
+            cgen_append(&inst, cgen_instr(NULL, TAC_ADD, index, index, offset));        
+            cgen_append(&inst, cgen_instr(NULL, TAC_SUB, sz, sz, cgen_field(get_value_ival(1), TAC_OPTYPE_INT)));
+            cgen_append(&inst, cgen_instr(NULL, TAC_JUMP, cgen_field(get_value_label(loop_init_label), TAC_OPTYPE_LABEL), NULL, NULL));
+        }
+
+        cgen_append(&inst, cgen_instr(loop_end_label, TAC_PRINT, cgen_field(get_value_label(cgen_label("'#'", 1)), TAC_OPTYPE_LABEL), NULL, NULL));
+        cgen_append(&inst, cgen_instr(NULL, TAC_PRINT, cgen_field(get_value_label(cgen_label("']'", 1)), TAC_OPTYPE_LABEL), NULL, NULL));
 
         return inst;
     } else {
@@ -495,7 +505,7 @@ void print_inst(Instruction *inst) {
         case TAC_MOVID:   sprintf(buffer, "movid");                                                         break;
         case TAC_MOVIA:   sprintf(buffer, "movia");                                                         break;
         case TAC_POP:     sprintf(buffer, "pop");                                                           break;
-        case TAC_BRZ:     sprintf(buffer, "%sbrz %s, %s", label, field[0], field[1]);                                                           break;
+        case TAC_BRZ:     sprintf(buffer, "%sbrz %s, %s", label, field[0], field[1]);                       break;
         case TAC_BRNZ:    sprintf(buffer, "%sbrnz %s, %s", label, field[0], field[1]);                      break;
         case TAC_JUMP:    sprintf(buffer, "%sjump %s", label, field[0]);                                    break;
         case TAC_PARAM:   sprintf(buffer, "param");                                                         break;
