@@ -237,6 +237,31 @@ Instruction* cgen_declaration(SymbolNode *sym, int *temp_inst_count) {
     return inst;
 }
 
+Instruction* cgen_declaration_param(SymbolNode *sym, int *param_inst_count) {
+    Instruction *inst = NULL;
+
+    switch(sym->type->node_type) {
+        case GTYPE_FLOAT:   
+        case GTYPE_INT: {
+            Field *value = cgen_field(get_value_ival((*param_inst_count)++), TAC_OPTYPE_PARAM);
+            sym->tac_ref = value;
+            break;
+        }
+        case GTYPE_GRAPH:     
+        case GTYPE_ARRAY: {
+            Field *index = cgen_field(get_value_ival((*param_inst_count)++), TAC_OPTYPE_PARAM);
+            Field *adress = cgen_field_adress(get_value_ival((*param_inst_count)++), TAC_OPTYPE_PARAM, index);
+            sym->tac_ref = adress;
+            break;
+        } 
+        default: 
+            printf("ERRO: type not found in declaration of param");
+            exit(0);
+    }
+
+    return inst;
+}
+
 /**
  * Assume-se que e um acesso valido na hierarquia do simbolo passado, dimensões possuem código gerado para indice de acesso
 */
@@ -308,14 +333,14 @@ Instruction *cgen_var_access(SymbolNode *sym, Node *dimension, int *temp_inst_co
     return inst;
 }
 
-Instruction* cgen_derref_lvalue(Field *field, int *temp_inst_count) {
-    if (field->value_type == LVALUE) {
+Instruction* cgen_derref_lvalue(Field *adress, int *temp_inst_count) {
+    if (adress->value_type == LVALUE) {
         return cgen_instr(
                 NULL, 
                 TAC_MOVVI, 
                 cgen_field(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP), 
-                field, 
-                field->adress_index
+                adress, 
+                adress->adress_index
             );     
     } else {
         return NULL;

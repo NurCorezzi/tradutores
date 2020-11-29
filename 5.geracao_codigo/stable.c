@@ -5,6 +5,7 @@
 #include "node.h"
 #include "gramatica.tab.h"
 #include "scope.c"
+#include "code_gen.h"
 
 /*-----------------CONVERSION---------------------*/
 
@@ -19,27 +20,32 @@ char* stype_to_string(int type) {
 /*------------PRINT SYMBOL TABLE---------------*/
 
 void stable_symbol_print(SymbolNode* entry, int isChild) {
-  char default_format[] = "│%-20p-%-20s│%-15s│%-15s│%-15s│\n";
-  char with_child_format[] = "│%-20p┌%-20s│%-15s│%-15s│%-15s│\n";
-  char nth_child_format[] = "│%-20p├%-20s│%-15s│%-15s│%-15s│\n";
-  char last_child_format[] = "│%-20p└%-20s│%-15s│%-15s│%-15s│\n";
+  char default_format[] = "│%-20p-%-20s│%-15s│%-15s│%-15s│%-15s|\n";
+  char with_child_format[] = "│%-20p┌%-20s│%-15s│%-15s│%-15s│%-15s|\n";
+  char nth_child_format[] = "│%-20p├%-20s│%-15s│%-15s│%-15s│%-15s|\n";
+  char last_child_format[] = "│%-20p└%-20s│%-15s│%-15s│%-15s│%-15s|\n";
   
   char *format = isChild ? nth_child_format : default_format;
 
   if (!isChild && entry->matches != NULL) format = with_child_format; 
   if (isChild && entry->matches == NULL) format = last_child_format;
 
+  char *field_ref = field_toa(entry->tac_ref);
+
   printf(format, 
     entry, 
     entry->id, 
     entry->scope_str, 
     stype_to_string(entry->stype), 
-    entry->type_str
+    entry->type_str,
+    field_ref
   );
+
+  free(field_ref);
 }
 
 void stable_print(SymbolNode* table) {
-  printf("│%-20s│%-20s│%-15s│%-15s│%-15s│\n", "ID", "ENTRY", "SCOPE", "STYPE", "GTYPE");
+  printf("│%-20s│%-20s│%-15s│%-15s│%-15s│%-15s|\n", "ID", "ENTRY", "SCOPE", "STYPE", "GTYPE", "TAC_FIELD");
 
   SymbolNode *entry = table;
   while(entry) {

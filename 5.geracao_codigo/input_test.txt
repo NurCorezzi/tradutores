@@ -1,2 +1,4 @@
-void main(int i) {
+void smain(graph[1] a, int b) {
+}
+void main(graph[1] a, int b) {
 }

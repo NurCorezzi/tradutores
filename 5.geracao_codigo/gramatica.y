@@ -32,9 +32,11 @@ int scope_count;
 Instruction *cgen;
 int next_instruction;
 int temp_inst_count;
+int param_inst_count;
 int label_count;
 
 int has_main;
+int is_declaration_param;
 
 /*-------UTILS-------*/
 
@@ -170,10 +172,16 @@ function: type dimension id {
   }
 
   scope_push(&global_scope, &scope_count, entry);
+
+  is_declaration_param = 1;
+  temp_inst_count = 0;
+  param_inst_count = 0;
+
 } OPEN_P params CLOSE_P {
   // Obtencao de parametros para symbol table
   SymbolNode *entry = stable_find_with_scope(symbol_table, global_scope, $id->complement, STYPE_FUNCTION);  
   entry->ast_node = $params;
+  is_declaration_param = 0;
 } OPEN_BRACE statements CLOSE_BRACE {
   $$ = create_node("function");
 
@@ -669,15 +677,22 @@ declaration: type dimension id {
 
   if (!invalid) {
     if ($dimension != NULL) {
-      cgen_append(&($$->code), $dimension->code);
+      // A principio nao esta sendo utilizado mas e gerado caso seja necessario
+      // cgen_append(&($$->code), $dimension->code);
     }
 
-    cgen_append(
-      &($$->code),
-      cgen_declaration(entry, &temp_inst_count)
-    );
+    if (is_declaration_param) { 
+      cgen_append(
+        &($$->code),
+        cgen_declaration_param(entry, &param_inst_count)
+      );
+    } else {
+      cgen_append(
+        &($$->code),
+        cgen_declaration(entry, &temp_inst_count)
+      );
+    }
   }
-
 }
 ;
 

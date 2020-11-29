@@ -76,7 +76,7 @@ char* scope_to_string(Scope* scope) {
   Scope *cur = scope;
   while(cur != NULL) {
     char buffer_int[20] = {0};
-    sprintf(buffer_int, "%d#", cur->id);
+    sprintf(buffer_int, "%d{", cur->id);
     strcat(buffer, buffer_int);
     cur = cur->child;
   }

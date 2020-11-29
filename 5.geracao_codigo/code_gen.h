@@ -60,4 +60,6 @@ typedef struct t_generic_list {
     struct t_generic_list *next;
 } GenericList;
 
+char* field_toa(Field *field);
+
 #endif
