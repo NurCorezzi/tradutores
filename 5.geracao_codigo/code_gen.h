@@ -61,5 +61,6 @@ typedef struct t_generic_list {
 } GenericList;
 
 char* field_toa(Field *field);
+Instruction* cgen_derref_lvalue(Field *adress, int *temp_inst_count);
 
 #endif

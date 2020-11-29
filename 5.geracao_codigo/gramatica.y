@@ -213,10 +213,18 @@ function: type dimension id {
     cgen_append(&($$->code), cgen_instr(NULL, TAC_NOP, NULL, NULL, NULL));
 
     if ($$->code) {
+      char *label_description;
+      // Caso seja main nao queremos adicionar "_" na label para que tac possa executar
+      if (strcmp($id->complement, "main") == 0) {
+        label_description = cgen_label($id->complement, 1)->value;
+      } else {
+        label_description = cgen_label($id->complement, 0)->value;
+      }
+     
       if ($$->code->label == NULL) {
-        $$->code->label = cgen_label($id->complement, 1);
+        $$->code->label = cgen_label(label_description, 1);
       } else{
-        replace_label_value($$->code->label, $id->complement);  
+        replace_label_value($$->code->label, label_description);  
       }
     }
   }
@@ -262,6 +270,13 @@ function_call: id OPEN_P params_call CLOSE_P {
       $params_call ? $params_call->begin_child : NULL
     );
   } 
+
+  if (!invalid) {
+    cgen_append(
+      &($$->code), 
+      cgen_function_call(match, $params_call, &temp_inst_count)
+    );
+  }
 }
 ;
 
@@ -269,12 +284,14 @@ params_call: %empty {$$ = NULL;}
 | params_call SEPARATOR expr_assign {
   $$ = create_node("params_call");
   
-  Node *it;
-  for (it = $1->begin_child; it != NULL; it = it->next) {
-    push_child($$, it);
-  }
-  free_node($1);
+  if ($1 != NULL) {
+    normalize_to_list($$, $1);
+    $$->code = $1->code;
+    free_node($1);
+  } 
   push_child($$, $expr_assign);
+  // Parametros nao podem ser juntados aqui pois e necessario last instruction de cada um para acessar o field com seu valor
+  // cgen_append(&($$->code), $expr_assign->code);
 } 
 | expr_assign {
   $$ = create_node("params_call");
@@ -904,8 +921,6 @@ Node* get_params_graph_call() {
 /*--------------------CODE GEN----------------------------*/
 
 void build_const_code(Node *$$, OperandType type, int ival, float fval) {
-    printf("%d", temp_inst_count);
-
   if (!invalid) {
     Field *field;
     if (type == TAC_OPTYPE_INT) {

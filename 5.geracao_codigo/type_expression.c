@@ -6,6 +6,7 @@
 #include "node.h"
 
 // Boolean por simplicidade sera transformado em int
+TypeExpression TYPE_EXPRESSION_VOID = {0, NULL, GTYPE_VOID};
 TypeExpression TYPE_EXPRESSION_BOOLEAN = {0, NULL, GTYPE_INT};
 TypeExpression TYPE_EXPRESSION_FLOAT = {0, NULL, GTYPE_FLOAT};
 TypeExpression TYPE_EXPRESSION_INT = {0, NULL, GTYPE_INT};

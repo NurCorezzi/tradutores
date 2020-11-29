@@ -1,4 +1,9 @@
-void smain(graph[1] a, int b) {
+void print() {
+    << 1;
 }
-void main(graph[1] a, int b) {
+
+void main() {
+    print();
+    print();
+    print();
 }
