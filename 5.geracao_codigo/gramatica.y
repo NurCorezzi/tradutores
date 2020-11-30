@@ -90,7 +90,7 @@ int invalid;
 
 %type<node> init program function params function_call params_call graph_call graph_params_call
 %type<node> statements statement
-%type<node> statement_no_dangle statement_prefix statement_end dangling_if block
+%type<node> block
 
 %type<node> expr_relational expr_and expr_or expr_add expr_sub expr_mul expr_div expr_unary
 %type<node> unary and or add sub mul div factor
@@ -107,7 +107,7 @@ int invalid;
 } 
 init program function params function_call params_call graph_call graph_params_call
 statements statement
-statement_no_dangle statement_prefix statement_end dangling_if block
+block
 
 expr_relational expr_and expr_or expr_add expr_sub expr_mul expr_div expr_unary
 unary and or add sub mul div factor
@@ -349,74 +349,6 @@ statements: %empty {$$ = NULL;} | statements statement {
 }
 ;
 
-statement: statement_prefix statement_end {
-  $$ = $statement_prefix;
-  push_child($$, $statement_end);
-}
-| statement_prefix dangling_if  {
-  $$ = $statement_prefix;
-  push_child($$, $dangling_if);
-}
-| statement_end {
-  $$ = $1;
-}
-| dangling_if {
-  $$ = $1;
-}
-| error { error_recovery_mode = 0; $$ = NULL; }
-;
-
-statement_no_dangle: statement_prefix statement_end {
-  $$ = $statement_prefix;
-  push_child($$, $statement_end);
-}
-| statement_end {
-  $$ = $1;
-}
-;
-
-dangling_if: IF OPEN_P expr_assign CLOSE_P statement {
-  $$ = create_node("if_open");
-  push_child($$, $expr_assign);
-  push_child($$, $statement);
-
-  if (!invalid) {
-    cgen_append(
-      &($$->code),
-      cgen_if($$, $expr_assign->code, $statement->code, &temp_inst_count)
-    );
-  }
-}
-;
-
-statement_prefix: IF OPEN_P expr_assign CLOSE_P statement_no_dangle ELSE {
-  $$ = create_node("if_else");
-  push_child($$, $expr_assign);
-  push_child($$, $statement_no_dangle);
-} 
-| WHILE OPEN_P expr_assign CLOSE_P {
-  $$ = create_node("while");
-  push_child($$, $expr_assign);
-}
-| FOR OPEN_P expr_assign[exp1] END expr_assign[exp2] END expr_assign[exp3] CLOSE_P {
-  $$ = create_node("for");
-  push_child($$, $exp1);
-  push_child($$, $exp2);
-  push_child($$, $exp3);
-}
-| FOR OPEN_P id_or_access IT graph_call CLOSE_P {
-  $$ = create_node("for_iterator");
-  push_child($$, $id_or_access);
-  push_child($$, $graph_call);
-
-  if (!type_eq(&TYPE_EXPRESSION_INT, $id_or_access->type)) {
-    char buffer[300] = {0};
-    sprintf(buffer, "receiving var in for mut be of type int ");
-    semantic_error(buffer);
-  } 
-}
-;
-
 block: OPEN_BRACE {  
   scope_push(&global_scope, &scope_count, NULL); 
 } statements CLOSE_BRACE {
@@ -430,7 +362,48 @@ block: OPEN_BRACE {
 }
 ;
 
-statement_end: block
+statement: IF OPEN_P expr_assign CLOSE_P block {
+  $$ = create_node("if_open");
+  push_child($$, $expr_assign);
+  push_child($$, $block);
+
+  if (!invalid) {
+    cgen_append(
+      &($$->code),
+      cgen_if($$, $expr_assign->code, $block->code, &temp_inst_count)
+    );
+  }
+}
+| IF OPEN_P expr_assign CLOSE_P block[body_if] ELSE block[body_else] {
+  $$ = create_node("if_else");
+  push_child($$, $expr_assign);
+  push_child($$, $body_if);
+  push_child($$, $body_else);
+} 
+| WHILE OPEN_P expr_assign CLOSE_P block {
+  $$ = create_node("while");
+  push_child($$, $expr_assign);
+  push_child($$, $block);
+}
+| FOR OPEN_P expr_assign[exp1] END expr_assign[exp2] END expr_assign[exp3] CLOSE_P block {
+  $$ = create_node("for");
+  push_child($$, $exp1);
+  push_child($$, $exp2);
+  push_child($$, $exp3);
+  push_child($$, $block);
+}
+| FOR OPEN_P id_or_access IT graph_call CLOSE_P block {
+  $$ = create_node("for_iterator");
+  push_child($$, $id_or_access);
+  push_child($$, $graph_call);
+  push_child($$, $block);
+
+  if (!type_eq(&TYPE_EXPRESSION_INT, $id_or_access->type)) {
+    char buffer[300] = {0};
+    sprintf(buffer, "receiving var in for mut be of type int ");
+    semantic_error(buffer);
+  } 
+}
 | READ id_or_access END {
   $$ = create_node("read");
   push_child($$, $id_or_access);
@@ -467,8 +440,8 @@ statement_end: block
     check_assign_expression($$, cur->function->type, $expr_assign);
   }
 }
+| block
 ;
-
 
 /*----------------------EXPRESSIONS--------------------------------*/
 
