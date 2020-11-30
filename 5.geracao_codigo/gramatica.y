@@ -89,7 +89,7 @@ int invalid;
 %type<node> ID C_FLOAT C_INT 
 
 %type<node> init program function params function_call params_call graph_call graph_params_call
-%type<node> statements statement
+%type<node> statements statement statement_control
 %type<node> block
 
 %type<node> expr_relational expr_and expr_or expr_add expr_sub expr_mul expr_div expr_unary
@@ -106,7 +106,7 @@ int invalid;
   }
 } 
 init program function params function_call params_call graph_call graph_params_call
-statements statement
+statements statement statement_control
 block
 
 expr_relational expr_and expr_or expr_add expr_sub expr_mul expr_div expr_unary
@@ -205,13 +205,13 @@ function: type dimension id {
     if ($params != NULL)      cgen_append(&($$->code), $params->code);
     if ($statements != NULL)  cgen_append(&($$->code), $statements->code);
 
+    // nop para sempre gerar funcao com label inicial caso nao tenha statements, deve ficar antes de return obviamente
+    Label *ending = cgen_label_by_counter();
+    cgen_append(&($$->code), cgen_instr(ending, TAC_NOP, NULL, NULL, NULL));
+
     if (strcmp($id->complement, "main") != 0) {
       cgen_append(&($$->code), cgen_instr(NULL, TAC_RETURN, NULL, NULL, NULL));
     }
-
-    // nop para sempre gerar funcao com label inicial
-    Label *ending = cgen_label_by_counter();
-    cgen_append(&($$->code), cgen_instr(ending, TAC_NOP, NULL, NULL, NULL));
 
     if ($statements != NULL) cgen_back_patch($statements->back_patch, ending);
 
@@ -362,7 +362,8 @@ block: OPEN_BRACE {
 }
 ;
 
-statement: IF OPEN_P expr_assign CLOSE_P block {
+statement_control: block
+| IF OPEN_P expr_assign CLOSE_P block {
   $$ = create_node("if_open");
   push_child($$, $expr_assign);
   push_child($$, $block);
@@ -370,17 +371,26 @@ statement: IF OPEN_P expr_assign CLOSE_P block {
   if (!invalid) {
     cgen_append(
       &($$->code),
-      cgen_if($$, $expr_assign->code, $block->code, &temp_inst_count)
+      cgen_if($$, $expr_assign->code, $block, &temp_inst_count)
     );
   }
 }
-| IF OPEN_P expr_assign CLOSE_P block[body_if] ELSE block[body_else] {
+| IF OPEN_P expr_assign CLOSE_P block[body_if] ELSE statement_control[else_statement] {
   $$ = create_node("if_else");
   push_child($$, $expr_assign);
   push_child($$, $body_if);
-  push_child($$, $body_else);
+  push_child($$, $else_statement);
+
+  if (!invalid) {
+    cgen_append(
+      &($$->code),
+      cgen_if_else($$, $expr_assign->code, $body_if, $else_statement, &temp_inst_count)
+    );
+  }
 } 
-| WHILE OPEN_P expr_assign CLOSE_P block {
+;
+
+statement: WHILE OPEN_P expr_assign CLOSE_P block {
   $$ = create_node("while");
   push_child($$, $expr_assign);
   push_child($$, $block);
@@ -440,7 +450,7 @@ statement: IF OPEN_P expr_assign CLOSE_P block {
     check_assign_expression($$, cur->function->type, $expr_assign);
   }
 }
-| block
+| statement_control
 ;
 
 /*----------------------EXPRESSIONS--------------------------------*/

@@ -567,7 +567,7 @@ Instruction *cgen_write(TypeExpression *type, Instruction *code, int *temp_inst_
     return inst;
 }
 
-Instruction* cgen_if(Node* dst, Instruction* condition, Instruction* body, int *temp_inst_count) {
+Instruction* cgen_if(Node* dst, Instruction* condition, Node* body, int *temp_inst_count) {
     Instruction *inst = condition;
     cgen_append(&inst, cgen_derref_lvalue(cgen_last_inst(inst)->fields[0], temp_inst_count));
 
@@ -575,13 +575,42 @@ Instruction* cgen_if(Node* dst, Instruction* condition, Instruction* body, int *
     Field *field_label_else = cgen_field(get_value_label(cgen_label("_", 0)), TAC_OPTYPE_LABEL);
     
     cgen_append(&inst, cgen_instr(NULL, TAC_BRZ, field_label_else, field_condition, NULL));
-    cgen_append(&inst, body);
+    cgen_append(&inst, body->code);
 
     dst->back_patch = cgen_patch(field_label_else);
+    dst->back_patch = cgen_merge_patch(dst->back_patch, body->back_patch);
 
     return inst;
 }
 
+Instruction* cgen_if_else(Node* dst, Instruction* condition, Node* body_if, Node* else_statement, int *temp_inst_count) {
+    Instruction *inst = condition;
+    cgen_append(&inst, cgen_derref_lvalue(cgen_last_inst(inst)->fields[0], temp_inst_count));
+
+    // Caso else statement seja um bloco vazio sabe se la porque usuario faria isso
+    if (else_statement->code == NULL) {
+        else_statement->code = cgen_instr(NULL, TAC_NOP, NULL, NULL, NULL);
+    }
+
+    if (else_statement->code->label == NULL) {
+        else_statement->code->label = cgen_label_by_counter();
+    }
+
+    Field* field_condition      = cgen_last_inst(inst)->fields[0];
+    Field *field_label_else     = cgen_field(get_value_label(else_statement->code->label), TAC_OPTYPE_LABEL);      
+    Field *field_next_statement = cgen_field(get_value_label(cgen_label("_", 0)), TAC_OPTYPE_LABEL);
+
+    cgen_append(&inst, cgen_instr(NULL, TAC_BRZ, field_label_else, field_condition, NULL));
+    cgen_append(&inst, body_if->code);
+    cgen_append(&inst, cgen_instr(NULL, TAC_JUMP, field_next_statement, NULL, NULL));
+    cgen_append(&inst, else_statement->code);
+
+    dst->back_patch = cgen_patch(field_next_statement);
+    dst->back_patch = cgen_merge_patch(dst->back_patch, body_if->back_patch);
+    dst->back_patch = cgen_merge_patch(dst->back_patch, else_statement->back_patch);
+
+    return inst;
+}
 
 /*---------------------FREE-------------------------*/
 
