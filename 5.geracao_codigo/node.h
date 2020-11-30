@@ -36,6 +36,7 @@ typedef struct t_node {
     struct t_symbol_node *sentry;
 
     Instruction *code;
+    BackPatchList *back_patch;
 
     char *id;
     char *complement;

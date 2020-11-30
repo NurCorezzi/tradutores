@@ -210,7 +210,10 @@ function: type dimension id {
     }
 
     // nop para sempre gerar funcao com label inicial
-    cgen_append(&($$->code), cgen_instr(NULL, TAC_NOP, NULL, NULL, NULL));
+    Label *ending = cgen_label_by_counter();
+    cgen_append(&($$->code), cgen_instr(ending, TAC_NOP, NULL, NULL, NULL));
+
+    if ($statements != NULL) cgen_back_patch($statements->back_patch, ending);
 
     if ($$->code) {
       char *label_description;
@@ -325,14 +328,24 @@ graph_params_call: OPEN_P id_or_access SEPARATOR expr_assign[exp1] SEPARATOR exp
 
 statements: %empty {$$ = NULL;} | statements statement {
   $$ = create_node("statements");
+  BackPatchList *back_patch = NULL;
 
   if ($1 != NULL) {
     normalize_to_list($$, $1);
     $$->code = $1->code;
+    back_patch = $1->back_patch;
     free_node($1);
   } 
   push_child($$, $statement);
-  cgen_append(&($$->code), $statement->code);
+
+  if (!invalid) {
+    cgen_append(&($$->code), $statement->code);
+    if (back_patch && $statement->code->label == NULL) {
+      $statement->code->label = cgen_label_by_counter();
+    }
+    cgen_back_patch(back_patch, $statement->code->label);  
+    $$->back_patch = $statement->back_patch;
+  }
 }
 ;
 
@@ -366,6 +379,13 @@ dangling_if: IF OPEN_P expr_assign CLOSE_P statement {
   $$ = create_node("if_open");
   push_child($$, $expr_assign);
   push_child($$, $statement);
+
+  if (!invalid) {
+    cgen_append(
+      &($$->code),
+      cgen_if($$, $expr_assign->code, $statement->code, &temp_inst_count)
+    );
+  }
 }
 ;
 
@@ -401,7 +421,11 @@ block: OPEN_BRACE {
   scope_push(&global_scope, &scope_count, NULL); 
 } statements CLOSE_BRACE {
   $$ = create_node("block");
-  push_child($$, $statements);
+  if ($statements) {
+    $$->code = $statements->code;
+    $$->back_patch = $statements->back_patch;
+    push_child($$, $statements);
+  }
   scope_pop(&global_scope);
 }
 ;

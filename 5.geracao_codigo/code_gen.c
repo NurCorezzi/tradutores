@@ -130,7 +130,61 @@ Instruction* cgen_last_inst(Instruction *inst) {
     return cur;
 }
 
-/*---------------------HELPER-------------------------*/
+/*--------------------BACK PATCH-------------------------*/
+
+BackPatchList* cgen_last_patch(BackPatchList *patch) {
+    while(patch && patch->next != NULL) {
+        patch = patch->next;
+    }
+    return patch;
+}
+
+BackPatchList* cgen_patch(Field *field) {
+    BackPatchList* patch = (BackPatchList*)calloc(1, sizeof(BackPatchList));
+    patch->cur = field;
+
+    push_alloc((void*)patch);
+    return patch;
+}
+
+BackPatchList* cgen_cpy_patch(BackPatchList *patch) {
+    BackPatchList* new_patch_list = NULL;
+    while(patch) {
+        BackPatchList* new_patch = cgen_patch(patch->cur);
+
+        if (new_patch_list == NULL) {
+            new_patch_list = new_patch;
+        } else {
+            // Ineficiente mas pratico
+            cgen_last_patch(new_patch_list)->next = new_patch;
+        }
+
+        patch = patch->next;
+    }
+    return new_patch_list;
+}
+
+BackPatchList* cgen_merge_patch(BackPatchList *a, BackPatchList *b) {
+    a = cgen_cpy_patch(a);
+    b = cgen_cpy_patch(b);
+    if (a == NULL) {
+        return b;
+    } else {
+        BackPatchList *last_patch = cgen_last_patch(a);
+        last_patch->next = b;
+        return a;
+    }
+}
+
+void cgen_back_patch(BackPatchList *patch_list, Label *patch) {
+    while(patch_list) {
+        patch_list->cur->value.label = patch;
+        patch_list = patch_list->next;
+    }
+}
+
+
+/*---------------------LANGUAGE CODE GENERATOR-------------------------*/
 
 /**
  * Calcula quantas unidades de memoria que o tipo deve ocupar levando em consideracao o destino traduzido como TAC, 
@@ -509,6 +563,21 @@ Instruction *cgen_write(TypeExpression *type, Instruction *code, int *temp_inst_
         } 
         default: break;
     }   
+
+    return inst;
+}
+
+Instruction* cgen_if(Node* dst, Instruction* condition, Instruction* body, int *temp_inst_count) {
+    Instruction *inst = condition;
+    cgen_append(&inst, cgen_derref_lvalue(cgen_last_inst(inst)->fields[0], temp_inst_count));
+
+    Field* field_condition = cgen_last_inst(inst)->fields[0];
+    Field *field_label_else = cgen_field(get_value_label(cgen_label("_", 0)), TAC_OPTYPE_LABEL);
+    
+    cgen_append(&inst, cgen_instr(NULL, TAC_BRZ, field_label_else, field_condition, NULL));
+    cgen_append(&inst, body);
+
+    dst->back_patch = cgen_patch(field_label_else);
 
     return inst;
 }

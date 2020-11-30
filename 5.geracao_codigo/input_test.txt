@@ -1,9 +1,7 @@
-void print() {
-    << 1;
-}
-
 void main() {
-    print();
-    print();
-    print();
+    if (true) 
+        << 1 + 2;
+    
+    if (false) 
+        << 15;
 }

@@ -60,6 +60,12 @@ typedef struct t_generic_list {
     struct t_generic_list *next;
 } GenericList;
 
+typedef struct t_back_patch {
+    Field *cur;
+    struct t_back_patch *next;
+} BackPatchList;
+
+
 char* field_toa(Field *field);
 Instruction* cgen_derref_lvalue(Field *adress, int *temp_inst_count);
 
