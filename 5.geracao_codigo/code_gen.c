@@ -521,6 +521,34 @@ Instruction* cgen_expression_relational(Node *a, Node *b, int op, int *temp_inst
     return inst;
 }
 
+Instruction* cgen_expression_unary(Node *a, int op, int *temp_inst_count) {
+    Instruction *inst = NULL;
+
+    cgen_append(&(a->code), cgen_derref_lvalue(cgen_last_inst(a->code)->fields[0], temp_inst_count));
+    Field *field = cgen_last_inst(a->code)->fields[0];
+
+    switch(op) {
+        case NOT: {
+            cgen_append(&inst, cgen_instr(NULL, TAC_NOT, cgen_field(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP), field, NULL));
+            break;
+        }       
+        case SUB: {
+            cgen_append(&inst, cgen_instr(NULL, TAC_MINUS, cgen_field(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP), field, NULL));
+            break;
+        }            
+        case ADD: {
+            break;
+        }
+        default: 
+            printf("ERRO: relational expression not found");
+            exit(0);
+    }
+
+    cgen_append(&(a->code), inst);
+    inst = a->code;
+    return inst;
+}
+
 /**
  * @param code contem codigo com field inicial sendo o destino a ser printado, pode ser lval ou rval
 */
@@ -718,7 +746,7 @@ void print_inst(Instruction *inst) {
         case TAC_DIV:     sprintf(buffer, "%sdiv %s, %s, %s", label, field[0], field[1], field[2]);         break;
         case TAC_AND:     sprintf(buffer, "%sand %s, %s, %s", label, field[0], field[1], field[2]);         break;
         case TAC_OR:      sprintf(buffer, "%sor %s, %s, %s",  label, field[0], field[1], field[2]);         break;
-        case TAC_MINUS:   sprintf(buffer, "minus");                                                         break;
+        case TAC_MINUS:   sprintf(buffer, "%sminus %s, %s", label, field[0], field[1]);                     break;
         case TAC_NOT:     sprintf(buffer, "%snot %s, %s", label, field[0], field[1]);                       break;
         case TAC_SEQ:     sprintf(buffer, "%sseq %s, %s, %s", label, field[0], field[1], field[2]);         break;
         case TAC_SLT:     sprintf(buffer, "%sslt %s, %s, %s", label, field[0], field[1], field[2]);         break;

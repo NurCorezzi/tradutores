@@ -602,6 +602,10 @@ expr_unary: unary factor {
 
   push_child($$, $1);
   push_child($$, $2);
+
+  if (!invalid) {
+    cgen_append(&($$->code), cgen_expression_unary($factor, $unary->t_token, &temp_inst_count));
+  }
 } 
 | factor
 ;
@@ -616,18 +620,18 @@ factor: OPEN_P expr_assign CLOSE_P {
 /*-----------------------EXPRESSION SYMBOLS-----------------------------------*/
 
 
-unary: NOT  { $$ = create_node(yytname[YYTRANSLATE(yylval.id)]); } 
+unary: NOT  { $$ = create_node(yytname[YYTRANSLATE(yylval.id)]); $$->t_token = yylval.id; } 
 | add 
 | sub  
 ;
 
-and: AND  { $$ = create_node(yytname[YYTRANSLATE(yylval.id)]); };
-or: OR   { $$ = create_node(yytname[YYTRANSLATE(yylval.id)]); };
+and: AND  { $$ = create_node(yytname[YYTRANSLATE(yylval.id)]); $$->t_token = yylval.id; };
+or: OR    { $$ = create_node(yytname[YYTRANSLATE(yylval.id)]); $$->t_token = yylval.id; };
 
-add: ADD  { $$ = create_node(yytname[YYTRANSLATE(yylval.id)]); };
-sub: SUB  { $$ = create_node(yytname[YYTRANSLATE(yylval.id)]); };
-mul: MUL  { $$ = create_node(yytname[YYTRANSLATE(yylval.id)]); };
-div: DIV  { $$ = create_node(yytname[YYTRANSLATE(yylval.id)]); };
+add: ADD  { $$ = create_node(yytname[YYTRANSLATE(yylval.id)]); $$->t_token = yylval.id; };
+sub: SUB  { $$ = create_node(yytname[YYTRANSLATE(yylval.id)]); $$->t_token = yylval.id; };
+mul: MUL  { $$ = create_node(yytname[YYTRANSLATE(yylval.id)]); $$->t_token = yylval.id; };
+div: DIV  { $$ = create_node(yytname[YYTRANSLATE(yylval.id)]); $$->t_token = yylval.id; };
 
 compare_op: LE  { $$ = create_node(yytname[YYTRANSLATE(yylval.id)]); $$->t_token = yylval.id; }
 | GE            { $$ = create_node(yytname[YYTRANSLATE(yylval.id)]); $$->t_token = yylval.id; }

@@ -1,6 +1,6 @@
 
 void main() {
-    if (10 <= 11 && false) {
+    if (!true) {
         << 1;
     }
 }
