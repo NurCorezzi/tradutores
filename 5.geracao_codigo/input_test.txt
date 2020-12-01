@@ -1,18 +1,6 @@
 
-void nos(int i) {
-    if (i) {
-        << i;
-        nos(i-1);
-    } 
-}
-
 void main() {
-    nos(5);
-    if (false) {
-        int[3] i; i[2] = 45;
-        << i;
-    } else {
-        << 22;
+    if (10 <= 11 && false) {
+        << 1;
     }
-    nos(5);
 }

@@ -472,6 +472,55 @@ Instruction* cgen_derref_lvalue(Field *adress, int *temp_inst_count) {
     }
 }
 
+Instruction* cgen_expression_relational(Node *a, Node *b, int op, int *temp_inst_count) {
+    Instruction *inst = NULL;
+
+    cgen_append(&(a->code), cgen_derref_lvalue(cgen_last_inst(a->code)->fields[0], temp_inst_count));
+    cgen_append(&(b->code), cgen_derref_lvalue(cgen_last_inst(b->code)->fields[0], temp_inst_count));
+
+    Instruction *eq     = cgen_instr(NULL, TAC_SEQ,   cgen_field(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP), cgen_last_inst(a->code)->fields[0], cgen_last_inst(b->code)->fields[0]);
+    Instruction *less   = cgen_instr(NULL, TAC_SLT,   cgen_field(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP), cgen_last_inst(a->code)->fields[0], cgen_last_inst(b->code)->fields[0]);
+    Instruction *le     = cgen_instr(NULL, TAC_SLEQ,  cgen_field(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP), cgen_last_inst(a->code)->fields[0], cgen_last_inst(b->code)->fields[0]);
+
+    switch(op) {
+        case LE: {
+            cgen_append(&inst, le);
+            break;
+        }  
+        case GREATER: {
+            cgen_append(&inst, le);
+            cgen_append(&inst, cgen_instr(NULL, TAC_NOT, cgen_field(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP), le->fields[0], NULL));
+            break;
+        }       
+        case LESS: {
+            cgen_append(&inst, less);
+            break;
+        }          
+        case GE: {
+            cgen_append(&inst, less);
+            cgen_append(&inst, cgen_instr(NULL, TAC_NOT, cgen_field(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP), less->fields[0], NULL));
+            break;
+        }            
+        case EQ: {
+            cgen_append(&inst, eq);
+            break;
+        }            
+        case NE: {
+            cgen_append(&inst, eq);
+            cgen_append(&inst, cgen_instr(NULL, TAC_NOT, cgen_field(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP), eq->fields[0], NULL));
+            break;
+        }
+        default: 
+            printf("ERRO: relational expression not found");
+            exit(0);
+    }
+
+    cgen_append(&(a->code), b->code);
+    cgen_append(&(a->code), inst);
+    inst = a->code;
+    return inst;
+}
+
 /**
  * @param code contem codigo com field inicial sendo o destino a ser printado, pode ser lval ou rval
 */
@@ -670,10 +719,10 @@ void print_inst(Instruction *inst) {
         case TAC_AND:     sprintf(buffer, "%sand %s, %s, %s", label, field[0], field[1], field[2]);         break;
         case TAC_OR:      sprintf(buffer, "%sor %s, %s, %s",  label, field[0], field[1], field[2]);         break;
         case TAC_MINUS:   sprintf(buffer, "minus");                                                         break;
-        case TAC_NOT:     sprintf(buffer, "not");                                                           break;
-        case TAC_SEQ:     sprintf(buffer, "seq");                                                           break;
-        case TAC_SLT:     sprintf(buffer, "slt");                                                           break;
-        case TAC_SLEQ:    sprintf(buffer, "sleq");                                                          break;
+        case TAC_NOT:     sprintf(buffer, "%snot %s, %s", label, field[0], field[1]);                       break;
+        case TAC_SEQ:     sprintf(buffer, "%sseq %s, %s, %s", label, field[0], field[1], field[2]);         break;
+        case TAC_SLT:     sprintf(buffer, "%sslt %s, %s, %s", label, field[0], field[1], field[2]);         break;
+        case TAC_SLEQ:    sprintf(buffer, "%ssleq %s, %s, %s", label, field[0], field[1], field[2]);        break;
         case TAC_BAND:    sprintf(buffer, "band");                                                          break;
         case TAC_BOR:     sprintf(buffer, "bor");                                                           break;
         case TAC_BXOR:    sprintf(buffer, "bxor");                                                          break;

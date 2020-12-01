@@ -51,17 +51,17 @@ Grammar
    33          | RETURN expr_assign END
    34          | statement_control
 
-   35 expr_assign: expr_relational ASSIGN expr_assign
-   36            | expr_relational
+   35 expr_assign: expr_or ASSIGN expr_assign
+   36            | expr_or
 
-   37 expr_relational: expr_relational compare_op expr_or
-   38                | expr_or
+   37 expr_or: expr_or or expr_and
+   38        | expr_and
 
-   39 expr_or: expr_or or expr_and
-   40        | expr_and
+   39 expr_and: expr_and and expr_relational
+   40         | expr_relational
 
-   41 expr_and: expr_and and expr_add
-   42         | expr_add
+   41 expr_relational: expr_relational compare_op expr_add
+   42                | expr_add
 
    43 expr_add: expr_add add expr_sub
    44         | expr_sub
@@ -228,11 +228,11 @@ statement (62)
 expr_assign (63)
     on left: 35 36, on right: 13 14 17 23 24 25 26 29 31 33 35 53 71
     81
-expr_relational (64)
+expr_or (64)
     on left: 37 38, on right: 35 36 37
-expr_or (65)
+expr_and (65)
     on left: 39 40, on right: 37 38 39
-expr_and (66)
+expr_relational (66)
     on left: 41 42, on right: 39 40 41
 expr_add (67)
     on left: 43 44, on right: 41 42 43
@@ -249,9 +249,9 @@ factor (72)
 unary (73)
     on left: 55 56 57, on right: 51
 and (74)
-    on left: 58, on right: 41
+    on left: 58, on right: 39
 or (75)
-    on left: 59, on right: 39
+    on left: 59, on right: 37
 add (76)
     on left: 60, on right: 43 56
 sub (77)
@@ -261,7 +261,7 @@ mul (78)
 div (79)
     on left: 63, on right: 49
 compare_op (80)
-    on left: 64 65 66 67 68 69, on right: 37
+    on left: 64 65 66 67 68 69, on right: 41
 graph_add (81)
     on left: 70 71, on right: 32
 declaration (82)
@@ -593,9 +593,9 @@ State 31
     statement_control  go to state 51
     statement          go to state 52
     expr_assign        go to state 53
-    expr_relational    go to state 54
-    expr_or            go to state 55
-    expr_and           go to state 56
+    expr_or            go to state 54
+    expr_and           go to state 55
+    expr_relational    go to state 56
     expr_add           go to state 57
     expr_sub           go to state 58
     expr_mul           go to state 59
@@ -687,9 +687,9 @@ State 39
 
     function_call    go to state 49
     expr_assign      go to state 80
-    expr_relational  go to state 54
-    expr_or          go to state 55
-    expr_and         go to state 56
+    expr_or          go to state 54
+    expr_and         go to state 55
+    expr_relational  go to state 56
     expr_add         go to state 57
     expr_sub         go to state 58
     expr_mul         go to state 59
@@ -738,9 +738,9 @@ State 42
 
     function_call    go to state 49
     expr_assign      go to state 83
-    expr_relational  go to state 54
-    expr_or          go to state 55
-    expr_and         go to state 56
+    expr_or          go to state 54
+    expr_and         go to state 55
+    expr_relational  go to state 56
     expr_add         go to state 57
     expr_sub         go to state 58
     expr_mul         go to state 59
@@ -812,9 +812,9 @@ State 48
 
     function_call    go to state 49
     expr_assign      go to state 85
-    expr_relational  go to state 54
-    expr_or          go to state 55
-    expr_and         go to state 56
+    expr_or          go to state 54
+    expr_and         go to state 55
+    expr_relational  go to state 56
     expr_add         go to state 57
     expr_sub         go to state 58
     expr_mul         go to state 59
@@ -870,55 +870,55 @@ State 53
 
 State 54
 
-   35 expr_assign: expr_relational . ASSIGN expr_assign
-   36            | expr_relational .
-   37 expr_relational: expr_relational . compare_op expr_or
+   35 expr_assign: expr_or . ASSIGN expr_assign
+   36            | expr_or .
+   37 expr_or: expr_or . or expr_and
 
-    LE       shift, and go to state 87
-    GE       shift, and go to state 88
-    LESS     shift, and go to state 89
-    GREATER  shift, and go to state 90
-    EQ       shift, and go to state 91
-    NE       shift, and go to state 92
-    ASSIGN   shift, and go to state 93
+    OR      shift, and go to state 87
+    ASSIGN  shift, and go to state 88
 
     $default  reduce using rule 36 (expr_assign)
 
-    compare_op  go to state 94
+    or  go to state 89
 
 
 State 55
 
-   38 expr_relational: expr_or .
-   39 expr_or: expr_or . or expr_and
+   38 expr_or: expr_and .
+   39 expr_and: expr_and . and expr_relational
 
-    OR  shift, and go to state 95
+    AND  shift, and go to state 90
 
-    $default  reduce using rule 38 (expr_relational)
+    $default  reduce using rule 38 (expr_or)
 
-    or  go to state 96
+    and  go to state 91
 
 
 State 56
 
-   40 expr_or: expr_and .
-   41 expr_and: expr_and . and expr_add
+   40 expr_and: expr_relational .
+   41 expr_relational: expr_relational . compare_op expr_add
 
-    AND  shift, and go to state 97
+    LE       shift, and go to state 92
+    GE       shift, and go to state 93
+    LESS     shift, and go to state 94
+    GREATER  shift, and go to state 95
+    EQ       shift, and go to state 96
+    NE       shift, and go to state 97
 
-    $default  reduce using rule 40 (expr_or)
+    $default  reduce using rule 40 (expr_and)
 
-    and  go to state 98
+    compare_op  go to state 98
 
 
 State 57
 
-   42 expr_and: expr_add .
+   42 expr_relational: expr_add .
    43 expr_add: expr_add . add expr_sub
 
     ADD  shift, and go to state 44
 
-    $default  reduce using rule 42 (expr_and)
+    $default  reduce using rule 42 (expr_relational)
 
     add  go to state 99
 
@@ -1095,9 +1095,9 @@ State 75
 
     function_call    go to state 49
     expr_assign      go to state 111
-    expr_relational  go to state 54
-    expr_or          go to state 55
-    expr_and         go to state 56
+    expr_or          go to state 54
+    expr_and         go to state 55
+    expr_relational  go to state 56
     expr_add         go to state 57
     expr_sub         go to state 58
     expr_mul         go to state 59
@@ -1133,9 +1133,9 @@ State 76
 
     function_call    go to state 49
     expr_assign      go to state 112
-    expr_relational  go to state 54
-    expr_or          go to state 55
-    expr_and         go to state 56
+    expr_or          go to state 54
+    expr_and         go to state 55
+    expr_relational  go to state 56
     expr_add         go to state 57
     expr_sub         go to state 58
     expr_mul         go to state 59
@@ -1170,9 +1170,9 @@ State 77
 
     function_call    go to state 49
     expr_assign      go to state 114
-    expr_relational  go to state 54
-    expr_or          go to state 55
-    expr_and         go to state 56
+    expr_or          go to state 54
+    expr_and         go to state 55
+    expr_relational  go to state 56
     expr_add         go to state 57
     expr_sub         go to state 58
     expr_mul         go to state 59
@@ -1268,49 +1268,14 @@ State 86
 
 State 87
 
-   64 compare_op: LE .
+   59 or: OR .
 
-    $default  reduce using rule 64 (compare_op)
+    $default  reduce using rule 59 (or)
 
 
 State 88
 
-   65 compare_op: GE .
-
-    $default  reduce using rule 65 (compare_op)
-
-
-State 89
-
-   66 compare_op: LESS .
-
-    $default  reduce using rule 66 (compare_op)
-
-
-State 90
-
-   67 compare_op: GREATER .
-
-    $default  reduce using rule 67 (compare_op)
-
-
-State 91
-
-   68 compare_op: EQ .
-
-    $default  reduce using rule 68 (compare_op)
-
-
-State 92
-
-   69 compare_op: NE .
-
-    $default  reduce using rule 69 (compare_op)
-
-
-State 93
-
-   35 expr_assign: expr_relational ASSIGN . expr_assign
+   35 expr_assign: expr_or ASSIGN . expr_assign
 
     TRUE     shift, and go to state 35
     FALSE    shift, and go to state 36
@@ -1324,9 +1289,9 @@ State 93
 
     function_call    go to state 49
     expr_assign      go to state 122
-    expr_relational  go to state 54
-    expr_or          go to state 55
-    expr_and         go to state 56
+    expr_or          go to state 54
+    expr_and         go to state 55
+    expr_relational  go to state 56
     expr_add         go to state 57
     expr_sub         go to state 58
     expr_mul         go to state 59
@@ -1345,51 +1310,9 @@ State 93
     boolean_const    go to state 74
 
 
-State 94
+State 89
 
-   37 expr_relational: expr_relational compare_op . expr_or
-
-    TRUE     shift, and go to state 35
-    FALSE    shift, and go to state 36
-    ID       shift, and go to state 16
-    C_FLOAT  shift, and go to state 37
-    C_INT    shift, and go to state 14
-    NOT      shift, and go to state 43
-    ADD      shift, and go to state 44
-    SUB      shift, and go to state 45
-    OPEN_P   shift, and go to state 48
-
-    function_call  go to state 49
-    expr_or        go to state 123
-    expr_and       go to state 56
-    expr_add       go to state 57
-    expr_sub       go to state 58
-    expr_mul       go to state 59
-    expr_div       go to state 60
-    expr_unary     go to state 61
-    factor         go to state 62
-    unary          go to state 63
-    add            go to state 64
-    sub            go to state 65
-    value          go to state 68
-    id_or_access   go to state 69
-    id             go to state 70
-    number         go to state 71
-    number_int     go to state 72
-    number_float   go to state 73
-    boolean_const  go to state 74
-
-
-State 95
-
-   59 or: OR .
-
-    $default  reduce using rule 59 (or)
-
-
-State 96
-
-   39 expr_or: expr_or or . expr_and
+   37 expr_or: expr_or or . expr_and
 
     TRUE     shift, and go to state 35
     FALSE    shift, and go to state 36
@@ -1401,36 +1324,113 @@ State 96
     SUB      shift, and go to state 45
     OPEN_P   shift, and go to state 48
 
-    function_call  go to state 49
-    expr_and       go to state 124
-    expr_add       go to state 57
-    expr_sub       go to state 58
-    expr_mul       go to state 59
-    expr_div       go to state 60
-    expr_unary     go to state 61
-    factor         go to state 62
-    unary          go to state 63
-    add            go to state 64
-    sub            go to state 65
-    value          go to state 68
-    id_or_access   go to state 69
-    id             go to state 70
-    number         go to state 71
-    number_int     go to state 72
-    number_float   go to state 73
-    boolean_const  go to state 74
+    function_call    go to state 49
+    expr_and         go to state 123
+    expr_relational  go to state 56
+    expr_add         go to state 57
+    expr_sub         go to state 58
+    expr_mul         go to state 59
+    expr_div         go to state 60
+    expr_unary       go to state 61
+    factor           go to state 62
+    unary            go to state 63
+    add              go to state 64
+    sub              go to state 65
+    value            go to state 68
+    id_or_access     go to state 69
+    id               go to state 70
+    number           go to state 71
+    number_int       go to state 72
+    number_float     go to state 73
+    boolean_const    go to state 74
 
 
-State 97
+State 90
 
    58 and: AND .
 
     $default  reduce using rule 58 (and)
 
 
+State 91
+
+   39 expr_and: expr_and and . expr_relational
+
+    TRUE     shift, and go to state 35
+    FALSE    shift, and go to state 36
+    ID       shift, and go to state 16
+    C_FLOAT  shift, and go to state 37
+    C_INT    shift, and go to state 14
+    NOT      shift, and go to state 43
+    ADD      shift, and go to state 44
+    SUB      shift, and go to state 45
+    OPEN_P   shift, and go to state 48
+
+    function_call    go to state 49
+    expr_relational  go to state 124
+    expr_add         go to state 57
+    expr_sub         go to state 58
+    expr_mul         go to state 59
+    expr_div         go to state 60
+    expr_unary       go to state 61
+    factor           go to state 62
+    unary            go to state 63
+    add              go to state 64
+    sub              go to state 65
+    value            go to state 68
+    id_or_access     go to state 69
+    id               go to state 70
+    number           go to state 71
+    number_int       go to state 72
+    number_float     go to state 73
+    boolean_const    go to state 74
+
+
+State 92
+
+   64 compare_op: LE .
+
+    $default  reduce using rule 64 (compare_op)
+
+
+State 93
+
+   65 compare_op: GE .
+
+    $default  reduce using rule 65 (compare_op)
+
+
+State 94
+
+   66 compare_op: LESS .
+
+    $default  reduce using rule 66 (compare_op)
+
+
+State 95
+
+   67 compare_op: GREATER .
+
+    $default  reduce using rule 67 (compare_op)
+
+
+State 96
+
+   68 compare_op: EQ .
+
+    $default  reduce using rule 68 (compare_op)
+
+
+State 97
+
+   69 compare_op: NE .
+
+    $default  reduce using rule 69 (compare_op)
+
+
 State 98
 
-   41 expr_and: expr_and and . expr_add
+   41 expr_relational: expr_relational compare_op . expr_add
 
     TRUE     shift, and go to state 35
     FALSE    shift, and go to state 36
@@ -1637,9 +1637,9 @@ State 108
     function_call    go to state 49
     params_call      go to state 130
     expr_assign      go to state 131
-    expr_relational  go to state 54
-    expr_or          go to state 55
-    expr_and         go to state 56
+    expr_or          go to state 54
+    expr_and         go to state 55
+    expr_relational  go to state 56
     expr_add         go to state 57
     expr_sub         go to state 58
     expr_mul         go to state 59
@@ -1674,9 +1674,9 @@ State 109
 
     function_call    go to state 49
     expr_assign      go to state 132
-    expr_relational  go to state 54
-    expr_or          go to state 55
-    expr_and         go to state 56
+    expr_or          go to state 54
+    expr_and         go to state 55
+    expr_relational  go to state 56
     expr_add         go to state 57
     expr_sub         go to state 58
     expr_mul         go to state 59
@@ -1804,9 +1804,9 @@ State 120
     statement_control  go to state 51
     statement          go to state 52
     expr_assign        go to state 53
-    expr_relational    go to state 54
-    expr_or            go to state 55
-    expr_and           go to state 56
+    expr_or            go to state 54
+    expr_and           go to state 55
+    expr_relational    go to state 56
     expr_add           go to state 57
     expr_sub           go to state 58
     expr_mul           go to state 59
@@ -1837,43 +1837,48 @@ State 121
 
 State 122
 
-   35 expr_assign: expr_relational ASSIGN expr_assign .
+   35 expr_assign: expr_or ASSIGN expr_assign .
 
     $default  reduce using rule 35 (expr_assign)
 
 
 State 123
 
-   37 expr_relational: expr_relational compare_op expr_or .
-   39 expr_or: expr_or . or expr_and
+   37 expr_or: expr_or or expr_and .
+   39 expr_and: expr_and . and expr_relational
 
-    OR  shift, and go to state 95
+    AND  shift, and go to state 90
 
-    $default  reduce using rule 37 (expr_relational)
+    $default  reduce using rule 37 (expr_or)
 
-    or  go to state 96
+    and  go to state 91
 
 
 State 124
 
-   39 expr_or: expr_or or expr_and .
-   41 expr_and: expr_and . and expr_add
+   39 expr_and: expr_and and expr_relational .
+   41 expr_relational: expr_relational . compare_op expr_add
 
-    AND  shift, and go to state 97
+    LE       shift, and go to state 92
+    GE       shift, and go to state 93
+    LESS     shift, and go to state 94
+    GREATER  shift, and go to state 95
+    EQ       shift, and go to state 96
+    NE       shift, and go to state 97
 
-    $default  reduce using rule 39 (expr_or)
+    $default  reduce using rule 39 (expr_and)
 
-    and  go to state 98
+    compare_op  go to state 98
 
 
 State 125
 
-   41 expr_and: expr_and and expr_add .
+   41 expr_relational: expr_relational compare_op expr_add .
    43 expr_add: expr_add . add expr_sub
 
     ADD  shift, and go to state 44
 
-    $default  reduce using rule 41 (expr_and)
+    $default  reduce using rule 41 (expr_relational)
 
     add  go to state 99
 
@@ -1970,9 +1975,9 @@ State 134
 
     function_call    go to state 49
     expr_assign      go to state 144
-    expr_relational  go to state 54
-    expr_or          go to state 55
-    expr_and         go to state 56
+    expr_or          go to state 54
+    expr_and         go to state 55
+    expr_relational  go to state 56
     expr_add         go to state 57
     expr_sub         go to state 58
     expr_mul         go to state 59
@@ -2026,9 +2031,9 @@ State 137
 
     function_call    go to state 49
     expr_assign      go to state 149
-    expr_relational  go to state 54
-    expr_or          go to state 55
-    expr_and         go to state 56
+    expr_or          go to state 54
+    expr_and         go to state 55
+    expr_relational  go to state 56
     expr_add         go to state 57
     expr_sub         go to state 58
     expr_mul         go to state 59
@@ -2077,9 +2082,9 @@ State 140
 
     function_call    go to state 49
     expr_assign      go to state 150
-    expr_relational  go to state 54
-    expr_or          go to state 55
-    expr_and         go to state 56
+    expr_or          go to state 54
+    expr_and         go to state 55
+    expr_relational  go to state 56
     expr_add         go to state 57
     expr_sub         go to state 58
     expr_mul         go to state 59
@@ -2213,9 +2218,9 @@ State 153
 
     function_call    go to state 49
     expr_assign      go to state 160
-    expr_relational  go to state 54
-    expr_or          go to state 55
-    expr_and         go to state 56
+    expr_or          go to state 54
+    expr_and         go to state 55
+    expr_relational  go to state 56
     expr_add         go to state 57
     expr_sub         go to state 58
     expr_mul         go to state 59
@@ -2283,9 +2288,9 @@ State 158
 
     function_call    go to state 49
     expr_assign      go to state 163
-    expr_relational  go to state 54
-    expr_or          go to state 55
-    expr_and         go to state 56
+    expr_or          go to state 54
+    expr_and         go to state 55
+    expr_relational  go to state 56
     expr_add         go to state 57
     expr_sub         go to state 58
     expr_mul         go to state 59
@@ -2364,9 +2369,9 @@ State 165
 
     function_call    go to state 49
     expr_assign      go to state 168
-    expr_relational  go to state 54
-    expr_or          go to state 55
-    expr_and         go to state 56
+    expr_or          go to state 54
+    expr_and         go to state 55
+    expr_relational  go to state 56
     expr_add         go to state 57
     expr_sub         go to state 58
     expr_mul         go to state 59
@@ -2422,9 +2427,9 @@ State 169
 
     function_call    go to state 49
     expr_assign      go to state 170
-    expr_relational  go to state 54
-    expr_or          go to state 55
-    expr_and         go to state 56
+    expr_or          go to state 54
+    expr_and         go to state 55
+    expr_relational  go to state 56
     expr_add         go to state 57
     expr_sub         go to state 58
     expr_mul         go to state 59

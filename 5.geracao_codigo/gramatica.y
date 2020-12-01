@@ -456,14 +456,14 @@ statement: WHILE OPEN_P expr_assign CLOSE_P block {
 /*----------------------EXPRESSIONS--------------------------------*/
 
 
-expr_assign: expr_relational ASSIGN expr_assign {
+expr_assign: expr_or ASSIGN expr_assign {
   $$ = create_node("expr_assign");
   $$->value_type = LVALUE;
   push_child($$, $1);
   push_child($$, $3);
   check_assign_expression($$, $1->type, $3);
 
-  if ($expr_relational->begin_child->value_type != LVALUE) {
+  if ($expr_or->begin_child->value_type != LVALUE) {
     char buffer[300] = {0};
     sprintf(buffer, "left side on \"ASSIGN\" must be an lvalue");
     semantic_error(buffer);
@@ -488,19 +488,9 @@ expr_assign: expr_relational ASSIGN expr_assign {
   }
 
 } 
-| expr_relational {  
+| expr_or {  
   $$ = $1;
 }
-;
-
-expr_relational: expr_relational compare_op expr_or {
-  $$ = create_node("expr_relational");
-  push_child($$, $1);
-  push_child($$, $2);
-  push_child($$, $3);
-  check_compare_expression($$, $1, $2, $3);
-}
-| expr_or 
 ;
 
 expr_or: expr_or or expr_and {
@@ -515,7 +505,7 @@ expr_or: expr_or or expr_and {
 | expr_and
 ;
 
-expr_and: expr_and and expr_add {
+expr_and: expr_and and expr_relational {
   $$ = create_node("expr_and");
   push_child($$, $1);
   push_child($$, $3);
@@ -524,7 +514,21 @@ expr_and: expr_and and expr_add {
 
   free_tree($2);
 } 
-| expr_add
+| expr_relational
+;
+
+expr_relational: expr_relational compare_op expr_add {
+  $$ = create_node("expr_relational");
+  push_child($$, $1);
+  push_child($$, $2);
+  push_child($$, $3);
+  check_compare_expression($$, $1, $2, $3);
+
+  if (!invalid) {
+    cgen_append(&($$->code), cgen_expression_relational($1, $3, $2->t_token, &temp_inst_count));
+  }
+}
+| expr_add 
 ;
 
 expr_add: expr_add add expr_sub {
@@ -625,12 +629,12 @@ sub: SUB  { $$ = create_node(yytname[YYTRANSLATE(yylval.id)]); };
 mul: MUL  { $$ = create_node(yytname[YYTRANSLATE(yylval.id)]); };
 div: DIV  { $$ = create_node(yytname[YYTRANSLATE(yylval.id)]); };
 
-compare_op: LE  { $$ = create_node(yytname[YYTRANSLATE(yylval.id)]); }
-| GE            { $$ = create_node(yytname[YYTRANSLATE(yylval.id)]); }
-| LESS          { $$ = create_node(yytname[YYTRANSLATE(yylval.id)]); }
-| GREATER       { $$ = create_node(yytname[YYTRANSLATE(yylval.id)]); }
-| EQ            { $$ = create_node(yytname[YYTRANSLATE(yylval.id)]); }
-| NE            { $$ = create_node(yytname[YYTRANSLATE(yylval.id)]); }
+compare_op: LE  { $$ = create_node(yytname[YYTRANSLATE(yylval.id)]); $$->t_token = yylval.id; }
+| GE            { $$ = create_node(yytname[YYTRANSLATE(yylval.id)]); $$->t_token = yylval.id; }
+| LESS          { $$ = create_node(yytname[YYTRANSLATE(yylval.id)]); $$->t_token = yylval.id; }
+| GREATER       { $$ = create_node(yytname[YYTRANSLATE(yylval.id)]); $$->t_token = yylval.id; }
+| EQ            { $$ = create_node(yytname[YYTRANSLATE(yylval.id)]); $$->t_token = yylval.id; }
+| NE            { $$ = create_node(yytname[YYTRANSLATE(yylval.id)]); $$->t_token = yylval.id; }
 ;
 
 
