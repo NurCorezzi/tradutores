@@ -199,6 +199,38 @@ int type_mem_sz(TypeExpression *type) {
     }
 }
 
+Instruction* cgen_derref_lvalue(Field *adress, int *temp_inst_count) {
+    if (adress->value_type == LVALUE) {
+        return cgen_instr(
+                NULL, 
+                TAC_MOVVI, 
+                cgen_field(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP), 
+                adress, 
+                adress->adress_index
+            );     
+    } else {
+        return NULL;
+    }
+}
+
+Instruction* cgen_cast(Field *field, Cast cast, int *temp_inst_count) {
+    InstCode code;
+    
+    switch (cast){
+        case CINT_TO_FLOAT: code = TAC_INTTOFL; break;
+        case CFLOAT_TO_INT: code = TAC_FLTOINT; break;
+        default:
+            return NULL;
+    }
+
+    return cgen_instr(
+            NULL, 
+            code, 
+            cgen_field(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP), 
+            field, 
+            NULL
+        );     
+}
 
 /**
  * Value serve para atualizar o tamanho 
@@ -330,6 +362,11 @@ Instruction *cgen_function_call(SymbolNode *sym, Node *params_call, int *temp_in
         while (param != NULL) {
             cgen_append(&inst, param->code);
             Field *ref = cgen_last_inst(param->code)->fields[0];
+            cgen_append(&inst, cgen_cast(ref, param->cast, temp_inst_count));
+            
+            if (param->cast) {
+                printf("cast\n");
+            }
 
             switch (ref->value_type){
                 case LVALUE: {
@@ -409,9 +446,9 @@ Instruction *cgen_var_access(SymbolNode *sym, Node *dimension, int *temp_inst_co
                 // Graph entra aqui para reaproveitar processamento de array
                 if (cur_type->node_type == GTYPE_GRAPH) {
                      // Valor de vertices do grafo estara na segunda posicao [sz][ponteiro vertice com valores][ponteiro para array de arestas]
-                    Field *adress = cgen_last_inst(inst)->fields[0];
+                    Field *adress       = cgen_last_inst(inst)->fields[0];
                     Field *adress_index = cgen_field(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP);
-                    Field *array_index = cgen_field(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP);
+                    Field *array_index  = cgen_field(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP);
 
                     // Endereco informado + 1 para acessar variavel que guarda endereco de array
                     cgen_append(&inst, cgen_instr(NULL, TAC_ADD, adress_index, adress->adress_index, cgen_field(get_value_ival(1), TAC_OPTYPE_INT)));
@@ -458,25 +495,97 @@ Instruction *cgen_var_access(SymbolNode *sym, Node *dimension, int *temp_inst_co
     return inst;
 }
 
-Instruction* cgen_derref_lvalue(Field *adress, int *temp_inst_count) {
-    if (adress->value_type == LVALUE) {
-        return cgen_instr(
-                NULL, 
-                TAC_MOVVI, 
-                cgen_field(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP), 
-                adress, 
-                adress->adress_index
-            );     
+Instruction* cgen_const_code(OperandType type, int ival, float fval, int *temp_inst_count) {   
+    Instruction *inst = NULL;
+
+    Field *field;
+    if (type == TAC_OPTYPE_INT) {
+        field = cgen_field(get_value_ival(ival) , type);
     } else {
-        return NULL;
+        field = cgen_field(get_value_fval(fval) , type);
     }
+
+    cgen_append(
+        &inst,
+        cgen_instr(
+            NULL,
+            TAC_MOVVV,
+            cgen_field(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP),
+            field,
+            NULL
+        )
+    );
+
+    return inst;
+}
+
+Instruction* cgen_assign(Node *dst, Node *src, int *temp_inst_count) {
+    Instruction *inst = NULL;
+    
+    printf("asdas\n");
+    cgen_append(&(src->code), cgen_derref_lvalue(cgen_last_inst(src->code)->fields[0], temp_inst_count));
+    cgen_append(&(src->code), cgen_cast(cgen_last_inst(src->code)->fields[0], src->cast, temp_inst_count));
+
+
+    cgen_append(
+      &inst,
+      cgen_instr(
+        NULL,
+        TAC_MOVIV,
+        cgen_last_inst(dst->code)->fields[0],
+        cgen_last_inst(dst->code)->fields[0]->adress_index,
+        cgen_last_inst(src->code)->fields[0]
+      )
+    );
+
+    // Necessario ocorrer apos para que campos convertidos acima por derref estejam corretos
+    cgen_append(&(dst->code), src->code);
+    cgen_append(&(dst->code), inst);
+    inst = dst->code;
+
+    return inst;
+}
+
+Instruction* cgen_expression_aritmetic(Node *a, Node *b, InstCode code, int *temp_inst_count) {
+    Instruction *inst = NULL;
+
+    cgen_append(&(a->code), cgen_derref_lvalue(cgen_last_inst(a->code)->fields[0], temp_inst_count));
+    cgen_append(&(a->code), cgen_cast(cgen_last_inst(a->code)->fields[0], a->cast, temp_inst_count));
+
+    cgen_append(&(b->code), cgen_derref_lvalue(cgen_last_inst(b->code)->fields[0], temp_inst_count));
+    cgen_append(&(b->code), cgen_cast(cgen_last_inst(b->code)->fields[0], b->cast, temp_inst_count));
+
+    cgen_append(
+        &inst,
+        cgen_instr(
+        NULL,
+        code,
+        cgen_field(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP),
+        cgen_last_inst(a->code)->fields[0],
+        cgen_last_inst(b->code)->fields[0]
+        )
+    );  
+
+    // Necessario ocorrer apos para que campos convertidos acima por derref estejam corretos
+    cgen_append(&(a->code), b->code);
+    cgen_append(&(a->code), inst);
+    inst = a->code;
+
+    return inst;
+}
+
+Instruction* cgen_expression_boolean(Node *a, Node *b, InstCode code, int *temp_inst_count) {
+    return cgen_expression_aritmetic(a, b, code, temp_inst_count);
 }
 
 Instruction* cgen_expression_relational(Node *a, Node *b, int op, int *temp_inst_count) {
     Instruction *inst = NULL;
 
     cgen_append(&(a->code), cgen_derref_lvalue(cgen_last_inst(a->code)->fields[0], temp_inst_count));
+    cgen_append(&(a->code), cgen_cast(cgen_last_inst(a->code)->fields[0], a->cast, temp_inst_count));
+
     cgen_append(&(b->code), cgen_derref_lvalue(cgen_last_inst(b->code)->fields[0], temp_inst_count));
+    cgen_append(&(b->code), cgen_cast(cgen_last_inst(b->code)->fields[0], b->cast, temp_inst_count));
 
     Instruction *eq     = cgen_instr(NULL, TAC_SEQ,   cgen_field(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP), cgen_last_inst(a->code)->fields[0], cgen_last_inst(b->code)->fields[0]);
     Instruction *less   = cgen_instr(NULL, TAC_SLT,   cgen_field(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP), cgen_last_inst(a->code)->fields[0], cgen_last_inst(b->code)->fields[0]);
@@ -525,6 +634,8 @@ Instruction* cgen_expression_unary(Node *a, int op, int *temp_inst_count) {
     Instruction *inst = NULL;
 
     cgen_append(&(a->code), cgen_derref_lvalue(cgen_last_inst(a->code)->fields[0], temp_inst_count));
+    cgen_append(&(a->code), cgen_cast(cgen_last_inst(a->code)->fields[0], a->cast, temp_inst_count));
+   
     Field *field = cgen_last_inst(a->code)->fields[0];
 
     switch(op) {
@@ -761,9 +872,9 @@ void print_inst(Instruction *inst) {
         case TAC_CHTOINT: sprintf(buffer, "chtoint");                                                       break;
         case TAC_CHTOFL:  sprintf(buffer, "chtofl");                                                        break;
         case TAC_INTTOCH: sprintf(buffer, "inttoch");                                                       break;
-        case TAC_INTTOFL: sprintf(buffer, "inttofl");                                                       break;
+        case TAC_INTTOFL: sprintf(buffer, "%sinttofl %s, %s", label, field[0], field[1]);                   break;
         case TAC_FLTOCH:  sprintf(buffer, "fltoch");                                                        break;
-        case TAC_FLTOINT: sprintf(buffer, "fltoint");                                                       break;
+        case TAC_FLTOINT: sprintf(buffer, "%sfltoint %s, %s", label, field[0], field[1]);                   break;
         case TAC_MOVVV:   sprintf(buffer, "%smov %s, %s", label, field[0], field[1]);                       break;
         case TAC_MOVVD:   sprintf(buffer, "%smov %s, *%s", label, field[0], field[1]);                      break;
         case TAC_MOVVA:   sprintf(buffer, "movva");                                                         break;

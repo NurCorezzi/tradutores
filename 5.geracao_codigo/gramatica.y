@@ -46,13 +46,10 @@ Node* get_params_addv();
 Node* get_params_adda();
 Node* get_params_graph_call();
 
-void build_expression_code(Node *$$, Node *$1, Node *$3, InstCode code);
-void build_const_code(Node *$$, OperandType type, int ival, float fval);
-
 void check_graph_call(char *id, Node* graph_params_call);
 void check_params(char *function_id, Node *param, Node *param_call);
 void check_assign_expression(Node *tgt, TypeExpression *tgt_type, Node *op2);
-void check_compare_expression(Node *tgt, Node *op1, Node *operator, Node *op2);
+void check_relational_expression(Node *tgt, Node *op1, Node *operator, Node *op2);
 void check_boolean_expression(Node *tgt, Node *op1, Node *operator, Node *op2);
 void check_aritmetic_expression(Node *tgt, Node *op1, Node *operator, Node *op2);
 
@@ -135,14 +132,17 @@ init: program {
 
 program: %empty {$$ = NULL;}
   | program function {
-  $$ = create_node("program");
+    $$ = create_node("program");
   if ($1 != NULL) {
     normalize_to_list($$, $1);
     $$->code = $1->code;
     free_node($1);
   }
   push_child($$, $function);
-  cgen_append(&($$->code), $function->code);
+  
+  if ($function != NULL) {
+    cgen_append(&($$->code), $function->code);
+  } 
 }
 ;
 
@@ -470,23 +470,8 @@ expr_assign: expr_or ASSIGN expr_assign {
   }
 
   if (!invalid) {
-    cgen_append(&($3->code), cgen_derref_lvalue(cgen_last_inst($3->code)->fields[0], &temp_inst_count));
-    cgen_append(
-      &($$->code),
-      cgen_instr(
-        NULL,
-        TAC_MOVIV,
-        cgen_last_inst($1->code)->fields[0],
-        cgen_last_inst($1->code)->fields[0]->adress_index,
-        cgen_last_inst($3->code)->fields[0]
-      )
-    );
-
-    cgen_append(&($1->code), $3->code);
-    cgen_append(&($1->code), $$->code);
-    $$->code = $1->code;
+    cgen_append(&($$->code), cgen_assign($1, $3, &temp_inst_count));
   }
-
 } 
 | expr_or {  
   $$ = $1;
@@ -498,7 +483,7 @@ expr_or: expr_or or expr_and {
   push_child($$, $1);
   push_child($$, $3);
   check_boolean_expression($$, $1, $2, $3);
-  build_expression_code($$, $1, $3, TAC_OR);
+  if (!invalid) cgen_append(&($$->code), cgen_expression_boolean($1, $3, TAC_OR, &temp_inst_count));
 
   free_tree($2);
 } 
@@ -510,7 +495,7 @@ expr_and: expr_and and expr_relational {
   push_child($$, $1);
   push_child($$, $3);
   check_boolean_expression($$, $1, $2, $3);
-  build_expression_code($$, $1, $3, TAC_AND);
+  if (!invalid) cgen_append(&($$->code), cgen_expression_boolean($1, $3, TAC_AND, &temp_inst_count));
 
   free_tree($2);
 } 
@@ -522,11 +507,8 @@ expr_relational: expr_relational compare_op expr_add {
   push_child($$, $1);
   push_child($$, $2);
   push_child($$, $3);
-  check_compare_expression($$, $1, $2, $3);
-
-  if (!invalid) {
-    cgen_append(&($$->code), cgen_expression_relational($1, $3, $2->t_token, &temp_inst_count));
-  }
+  check_relational_expression($$, $1, $2, $3);
+  if (!invalid) cgen_append(&($$->code), cgen_expression_relational($1, $3, $2->t_token, &temp_inst_count));
 }
 | expr_add 
 ;
@@ -536,7 +518,7 @@ expr_add: expr_add add expr_sub {
   push_child($$, $1);
   push_child($$, $3);
   check_aritmetic_expression($$, $1, $2, $3);
-  build_expression_code($$, $1, $3, TAC_ADD);
+  if (!invalid) cgen_append(&($$->code), cgen_expression_aritmetic($1, $3, TAC_ADD, &temp_inst_count));
 
   free_tree($2);
 } 
@@ -548,7 +530,7 @@ expr_sub: expr_sub sub expr_mul {
   push_child($$, $1);
   push_child($$, $3);
   check_aritmetic_expression($$, $1, $2, $3);
-  build_expression_code($$, $1, $3, TAC_SUB);
+  if (!invalid) cgen_append(&($$->code), cgen_expression_aritmetic($1, $3, TAC_SUB, &temp_inst_count));
 
   free_tree($2);
 } 
@@ -560,7 +542,7 @@ expr_mul: expr_mul mul expr_div {
   push_child($$, $1);
   push_child($$, $3);
   check_aritmetic_expression($$, $1, $2, $3);
-  build_expression_code($$, $1, $3, TAC_MUL);
+  if (!invalid) cgen_append(&($$->code), cgen_expression_aritmetic($1, $3, TAC_MUL, &temp_inst_count));
 
   free_tree($2);
 } 
@@ -572,7 +554,7 @@ expr_div: expr_div div expr_unary {
   push_child($$, $1);
   push_child($$, $3);
   check_aritmetic_expression($$, $1, $2, $3);
-  build_expression_code($$, $1, $3, TAC_DIV);
+  if (!invalid) cgen_append(&($$->code), cgen_expression_aritmetic($1, $3, TAC_DIV, &temp_inst_count));
 
   free_tree($2);
 } 
@@ -832,7 +814,10 @@ number_int: C_INT {
   strcpy(cpy, yytext);
   $$->complement = cpy;
   $$->type = type_base(GTYPE_INT);
-  build_const_code($$, TAC_OPTYPE_INT, atoi($$->complement), 0.0);
+  
+  if (!invalid) {
+    cgen_append(&($$->code), cgen_const_code(TAC_OPTYPE_INT, atoi($$->complement), 0.0, &temp_inst_count));
+  }
 }
 ;
 
@@ -843,7 +828,10 @@ number_float: C_FLOAT {
   strcpy(cpy, yytext);
   $$->complement = cpy;
   $$->type = type_base(GTYPE_FLOAT);
-  build_const_code($$, TAC_OPTYPE_FLOAT, 0, atof($$->complement));
+  
+  if (!invalid) {
+    cgen_append(&($$->code), cgen_const_code(TAC_OPTYPE_FLOAT, 0, atof($$->complement), &temp_inst_count));
+  }
 }
 ;
 
@@ -854,7 +842,10 @@ boolean_const: TRUE {
   strcpy(cpy, "1");
   $$->complement = cpy;
   $$->type = type_base(GTYPE_INT);
-  build_const_code($$, TAC_OPTYPE_INT, 1, 0);
+  
+  if (!invalid) {
+    cgen_append(&($$->code), cgen_const_code(TAC_OPTYPE_INT, 1, 0, &temp_inst_count));
+  }
 }
 | FALSE             { 
   $$ = create_node(yytname[YYTRANSLATE(yylval.id)]); 
@@ -863,7 +854,10 @@ boolean_const: TRUE {
   strcpy(cpy, "0");
   $$->complement = cpy;
   $$->type = type_base(GTYPE_INT);
-  build_const_code($$, TAC_OPTYPE_INT, 0, 0);
+  
+  if (!invalid) {
+    cgen_append(&($$->code), cgen_const_code(TAC_OPTYPE_INT, 0, 0, &temp_inst_count));
+  }
 }
 ;
 
@@ -932,52 +926,6 @@ Node* get_params_graph_call() {
   return params;
 }
 
-
-/*--------------------CODE GEN----------------------------*/
-
-void build_const_code(Node *$$, OperandType type, int ival, float fval) {
-  if (!invalid) {
-    Field *field;
-    if (type == TAC_OPTYPE_INT) {
-      field = cgen_field(get_value_ival(ival) , type);
-    } else {
-      field = cgen_field(get_value_fval(fval) , type);
-    }
-
-    cgen_append(
-      &($$->code),
-      cgen_instr(
-        NULL,
-        TAC_MOVVV,
-        cgen_field(get_value_ival(temp_inst_count++), TAC_OPTYPE_TEMP),
-        field,
-        NULL
-      )
-    );
-  }
-}
-
-void build_expression_code(Node *$$, Node *$1, Node *$3, InstCode code) {
-  if (!invalid) {
-    cgen_append(&($1->code), cgen_derref_lvalue(cgen_last_inst($1->code)->fields[0], &temp_inst_count));
-    cgen_append(&($3->code), cgen_derref_lvalue(cgen_last_inst($3->code)->fields[0], &temp_inst_count));
-
-    cgen_append(
-      &($$->code),
-      cgen_instr(
-        NULL,
-        code,
-        cgen_field(get_value_ival(temp_inst_count++), TAC_OPTYPE_TEMP),
-        cgen_last_inst($1->code)->fields[0],
-        cgen_last_inst($3->code)->fields[0]
-      )
-    );  
-    cgen_append(&($1->code), $3->code);
-    cgen_append(&($1->code), $$->code);
-    $$->code = $1->code;
-  }
-}
-
 /*-------------------TYPE CHECK---------------------------*/
 
 void check_graph_call(char *id, Node* graph_params_call) {
@@ -1032,7 +980,7 @@ void check_assign_expression(Node *tgt, TypeExpression *tgt_type, Node *op2) {
   }
 }
 
-void check_compare_expression(Node *tgt, Node *op1, Node *operator, Node *op2) {
+void check_relational_expression(Node *tgt, Node *op1, Node *operator, Node *op2) {
   TypeExpression *tmax = type_max(op1->type, op2->type);
   if (type_is_aritmetic(tmax)) {
       op1->cast = type_get_cast(tmax, op1->type);  

@@ -37,6 +37,8 @@
 %option yylineno
 
 
+%s IN_COMMENT
+
 /* regular definitions */
 ws              [ \t\n]
 letter          [A-Za-z]
@@ -45,6 +47,15 @@ id              {letter}({letter}|{digit}|_)*
 number_int      {digit}+
 number_float    {digit}+(\.{digit}+)+
 %%
+
+"/*"              { BEGIN(IN_COMMENT); }
+
+<IN_COMMENT>{
+    "*/"      { BEGIN(INITIAL); }
+    [^*\n]+   {}
+    "*"       {}
+    \n        { yylineno++; }
+}
 
 {ws}            { }
 
