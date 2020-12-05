@@ -349,6 +349,40 @@ Instruction* cgen_declaration_param(SymbolNode *sym, int *param_inst_count) {
 }
 
 /**
+ * A principio retorno sera sempre rvalue
+*/
+Instruction* cgen_return(Node *expr, int *temp_inst_count) {
+    Instruction *inst = NULL;
+
+    if (expr) {
+        cgen_append(&(expr->code), cgen_derref_lvalue(cgen_last_inst(expr->code)->fields[0], temp_inst_count));
+        cgen_append(&(expr->code), cgen_cast(cgen_last_inst(expr->code)->fields[0], expr->cast, temp_inst_count));
+    }
+
+    Field *field = expr ? cgen_last_inst(expr->code)->fields[0] : NULL;
+
+    cgen_append(
+      &inst,
+      cgen_instr(
+        NULL,
+        TAC_RETURN,
+        field,
+        NULL,
+        NULL
+      )
+    );
+
+    // Necessario ocorrer apos para que campos convertidos acima por derref estejam corretos
+    if (expr) {
+        cgen_append(&(expr->code), inst);
+        inst = expr->code;
+    }
+
+    return inst;
+}
+
+
+/**
  * Codigo dos parametros tambem sera anexado aqui
 */
 Instruction *cgen_function_call(SymbolNode *sym, Node *params_call, int *temp_inst_count) {
@@ -362,7 +396,6 @@ Instruction *cgen_function_call(SymbolNode *sym, Node *params_call, int *temp_in
         while (param != NULL) {
             cgen_append(&inst, param->code);
             Field *ref = cgen_last_inst(param->code)->fields[0];
-            cgen_append(&inst, cgen_cast(ref, param->cast, temp_inst_count));
             
             if (param->cast) {
                 printf("cast\n");
@@ -380,6 +413,7 @@ Instruction *cgen_function_call(SymbolNode *sym, Node *params_call, int *temp_in
                         }
                         case RVALUE: {
                             cgen_append(&inst, cgen_derref_lvalue(ref, temp_inst_count));
+                            cgen_append(&inst, cgen_cast(cgen_last_inst(inst)->fields[0], param->cast, temp_inst_count));
                             cgen_append(&inst, cgen_instr(NULL, TAC_PARAM, cgen_last_inst(inst)->fields[0], NULL, NULL));
                             params_count++;
                             break;
@@ -395,6 +429,7 @@ Instruction *cgen_function_call(SymbolNode *sym, Node *params_call, int *temp_in
                             break;
                         }
                         case RVALUE: {
+                            cgen_append(&inst, cgen_cast(ref, param->cast, temp_inst_count));
                             cgen_append(&inst, cgen_instr(NULL, TAC_PARAM, cgen_last_inst(inst)->fields[0], NULL, NULL));
                             params_count++;
                             break;
@@ -522,10 +557,8 @@ Instruction* cgen_const_code(OperandType type, int ival, float fval, int *temp_i
 Instruction* cgen_assign(Node *dst, Node *src, int *temp_inst_count) {
     Instruction *inst = NULL;
     
-    printf("asdas\n");
     cgen_append(&(src->code), cgen_derref_lvalue(cgen_last_inst(src->code)->fields[0], temp_inst_count));
     cgen_append(&(src->code), cgen_cast(cgen_last_inst(src->code)->fields[0], src->cast, temp_inst_count));
-
 
     cgen_append(
       &inst,

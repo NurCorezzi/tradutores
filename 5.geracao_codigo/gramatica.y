@@ -48,6 +48,7 @@ Node* get_params_graph_call();
 
 void check_graph_call(char *id, Node* graph_params_call);
 void check_params(char *function_id, Node *param, Node *param_call);
+void check_return(Node *tgt, Node *expr);
 void check_assign_expression(Node *tgt, TypeExpression *tgt_type, Node *op2);
 void check_relational_expression(Node *tgt, Node *op1, Node *operator, Node *op2);
 void check_boolean_expression(Node *tgt, Node *op1, Node *operator, Node *op2);
@@ -440,14 +441,18 @@ statement: WHILE OPEN_P expr_assign CLOSE_P block {
 | RETURN expr_assign END {
   $$ = create_node("return");
   push_child($$, $expr_assign);
+  check_return($$, $expr_assign);
 
-  Scope* cur = scope_top(global_scope);
-  if (cur == NULL || cur->function == NULL) {
-    char buffer[300] = {0};
-    sprintf(buffer, "there is no function for this return statement");
-    semantic_error(buffer);
-  } else {
-    check_assign_expression($$, cur->function->type, $expr_assign);
+  if (!invalid) {
+    cgen_append(&($$->code), cgen_return($expr_assign, &temp_inst_count));
+  }
+}
+| RETURN END {
+  $$ = create_node("return");
+  check_return($$, NULL);
+
+  if (!invalid) {
+    cgen_append(&($$->code), cgen_return(NULL, &temp_inst_count));
   }
 }
 | statement_control
@@ -964,17 +969,31 @@ void check_params(char *function_id, Node *param, Node *param_call) {
   );
 }
 
+void check_return(Node *tgt, Node *expr) {
+  Scope* cur = scope_top(global_scope);
+  if (cur == NULL || cur->function == NULL) {
+    char buffer[300] = {0};
+    sprintf(buffer, "there is no function for this return statement");
+    semantic_error(buffer);
+  } else {
+    check_assign_expression(tgt, cur->function->type, expr);
+  }
+}
+
 /**
  * Também usado para checar tipo em return statement.
  */
-void check_assign_expression(Node *tgt, TypeExpression *tgt_type, Node *op2) {
-  TypeExpression *tmax = type_max(tgt_type, op2->type);
+void check_assign_expression(Node *tgt, TypeExpression *tgt_type, Node *src) {
+  TypeExpression *src_type = src ? src->type : &TYPE_EXPRESSION_VOID;
+  TypeExpression *tmax = type_max(tgt_type, src_type);
   if (type_can_assign(tgt_type) && tmax) {
-      op2->cast = type_get_cast(tgt_type, op2->type);  
-      tgt->type = type_cpy(tgt_type);
+    if (src) {
+      src->cast = type_get_cast(tgt_type, src_type);  
+    }
+    tgt->type = type_cpy(tgt_type);
   } else {
     char buffer[400] = {0}, buffer1[300] = {0};
-    build_incompatible_types_str(buffer1, tgt_type, op2->type);
+    build_incompatible_types_str(buffer1, tgt_type, src_type);
     sprintf(buffer, "%s with operator \"ASSIGN/RETURN\"", buffer1);
     semantic_error(buffer);
   }

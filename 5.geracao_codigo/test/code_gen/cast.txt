@@ -1,29 +1,48 @@
-void main() {
-    << true || true;
-    << true || false;
-    << false || true;
-    << true && 8;
-    << !0 && 1;
 
-    boolean a;
-    a = true;
-    << a || false;
-
-    << (a = false) || false;
-    << false || false;
-    << 0 && true;
-    << (false || 0) && false;
+int dummya(int a, float b, boolean s) {
+    a + 1;
+    a + 1.0;
+    s && true;
+    return b;
 }
 
-/*
-1
-1
-1
-1
-1
-1
-0
-0
-0
-0
-*/
+float dummyb() {
+    return 1;
+}
+
+void dummyc(int[3] a) {
+    a[1] + 1;
+}
+
+int main() {
+    float a;
+    int b;
+    int[3] c;
+
+    dummyc(c);
+    dummya(b, a, b);
+
+    /*teste com funcoes e parametros*/ 
+    a = dummya(1, 2, 3.0);
+    b = dummyb();
+    a + 1.0;
+    b + 1;
+
+    /*teste em expressoes*/
+    << 1 + 2.0;
+    << 1.2 + (1 < 2);
+
+    /*testar rvalue*/
+    a = 1;
+    b = 1.0;
+
+    /*testar lvalue*/
+    a = b;
+    b = a;
+    
+    /*garante que tipos sao iguais*/
+    a + 1.0;
+    b + 1;
+}
+
+/*Espera-se que execucao em tac nao gere erros de tipos*/

@@ -1,35 +1,13 @@
-
-int dummya(int a, float b, boolean s) {
-    return 1.0;
-}
-
-float dummyb() {
-    return 1;
+int count(int n) {
+    if (n == 0) {
+        return 0;
+    } else {
+        return count(n-1) + n;
+    }
 }
 
 int main() {
-    float a;
-    int b;
-
-    /*teste com funcoes e parametros*/ 
-    a = dummya(1, 2, 3.0);
-    b = dummyb();
-    a + 1.0;
-    b + 1;
-
-    /*teste em expressoes*/
-    << 1 + 2.0;
-    << 1.2 + (1 < 2);
-
-    /*testar rvalue*/
-    a = 1;
-    b = 1.0;
-
-    /*testar lvalue*/
-    a = b;
-    b = a;
-    
-    /*garante que tipos sao iguais*/
-    a + 1.0;
-    b + 1;
+    int a;
 }
+
+/*Espera-se que execucao em tac nao gere erros de tipos*/

@@ -245,7 +245,7 @@ TypeExpression* type_max(TypeExpression* a, TypeExpression* b) {
             break;
         }  
         case GTYPE_ARRAY:   return type_eq(a, b) ? a : NULL;
-        case GTYPE_VOID:    break;  
+        case GTYPE_VOID:    return type_eq(a, b) ? a : NULL;  
         default: return NULL;
     }
     return NULL;
@@ -273,13 +273,13 @@ Cast type_get_cast(TypeExpression* tgt, TypeExpression* src) {
 }
 
 /**
- * Verifica se tipo pode receber uma atribuição. 
+ * Verifica se tipo pode receber uma atribuição. Void esta aqui apenas para caso de checagem de retorno de funcoes.
  */
 int type_can_assign(TypeExpression *tgt) {
     if (tgt == NULL) {
         return 0;
     }
-    return tgt->node_type == GTYPE_FLOAT || tgt->node_type == GTYPE_INT;
+    return tgt->node_type == GTYPE_FLOAT || tgt->node_type == GTYPE_INT || tgt->node_type == GTYPE_VOID;
 }
 
 int type_is_aritmetic(TypeExpression *type) {
