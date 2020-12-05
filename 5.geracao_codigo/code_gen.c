@@ -833,6 +833,28 @@ Instruction* cgen_if_else(Node* dst, Instruction* condition, Node* body_if, Node
     return inst;
 }
 
+Instruction* cgen_while(Node* dst, Instruction* condition, Node* body, int *temp_inst_count) {
+    Instruction *inst = condition;
+
+    Label *init_while           = cgen_label_by_counter();
+    Label *end_while            = cgen_label_by_counter();
+
+    cgen_append(&inst, cgen_derref_lvalue(cgen_last_inst(inst)->fields[0], temp_inst_count));
+    inst->label = init_while;
+
+    Field* field_condition      = cgen_last_inst(inst)->fields[0];
+    Field *field_next_statement = cgen_field(get_value_label(cgen_label("_", 0)), TAC_OPTYPE_LABEL);
+    
+    cgen_append(&inst, cgen_instr(NULL, TAC_BRZ, field_next_statement, field_condition, NULL));
+    cgen_append(&inst, body->code);
+    cgen_append(&inst, cgen_instr(end_while, TAC_JUMP, cgen_field(get_value_label(init_while), TAC_OPTYPE_LABEL), NULL, NULL));
+
+    cgen_back_patch(body->back_patch, end_while);
+    dst->back_patch = cgen_patch(field_next_statement);
+
+    return inst;
+}
+
 /*---------------------FREE-------------------------*/
 
 void free_cgen() {

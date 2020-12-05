@@ -1,13 +1,7 @@
-int count(int n) {
-    if (n == 0) {
-        return 0;
-    } else {
-        return count(n-1) + n;
+void main() {
+    int i; i = 5;
+    while(i * i < 5) {
+        << i;
+        i = i - 1;
     }
 }
-
-int main() {
-    int a;
-}
-
-/*Espera-se que execucao em tac nao gere erros de tipos*/

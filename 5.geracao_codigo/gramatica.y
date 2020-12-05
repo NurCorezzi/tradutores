@@ -395,6 +395,13 @@ statement: WHILE OPEN_P expr_assign CLOSE_P block {
   $$ = create_node("while");
   push_child($$, $expr_assign);
   push_child($$, $block);
+
+  if (!invalid) {
+    cgen_append(
+      &($$->code),
+      cgen_while($$, $expr_assign->code, $block, &temp_inst_count)
+    );
+  }
 }
 | FOR OPEN_P expr_assign[exp1] END expr_assign[exp2] END expr_assign[exp3] CLOSE_P block {
   $$ = create_node("for");

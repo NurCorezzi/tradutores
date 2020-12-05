@@ -558,14 +558,14 @@ static const yytype_uint16 yyrline[] =
 {
        0,   121,   121,   134,   135,   150,   181,   150,   236,   239,
      240,   251,   258,   287,   288,   300,   306,   311,   318,   330,
-     330,   353,   353,   366,   367,   379,   394,   399,   406,   418,
-     422,   432,   435,   438,   441,   450,   458,   464,   481,   486,
-     495,   498,   507,   510,   518,   521,   530,   533,   542,   545,
-     554,   557,   566,   569,   597,   600,   603,   610,   611,   612,
-     615,   616,   618,   619,   620,   621,   623,   624,   625,   626,
-     627,   628,   635,   647,   663,   718,   719,   727,   733,   738,
-     743,   750,   783,   784,   796,   805,   806,   807,   808,   809,
-     812,   812,   815,   829,   843,   855
+     330,   353,   353,   366,   367,   379,   394,   406,   413,   425,
+     429,   439,   442,   445,   448,   457,   465,   471,   488,   493,
+     502,   505,   514,   517,   525,   528,   537,   540,   549,   552,
+     561,   564,   573,   576,   604,   607,   610,   617,   618,   619,
+     622,   623,   625,   626,   627,   628,   630,   631,   632,   633,
+     634,   635,   642,   654,   670,   725,   726,   734,   740,   745,
+     750,   757,   790,   791,   803,   812,   813,   814,   815,   816,
+     819,   819,   822,   836,   850,   862
 };
 #endif
 
@@ -2346,12 +2346,19 @@ yyreduce:
   (yyval.node) = create_node("while");
   push_child((yyval.node), (yyvsp[-2].node));
   push_child((yyval.node), (yyvsp[0].node));
+
+  if (!invalid) {
+    cgen_append(
+      &((yyval.node)->code),
+      cgen_while((yyval.node), (yyvsp[-2].node)->code, (yyvsp[0].node), &temp_inst_count)
+    );
+  }
 }
-#line 2351 "gramatica.tab.c" /* yacc.c:1646  */
+#line 2358 "gramatica.tab.c" /* yacc.c:1646  */
     break;
 
   case 27:
-#line 399 "gramatica.y" /* yacc.c:1646  */
+#line 406 "gramatica.y" /* yacc.c:1646  */
     {
   (yyval.node) = create_node("for");
   push_child((yyval.node), (yyvsp[-6].node));
@@ -2359,11 +2366,11 @@ yyreduce:
   push_child((yyval.node), (yyvsp[-2].node));
   push_child((yyval.node), (yyvsp[0].node));
 }
-#line 2363 "gramatica.tab.c" /* yacc.c:1646  */
+#line 2370 "gramatica.tab.c" /* yacc.c:1646  */
     break;
 
   case 28:
-#line 406 "gramatica.y" /* yacc.c:1646  */
+#line 413 "gramatica.y" /* yacc.c:1646  */
     {
   (yyval.node) = create_node("for_iterator");
   push_child((yyval.node), (yyvsp[-4].node));
@@ -2376,20 +2383,20 @@ yyreduce:
     semantic_error(buffer);
   } 
 }
-#line 2380 "gramatica.tab.c" /* yacc.c:1646  */
+#line 2387 "gramatica.tab.c" /* yacc.c:1646  */
     break;
 
   case 29:
-#line 418 "gramatica.y" /* yacc.c:1646  */
+#line 425 "gramatica.y" /* yacc.c:1646  */
     {
   (yyval.node) = create_node("read");
   push_child((yyval.node), (yyvsp[-1].node));
 }
-#line 2389 "gramatica.tab.c" /* yacc.c:1646  */
+#line 2396 "gramatica.tab.c" /* yacc.c:1646  */
     break;
 
   case 30:
-#line 422 "gramatica.y" /* yacc.c:1646  */
+#line 429 "gramatica.y" /* yacc.c:1646  */
     {
   (yyval.node) = create_node("write");
   push_child((yyval.node), (yyvsp[-1].node));
@@ -2400,35 +2407,35 @@ yyreduce:
     cgen_append(&((yyval.node)->code), cgen_instr(NULL, TAC_PRINTLN, NULL, NULL, NULL));  
   }
 }
-#line 2404 "gramatica.tab.c" /* yacc.c:1646  */
+#line 2411 "gramatica.tab.c" /* yacc.c:1646  */
     break;
 
   case 31:
-#line 432 "gramatica.y" /* yacc.c:1646  */
+#line 439 "gramatica.y" /* yacc.c:1646  */
     {
   (yyval.node) = (yyvsp[-1].node);
 }
-#line 2412 "gramatica.tab.c" /* yacc.c:1646  */
+#line 2419 "gramatica.tab.c" /* yacc.c:1646  */
     break;
 
   case 32:
-#line 435 "gramatica.y" /* yacc.c:1646  */
+#line 442 "gramatica.y" /* yacc.c:1646  */
     {
   (yyval.node) = (yyvsp[-1].node);
 }
-#line 2420 "gramatica.tab.c" /* yacc.c:1646  */
+#line 2427 "gramatica.tab.c" /* yacc.c:1646  */
     break;
 
   case 33:
-#line 438 "gramatica.y" /* yacc.c:1646  */
+#line 445 "gramatica.y" /* yacc.c:1646  */
     {
   (yyval.node) = (yyvsp[-1].node);
 }
-#line 2428 "gramatica.tab.c" /* yacc.c:1646  */
+#line 2435 "gramatica.tab.c" /* yacc.c:1646  */
     break;
 
   case 34:
-#line 441 "gramatica.y" /* yacc.c:1646  */
+#line 448 "gramatica.y" /* yacc.c:1646  */
     {
   (yyval.node) = create_node("return");
   push_child((yyval.node), (yyvsp[-1].node));
@@ -2438,11 +2445,11 @@ yyreduce:
     cgen_append(&((yyval.node)->code), cgen_return((yyvsp[-1].node), &temp_inst_count));
   }
 }
-#line 2442 "gramatica.tab.c" /* yacc.c:1646  */
+#line 2449 "gramatica.tab.c" /* yacc.c:1646  */
     break;
 
   case 35:
-#line 450 "gramatica.y" /* yacc.c:1646  */
+#line 457 "gramatica.y" /* yacc.c:1646  */
     {
   (yyval.node) = create_node("return");
   check_return((yyval.node), NULL);
@@ -2451,11 +2458,11 @@ yyreduce:
     cgen_append(&((yyval.node)->code), cgen_return(NULL, &temp_inst_count));
   }
 }
-#line 2455 "gramatica.tab.c" /* yacc.c:1646  */
+#line 2462 "gramatica.tab.c" /* yacc.c:1646  */
     break;
 
   case 37:
-#line 464 "gramatica.y" /* yacc.c:1646  */
+#line 471 "gramatica.y" /* yacc.c:1646  */
     {
   (yyval.node) = create_node("expr_assign");
   (yyval.node)->value_type = LVALUE;
@@ -2473,19 +2480,19 @@ yyreduce:
     cgen_append(&((yyval.node)->code), cgen_assign((yyvsp[-2].node), (yyvsp[0].node), &temp_inst_count));
   }
 }
-#line 2477 "gramatica.tab.c" /* yacc.c:1646  */
+#line 2484 "gramatica.tab.c" /* yacc.c:1646  */
     break;
 
   case 38:
-#line 481 "gramatica.y" /* yacc.c:1646  */
+#line 488 "gramatica.y" /* yacc.c:1646  */
     {  
   (yyval.node) = (yyvsp[0].node);
 }
-#line 2485 "gramatica.tab.c" /* yacc.c:1646  */
+#line 2492 "gramatica.tab.c" /* yacc.c:1646  */
     break;
 
   case 39:
-#line 486 "gramatica.y" /* yacc.c:1646  */
+#line 493 "gramatica.y" /* yacc.c:1646  */
     {
   (yyval.node) = create_node("expr_or");
   push_child((yyval.node), (yyvsp[-2].node));
@@ -2495,11 +2502,11 @@ yyreduce:
 
   free_tree((yyvsp[-1].node));
 }
-#line 2499 "gramatica.tab.c" /* yacc.c:1646  */
+#line 2506 "gramatica.tab.c" /* yacc.c:1646  */
     break;
 
   case 41:
-#line 498 "gramatica.y" /* yacc.c:1646  */
+#line 505 "gramatica.y" /* yacc.c:1646  */
     {
   (yyval.node) = create_node("expr_and");
   push_child((yyval.node), (yyvsp[-2].node));
@@ -2509,11 +2516,11 @@ yyreduce:
 
   free_tree((yyvsp[-1].node));
 }
-#line 2513 "gramatica.tab.c" /* yacc.c:1646  */
+#line 2520 "gramatica.tab.c" /* yacc.c:1646  */
     break;
 
   case 43:
-#line 510 "gramatica.y" /* yacc.c:1646  */
+#line 517 "gramatica.y" /* yacc.c:1646  */
     {
   (yyval.node) = create_node("expr_relational");
   push_child((yyval.node), (yyvsp[-2].node));
@@ -2522,11 +2529,11 @@ yyreduce:
   check_relational_expression((yyval.node), (yyvsp[-2].node), (yyvsp[-1].node), (yyvsp[0].node));
   if (!invalid) cgen_append(&((yyval.node)->code), cgen_expression_relational((yyvsp[-2].node), (yyvsp[0].node), (yyvsp[-1].node)->t_token, &temp_inst_count));
 }
-#line 2526 "gramatica.tab.c" /* yacc.c:1646  */
+#line 2533 "gramatica.tab.c" /* yacc.c:1646  */
     break;
 
   case 45:
-#line 521 "gramatica.y" /* yacc.c:1646  */
+#line 528 "gramatica.y" /* yacc.c:1646  */
     {
   (yyval.node) = create_node("expr_add");
   push_child((yyval.node), (yyvsp[-2].node));
@@ -2536,11 +2543,11 @@ yyreduce:
 
   free_tree((yyvsp[-1].node));
 }
-#line 2540 "gramatica.tab.c" /* yacc.c:1646  */
+#line 2547 "gramatica.tab.c" /* yacc.c:1646  */
     break;
 
   case 47:
-#line 533 "gramatica.y" /* yacc.c:1646  */
+#line 540 "gramatica.y" /* yacc.c:1646  */
     {
   (yyval.node) = create_node("expr_sub");
   push_child((yyval.node), (yyvsp[-2].node));
@@ -2550,11 +2557,11 @@ yyreduce:
 
   free_tree((yyvsp[-1].node));
 }
-#line 2554 "gramatica.tab.c" /* yacc.c:1646  */
+#line 2561 "gramatica.tab.c" /* yacc.c:1646  */
     break;
 
   case 49:
-#line 545 "gramatica.y" /* yacc.c:1646  */
+#line 552 "gramatica.y" /* yacc.c:1646  */
     {
   (yyval.node) = create_node("expr_mul");
   push_child((yyval.node), (yyvsp[-2].node));
@@ -2564,11 +2571,11 @@ yyreduce:
 
   free_tree((yyvsp[-1].node));
 }
-#line 2568 "gramatica.tab.c" /* yacc.c:1646  */
+#line 2575 "gramatica.tab.c" /* yacc.c:1646  */
     break;
 
   case 51:
-#line 557 "gramatica.y" /* yacc.c:1646  */
+#line 564 "gramatica.y" /* yacc.c:1646  */
     {
   (yyval.node) = create_node("expr_div");
   push_child((yyval.node), (yyvsp[-2].node));
@@ -2578,11 +2585,11 @@ yyreduce:
 
   free_tree((yyvsp[-1].node));
 }
-#line 2582 "gramatica.tab.c" /* yacc.c:1646  */
+#line 2589 "gramatica.tab.c" /* yacc.c:1646  */
     break;
 
   case 53:
-#line 569 "gramatica.y" /* yacc.c:1646  */
+#line 576 "gramatica.y" /* yacc.c:1646  */
     {
   (yyval.node) = create_node("expr_unary");
 
@@ -2611,97 +2618,97 @@ yyreduce:
     cgen_append(&((yyval.node)->code), cgen_expression_unary((yyvsp[0].node), (yyvsp[-1].node)->t_token, &temp_inst_count));
   }
 }
-#line 2615 "gramatica.tab.c" /* yacc.c:1646  */
+#line 2622 "gramatica.tab.c" /* yacc.c:1646  */
     break;
 
   case 55:
-#line 600 "gramatica.y" /* yacc.c:1646  */
+#line 607 "gramatica.y" /* yacc.c:1646  */
     {
   (yyval.node) = (yyvsp[-1].node);
 }
-#line 2623 "gramatica.tab.c" /* yacc.c:1646  */
+#line 2630 "gramatica.tab.c" /* yacc.c:1646  */
     break;
 
   case 57:
-#line 610 "gramatica.y" /* yacc.c:1646  */
+#line 617 "gramatica.y" /* yacc.c:1646  */
     { (yyval.node) = create_node(yytname[YYTRANSLATE(yylval.id)]); (yyval.node)->t_token = yylval.id; }
-#line 2629 "gramatica.tab.c" /* yacc.c:1646  */
+#line 2636 "gramatica.tab.c" /* yacc.c:1646  */
     break;
 
   case 60:
-#line 615 "gramatica.y" /* yacc.c:1646  */
+#line 622 "gramatica.y" /* yacc.c:1646  */
     { (yyval.node) = create_node(yytname[YYTRANSLATE(yylval.id)]); (yyval.node)->t_token = yylval.id; }
-#line 2635 "gramatica.tab.c" /* yacc.c:1646  */
+#line 2642 "gramatica.tab.c" /* yacc.c:1646  */
     break;
 
   case 61:
-#line 616 "gramatica.y" /* yacc.c:1646  */
+#line 623 "gramatica.y" /* yacc.c:1646  */
     { (yyval.node) = create_node(yytname[YYTRANSLATE(yylval.id)]); (yyval.node)->t_token = yylval.id; }
-#line 2641 "gramatica.tab.c" /* yacc.c:1646  */
+#line 2648 "gramatica.tab.c" /* yacc.c:1646  */
     break;
 
   case 62:
-#line 618 "gramatica.y" /* yacc.c:1646  */
+#line 625 "gramatica.y" /* yacc.c:1646  */
     { (yyval.node) = create_node(yytname[YYTRANSLATE(yylval.id)]); (yyval.node)->t_token = yylval.id; }
-#line 2647 "gramatica.tab.c" /* yacc.c:1646  */
+#line 2654 "gramatica.tab.c" /* yacc.c:1646  */
     break;
 
   case 63:
-#line 619 "gramatica.y" /* yacc.c:1646  */
+#line 626 "gramatica.y" /* yacc.c:1646  */
     { (yyval.node) = create_node(yytname[YYTRANSLATE(yylval.id)]); (yyval.node)->t_token = yylval.id; }
-#line 2653 "gramatica.tab.c" /* yacc.c:1646  */
+#line 2660 "gramatica.tab.c" /* yacc.c:1646  */
     break;
 
   case 64:
-#line 620 "gramatica.y" /* yacc.c:1646  */
+#line 627 "gramatica.y" /* yacc.c:1646  */
     { (yyval.node) = create_node(yytname[YYTRANSLATE(yylval.id)]); (yyval.node)->t_token = yylval.id; }
-#line 2659 "gramatica.tab.c" /* yacc.c:1646  */
+#line 2666 "gramatica.tab.c" /* yacc.c:1646  */
     break;
 
   case 65:
-#line 621 "gramatica.y" /* yacc.c:1646  */
+#line 628 "gramatica.y" /* yacc.c:1646  */
     { (yyval.node) = create_node(yytname[YYTRANSLATE(yylval.id)]); (yyval.node)->t_token = yylval.id; }
-#line 2665 "gramatica.tab.c" /* yacc.c:1646  */
+#line 2672 "gramatica.tab.c" /* yacc.c:1646  */
     break;
 
   case 66:
-#line 623 "gramatica.y" /* yacc.c:1646  */
+#line 630 "gramatica.y" /* yacc.c:1646  */
     { (yyval.node) = create_node(yytname[YYTRANSLATE(yylval.id)]); (yyval.node)->t_token = yylval.id; }
-#line 2671 "gramatica.tab.c" /* yacc.c:1646  */
+#line 2678 "gramatica.tab.c" /* yacc.c:1646  */
     break;
 
   case 67:
-#line 624 "gramatica.y" /* yacc.c:1646  */
+#line 631 "gramatica.y" /* yacc.c:1646  */
     { (yyval.node) = create_node(yytname[YYTRANSLATE(yylval.id)]); (yyval.node)->t_token = yylval.id; }
-#line 2677 "gramatica.tab.c" /* yacc.c:1646  */
+#line 2684 "gramatica.tab.c" /* yacc.c:1646  */
     break;
 
   case 68:
-#line 625 "gramatica.y" /* yacc.c:1646  */
+#line 632 "gramatica.y" /* yacc.c:1646  */
     { (yyval.node) = create_node(yytname[YYTRANSLATE(yylval.id)]); (yyval.node)->t_token = yylval.id; }
-#line 2683 "gramatica.tab.c" /* yacc.c:1646  */
+#line 2690 "gramatica.tab.c" /* yacc.c:1646  */
     break;
 
   case 69:
-#line 626 "gramatica.y" /* yacc.c:1646  */
+#line 633 "gramatica.y" /* yacc.c:1646  */
     { (yyval.node) = create_node(yytname[YYTRANSLATE(yylval.id)]); (yyval.node)->t_token = yylval.id; }
-#line 2689 "gramatica.tab.c" /* yacc.c:1646  */
+#line 2696 "gramatica.tab.c" /* yacc.c:1646  */
     break;
 
   case 70:
-#line 627 "gramatica.y" /* yacc.c:1646  */
+#line 634 "gramatica.y" /* yacc.c:1646  */
     { (yyval.node) = create_node(yytname[YYTRANSLATE(yylval.id)]); (yyval.node)->t_token = yylval.id; }
-#line 2695 "gramatica.tab.c" /* yacc.c:1646  */
+#line 2702 "gramatica.tab.c" /* yacc.c:1646  */
     break;
 
   case 71:
-#line 628 "gramatica.y" /* yacc.c:1646  */
+#line 635 "gramatica.y" /* yacc.c:1646  */
     { (yyval.node) = create_node(yytname[YYTRANSLATE(yylval.id)]); (yyval.node)->t_token = yylval.id; }
-#line 2701 "gramatica.tab.c" /* yacc.c:1646  */
+#line 2708 "gramatica.tab.c" /* yacc.c:1646  */
     break;
 
   case 72:
-#line 635 "gramatica.y" /* yacc.c:1646  */
+#line 642 "gramatica.y" /* yacc.c:1646  */
     { 
   (yyval.node) = create_node("adda"); 
   push_child((yyval.node), (yyvsp[-1].node));
@@ -2714,11 +2721,11 @@ yyreduce:
   );
   free_tree(params);
 }
-#line 2718 "gramatica.tab.c" /* yacc.c:1646  */
+#line 2725 "gramatica.tab.c" /* yacc.c:1646  */
     break;
 
   case 73:
-#line 647 "gramatica.y" /* yacc.c:1646  */
+#line 654 "gramatica.y" /* yacc.c:1646  */
     { 
   (yyval.node) = create_node("addv"); 
   push_child((yyval.node), (yyvsp[-5].node));
@@ -2733,11 +2740,11 @@ yyreduce:
   );
   free_tree(params);
 }
-#line 2737 "gramatica.tab.c" /* yacc.c:1646  */
+#line 2744 "gramatica.tab.c" /* yacc.c:1646  */
     break;
 
   case 74:
-#line 663 "gramatica.y" /* yacc.c:1646  */
+#line 670 "gramatica.y" /* yacc.c:1646  */
     {
   (yyval.node) = create_node("declaration");
   push_child((yyval.node), (yyvsp[-2].node));
@@ -2791,69 +2798,69 @@ yyreduce:
     }
   }
 }
-#line 2795 "gramatica.tab.c" /* yacc.c:1646  */
+#line 2802 "gramatica.tab.c" /* yacc.c:1646  */
     break;
 
   case 75:
-#line 718 "gramatica.y" /* yacc.c:1646  */
+#line 725 "gramatica.y" /* yacc.c:1646  */
     {(yyval.node) = NULL;}
-#line 2801 "gramatica.tab.c" /* yacc.c:1646  */
+#line 2808 "gramatica.tab.c" /* yacc.c:1646  */
     break;
 
   case 76:
-#line 719 "gramatica.y" /* yacc.c:1646  */
+#line 726 "gramatica.y" /* yacc.c:1646  */
     {
   // OBS: SE EM ALGUM MOMENTO MAIS DIMENSOES FOREM ADICIONADAS COLOCAR EM BEGIN/END CHILD
   (yyval.node) = create_node("dimension");
   push_child((yyval.node), (yyvsp[-1].node));
   (yyval.node)->code = (yyvsp[-1].node)->code;
 }
-#line 2812 "gramatica.tab.c" /* yacc.c:1646  */
+#line 2819 "gramatica.tab.c" /* yacc.c:1646  */
     break;
 
   case 77:
-#line 727 "gramatica.y" /* yacc.c:1646  */
+#line 734 "gramatica.y" /* yacc.c:1646  */
     {
   (yyval.node) = create_node_with_type("value", (yyvsp[0].node)->type);
   push_child((yyval.node), (yyvsp[0].node));
   (yyval.node)->code = (yyvsp[0].node)->code;
   (yyval.node)->value_type = (yyvsp[0].node)->value_type;
 }
-#line 2823 "gramatica.tab.c" /* yacc.c:1646  */
+#line 2830 "gramatica.tab.c" /* yacc.c:1646  */
     break;
 
   case 78:
-#line 733 "gramatica.y" /* yacc.c:1646  */
+#line 740 "gramatica.y" /* yacc.c:1646  */
     {
   (yyval.node) = create_node_with_type("value", (yyvsp[0].node)->type);
   push_child((yyval.node), (yyvsp[0].node));
   (yyval.node)->code = (yyvsp[0].node)->code;
 }
-#line 2833 "gramatica.tab.c" /* yacc.c:1646  */
+#line 2840 "gramatica.tab.c" /* yacc.c:1646  */
     break;
 
   case 79:
-#line 738 "gramatica.y" /* yacc.c:1646  */
+#line 745 "gramatica.y" /* yacc.c:1646  */
     {
   (yyval.node) = create_node_with_type("value", (yyvsp[0].node)->type);
   push_child((yyval.node), (yyvsp[0].node));
   (yyval.node)->code = (yyvsp[0].node)->code;
 }
-#line 2843 "gramatica.tab.c" /* yacc.c:1646  */
+#line 2850 "gramatica.tab.c" /* yacc.c:1646  */
     break;
 
   case 80:
-#line 743 "gramatica.y" /* yacc.c:1646  */
+#line 750 "gramatica.y" /* yacc.c:1646  */
     {
   (yyval.node) = create_node_with_type("value", (yyvsp[0].node)->type);
   push_child((yyval.node), (yyvsp[0].node));
   (yyval.node)->code = (yyvsp[0].node)->code;
 }
-#line 2853 "gramatica.tab.c" /* yacc.c:1646  */
+#line 2860 "gramatica.tab.c" /* yacc.c:1646  */
     break;
 
   case 81:
-#line 750 "gramatica.y" /* yacc.c:1646  */
+#line 757 "gramatica.y" /* yacc.c:1646  */
     {
   (yyval.node) = create_node("access");
   (yyval.node)->value_type = LVALUE;
@@ -2885,17 +2892,17 @@ yyreduce:
   }
   (yyval.node)->sentry = match;
 }
-#line 2889 "gramatica.tab.c" /* yacc.c:1646  */
+#line 2896 "gramatica.tab.c" /* yacc.c:1646  */
     break;
 
   case 82:
-#line 783 "gramatica.y" /* yacc.c:1646  */
+#line 790 "gramatica.y" /* yacc.c:1646  */
     {(yyval.node) = NULL;}
-#line 2895 "gramatica.tab.c" /* yacc.c:1646  */
+#line 2902 "gramatica.tab.c" /* yacc.c:1646  */
     break;
 
   case 83:
-#line 784 "gramatica.y" /* yacc.c:1646  */
+#line 791 "gramatica.y" /* yacc.c:1646  */
     {
   // OBS: SE EM ALGUM MOMENTO MAIS DIMENSOES FOREM ADICIONADAS COLOCAR EM BEGIN/END CHILD
   (yyval.node) = create_node("access_lvl");
@@ -2906,11 +2913,11 @@ yyreduce:
     free_node((yyvsp[0].node));
   }
 }
-#line 2910 "gramatica.tab.c" /* yacc.c:1646  */
+#line 2917 "gramatica.tab.c" /* yacc.c:1646  */
     break;
 
   case 84:
-#line 796 "gramatica.y" /* yacc.c:1646  */
+#line 803 "gramatica.y" /* yacc.c:1646  */
     { 
   (yyval.node) = create_node(yytname[YYTRANSLATE(yylval.id)]);
   
@@ -2918,41 +2925,41 @@ yyreduce:
   strcpy(cpy, yytext);
   (yyval.node)->complement = cpy;
 }
-#line 2922 "gramatica.tab.c" /* yacc.c:1646  */
+#line 2929 "gramatica.tab.c" /* yacc.c:1646  */
     break;
 
   case 85:
-#line 805 "gramatica.y" /* yacc.c:1646  */
+#line 812 "gramatica.y" /* yacc.c:1646  */
     { (yyval.node) = create_node(yytname[YYTRANSLATE(yylval.id)]); (yyval.node)->t_token = yylval.id; }
-#line 2928 "gramatica.tab.c" /* yacc.c:1646  */
+#line 2935 "gramatica.tab.c" /* yacc.c:1646  */
     break;
 
   case 86:
-#line 806 "gramatica.y" /* yacc.c:1646  */
+#line 813 "gramatica.y" /* yacc.c:1646  */
     { (yyval.node) = create_node(yytname[YYTRANSLATE(yylval.id)]); (yyval.node)->t_token = yylval.id; }
-#line 2934 "gramatica.tab.c" /* yacc.c:1646  */
+#line 2941 "gramatica.tab.c" /* yacc.c:1646  */
     break;
 
   case 87:
-#line 807 "gramatica.y" /* yacc.c:1646  */
+#line 814 "gramatica.y" /* yacc.c:1646  */
     { (yyval.node) = create_node(yytname[YYTRANSLATE(yylval.id)]); (yyval.node)->t_token = yylval.id; }
-#line 2940 "gramatica.tab.c" /* yacc.c:1646  */
+#line 2947 "gramatica.tab.c" /* yacc.c:1646  */
     break;
 
   case 88:
-#line 808 "gramatica.y" /* yacc.c:1646  */
+#line 815 "gramatica.y" /* yacc.c:1646  */
     { (yyval.node) = create_node(yytname[YYTRANSLATE(yylval.id)]); (yyval.node)->t_token = yylval.id; }
-#line 2946 "gramatica.tab.c" /* yacc.c:1646  */
+#line 2953 "gramatica.tab.c" /* yacc.c:1646  */
     break;
 
   case 89:
-#line 809 "gramatica.y" /* yacc.c:1646  */
+#line 816 "gramatica.y" /* yacc.c:1646  */
     { (yyval.node) = create_node(yytname[YYTRANSLATE(yylval.id)]); (yyval.node)->t_token = yylval.id; }
-#line 2952 "gramatica.tab.c" /* yacc.c:1646  */
+#line 2959 "gramatica.tab.c" /* yacc.c:1646  */
     break;
 
   case 92:
-#line 815 "gramatica.y" /* yacc.c:1646  */
+#line 822 "gramatica.y" /* yacc.c:1646  */
     {
   (yyval.node) = create_node("c_int");
 
@@ -2965,11 +2972,11 @@ yyreduce:
     cgen_append(&((yyval.node)->code), cgen_const_code(TAC_OPTYPE_INT, atoi((yyval.node)->complement), 0.0, &temp_inst_count));
   }
 }
-#line 2969 "gramatica.tab.c" /* yacc.c:1646  */
+#line 2976 "gramatica.tab.c" /* yacc.c:1646  */
     break;
 
   case 93:
-#line 829 "gramatica.y" /* yacc.c:1646  */
+#line 836 "gramatica.y" /* yacc.c:1646  */
     {
   (yyval.node) = create_node("c_float");
 
@@ -2982,11 +2989,11 @@ yyreduce:
     cgen_append(&((yyval.node)->code), cgen_const_code(TAC_OPTYPE_FLOAT, 0, atof((yyval.node)->complement), &temp_inst_count));
   }
 }
-#line 2986 "gramatica.tab.c" /* yacc.c:1646  */
+#line 2993 "gramatica.tab.c" /* yacc.c:1646  */
     break;
 
   case 94:
-#line 843 "gramatica.y" /* yacc.c:1646  */
+#line 850 "gramatica.y" /* yacc.c:1646  */
     { 
   (yyval.node) = create_node(yytname[YYTRANSLATE(yylval.id)]); 
   (yyval.node)->t_token = yylval.id; 
@@ -2999,11 +3006,11 @@ yyreduce:
     cgen_append(&((yyval.node)->code), cgen_const_code(TAC_OPTYPE_INT, 1, 0, &temp_inst_count));
   }
 }
-#line 3003 "gramatica.tab.c" /* yacc.c:1646  */
+#line 3010 "gramatica.tab.c" /* yacc.c:1646  */
     break;
 
   case 95:
-#line 855 "gramatica.y" /* yacc.c:1646  */
+#line 862 "gramatica.y" /* yacc.c:1646  */
     { 
   (yyval.node) = create_node(yytname[YYTRANSLATE(yylval.id)]); 
   (yyval.node)->t_token = yylval.id; 
@@ -3016,11 +3023,11 @@ yyreduce:
     cgen_append(&((yyval.node)->code), cgen_const_code(TAC_OPTYPE_INT, 0, 0, &temp_inst_count));
   }
 }
-#line 3020 "gramatica.tab.c" /* yacc.c:1646  */
+#line 3027 "gramatica.tab.c" /* yacc.c:1646  */
     break;
 
 
-#line 3024 "gramatica.tab.c" /* yacc.c:1646  */
+#line 3031 "gramatica.tab.c" /* yacc.c:1646  */
       default: break;
     }
   /* User semantic actions sometimes alter yychar, and that requires
@@ -3255,7 +3262,7 @@ yyreturn:
 #endif
   return yyresult;
 }
-#line 869 "gramatica.y" /* yacc.c:1906  */
+#line 876 "gramatica.y" /* yacc.c:1906  */
 
 
 /*-------------------UTILS--------------------------------*/
