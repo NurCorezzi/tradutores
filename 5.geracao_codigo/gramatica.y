@@ -124,6 +124,7 @@ init: program {
 
   if (!has_main) {
     warning("no main function identified program will not run");
+    invalid = 1;
   }
 }
 ;
@@ -410,6 +411,13 @@ statement: WHILE OPEN_P expr_assign CLOSE_P block {
   push_child($$, $exp2);
   push_child($$, $exp3);
   push_child($$, $block);
+
+  if (!invalid) {
+    cgen_append(
+      &($$->code),
+      cgen_for($$, $exp1->code, $exp2->code, $exp3->code, $block, &temp_inst_count)
+    );
+  }
 }
 | FOR OPEN_P id_or_access IT graph_call CLOSE_P block {
   $$ = create_node("for_iterator");
