@@ -1,7 +1,16 @@
 void main() {
-    int i; i = 5;
-    while(i * i < 5) {
-        << i;
-        i = i - 1;
+    if (false) {
+
+    } else if (false) {
+
+    } else if (true) {
+        << 1;
+        int i; i = 10;
+        while(i) {
+            << i;
+            i = i - 1;
+        }
     }
+    int[3] i;
+    << i;
 }

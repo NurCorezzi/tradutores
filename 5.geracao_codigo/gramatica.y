@@ -34,6 +34,7 @@ int next_instruction;
 int temp_inst_count;
 int param_inst_count;
 int label_count;
+int declaration_count;
 
 int has_main;
 int is_declaration_param;

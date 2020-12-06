@@ -45,4 +45,7 @@ int main() {
     b + 1;
 }
 
-/*Espera-se que execucao em tac nao gere erros de tipos*/
+/*Espera-se que execucao em tac nao gere erros de tipos
+3
+2.2
+*/
