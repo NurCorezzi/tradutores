@@ -4,6 +4,7 @@
 
 #include "node.h"
 #include "gramatica.tab.h"
+#include "scope.h"
 
 /*--------------------ESCOPO---------------------*/
 

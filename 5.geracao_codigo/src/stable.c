@@ -2,10 +2,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "node.h"
 #include "gramatica.tab.h"
-#include "scope.c"
+#include "node.h"
 #include "code_gen.h"
+#include "stable.h"
+#include "type_expression.h"
 
 /*-----------------CONVERSION---------------------*/
 

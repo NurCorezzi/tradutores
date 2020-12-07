@@ -40,7 +40,7 @@
 extern int yydebug;
 #endif
 /* "%code requires" blocks.  */
-#line 1 "gramatica.y" /* yacc.c:1909  */
+#line 1 "./src/sintax/gramatica.y" /* yacc.c:1909  */
 
   #include "node.h"
 
@@ -103,7 +103,7 @@ extern int yydebug;
 
 union YYSTYPE
 {
-#line 80 "gramatica.y" /* yacc.c:1909  */
+#line 83 "./src/sintax/gramatica.y" /* yacc.c:1909  */
 
   int id;
   Node* node;

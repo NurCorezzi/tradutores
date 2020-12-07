@@ -1,8 +1,6 @@
 #ifndef NODE_H
 #define NODE_H
 
-#include "code_gen.h"
-
 typedef enum {
     STYPE_FUNCTION, 
     STYPE_VARIABLE
@@ -22,6 +20,11 @@ typedef enum {
     CFLOAT_TO_INT
 } Cast;
 
+typedef enum {
+    RVALUE,
+    LVALUE
+} ValueType;
+
 typedef struct t_node {
     // Inicio e termino da lista de filhos
     struct t_node *begin_child;
@@ -35,8 +38,8 @@ typedef struct t_node {
     struct t_type_expression *type;
     struct t_symbol_node *sentry;
 
-    Instruction *code;
-    BackPatchList *back_patch;
+    struct t_instruction *code;
+    struct t_back_patch *back_patch;
 
     char *id;
     char *complement;
@@ -62,13 +65,17 @@ typedef struct t_symbol_node {
 
     SymbolType stype;
     TypeExpression *type;
-    Field *tac_ref;              // Campo com valor de endereco para regiao inicial de memoria do simbolo
+    struct t_field *tac_ref;              // Campo com valor de endereco para regiao inicial de memoria do simbolo
     Scope *scope;
     Node *ast_node;
 
     struct t_symbol_node *matches;
     struct t_symbol_node *next;
 } SymbolNode;
+
+
+/*----------------FUNCTION------------------------*/
+
 
 char* type_to_string(TypeExpression* type);
 TypeExpression* type_cpy(TypeExpression* src);

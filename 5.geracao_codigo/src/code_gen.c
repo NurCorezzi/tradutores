@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "gramatica.tab.h"
 #include "code_gen.h"
 #include "node.h"
 
@@ -12,8 +13,6 @@ extern int next_instruction;
 extern int label_count;
 extern int declaration_count;
 
-// GAMIARRA: evitar dependencia circular que tambem ocorreria em code_gen.h
-Instruction *cgen_write(TypeExpression *type, Instruction *code, int *temp_inst_count);
 GenericList *alloc;
 
 union Value get_value_label(Label *label) {

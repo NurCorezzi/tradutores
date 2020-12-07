@@ -3,6 +3,8 @@
 #include <string.h>
 
 #include "node.h"
+#include "ast.h"
+#include "type_expression.h"
 
 void (*tree_prefix[150]) (void);
 int i_prefix = 0;

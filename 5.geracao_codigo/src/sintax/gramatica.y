@@ -11,17 +11,20 @@
 #include "gramatica.tab.h"
 #include "node.h"
 #include "code_gen.h"
-
-#include "type_expression.c"
-#include "ast.c"
-#include "stable.c"
-#include "code_gen.c"
+#include "stable.h"
+#include "type_expression.h"
+#include "ast.h"
 
 extern char *yytext;
 int yylex_destroy ( void );
 int yylex();
 
 /*----GLOBAL-----*/
+
+extern TypeExpression TYPE_EXPRESSION_VOID;
+extern TypeExpression TYPE_EXPRESSION_BOOLEAN;
+extern TypeExpression TYPE_EXPRESSION_FLOAT;
+extern TypeExpression TYPE_EXPRESSION_INT;
 
 SymbolNode *symbol_table;
 Node *ast;

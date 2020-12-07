@@ -4,6 +4,7 @@
 
 #include "gramatica.tab.h"
 #include "node.h"
+#include "type_expression.h"
 
 // Boolean por simplicidade sera transformado em int
 TypeExpression TYPE_EXPRESSION_VOID = {0, NULL, GTYPE_VOID};

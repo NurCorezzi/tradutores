@@ -1,43 +1,45 @@
-prog_name=tradutor.out
-input_default=input_test.txt
+prog_name 		= tradutor.out
+input_default 	= ./test/input_test
+gramar_name 	= gramatica
 
-prog_c1=./test/semantico/correto1.txt
-prog_c2=./test/semantico/correto2.txt
-prog_e1=./test/semantico/errado1.txt
-prog_e2=./test/semantico/errado2.txt
+INC_DIR = ./include
+IMPL_DIR= ./src
 
-all:
-	bison -v -d -Wempty-rule -Wconflicts-sr --verbose gramatica.y
-	flex definicao.l
-	gcc -g -Wall -Wextra lex.yy.c gramatica.tab.c -o ${prog_name}
+_IMPL	= code_gen.c ast.c scope.c stable.c type_expression.c
+IMPL 	= $(patsubst %, $(IMPL_DIR)/%,$(_IMPL))
+
+all: 
+	bison -v -d -Wempty-rule -Wconflicts-sr --verbose ./src/sintax/$(gramar_name).y
+	flex ./src/lex/definicao.l
+	gcc -g -Wall -Wextra $(IMPL) lex.yy.c $(gramar_name).tab.c -I $(INC_DIR) -I. -o $(prog_name)
 
 r:
 	./${prog_name} < ${input_default}
 
 tac: r out
-
+ 
 out: 
 	../../tac-master/tac ./out.tac
 
 check:
 	valgrind -v --tool=memcheck --leak-check=full --show-leak-kinds=all --track-origins=yes ./${prog_name} < ${input_default}
-cc1:
-	valgrind -v --tool=memcheck --leak-check=full --show-leak-kinds=all --track-origins=yes ./${prog_name} < ${prog_c1}
-cc2:
-	valgrind -v --tool=memcheck --leak-check=full --show-leak-kinds=all --track-origins=yes ./${prog_name} < ${prog_c2}
-ce1:
-	valgrind -v --tool=memcheck --leak-check=full --show-leak-kinds=all --track-origins=yes ./${prog_name} < ${prog_e1}
-ce2:
-	valgrind -v --tool=memcheck --leak-check=full --show-leak-kinds=all --track-origins=yes ./${prog_name} < ${prog_e2}
 
 c1:
-	./${prog_name} < ${prog_c1}
+	./${prog_name} < ./test/code_gen/cast
 c2:
-	./${prog_name} < ${prog_c2}
-e1:
-	./${prog_name} < ${prog_e1}
-e2: 
-	./${prog_name} < ${prog_e2}
+	./${prog_name} < ./test/code_gen/const
+c3:
+	./${prog_name} < ./test/code_gen/expression_aritmetic
+c4:
+	./${prog_name} < ./test/code_gen/expression_boolean
+c5:
+	./${prog_name} < ./test/code_gen/expression_relational
+c6:
+	./${prog_name} < ./test/code_gen/function_parameter
+c7:
+	./${prog_name} < ./test/code_gen/if_else
+c8:
+	./${prog_name} < ./test/code_gen/while_for
 
 clean:
-	rm ./${prog_name} lex.yy.c 
+	rm -f ./${prog_name} lex.yy.c  $(gramar_name).*
