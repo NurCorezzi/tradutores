@@ -23,42 +23,35 @@
     <statements> ::= $\epsilon$
               \alt <statements> <statement>
 
-    <statement> ::= <statement-prefix> <statement-end>
-             \alt <statement-prefix> <dangling-if>
-             \alt <statement-end>
-             \alt <dangling-if>
-
-    <statement-no-dangle> ::= <statement-prefix> <statement-end>
-                       \alt <statement-end>
-
-    <dangling-if> ::= 'if' '(' <expr-assign> ')' <statement>
-
-    <statement-prefix> ::= 'if' '(' <expr-assign> ')' <statement-no-dangle> 'else'
-                    \alt 'while' '(' <expr-assign> ')'
-                    \alt 'for' '(' <declaration> ';' <expr-assign> ';' <expr-assign> ')'
-                    \alt 'for' '(' <declaration> ':' <graph-call> ')'
-
     <block> ::= '\{' <statements> '\}'
 
-    <statement-end> ::= <block>
-                 \alt '$>>$' <id-or-access> ';'
-                 \alt '\textless\textless' <expr-assign> ';'
-                 \alt <declaration> ';'
-                 \alt <expr-assign> ';'
-                 \alt <graph-add> ';'
-                 \alt 'return' <expr-assign> ';'
+    <statement-control> ::= <block>
+                \alt 'if' '(' <expr-assign> ')' <block>
+                \alt 'if' '(' <expr-assign> ')' <block> 'else' <statement-control>
+
+    <statement> ::=  <statement-control>
+                \alt 'while' '(' <expr-assign> ')' <block>
+                \alt 'for' '(' <expr-assign> ';' <expr-assign> ';' <expr-assign> ')' <block>
+                \alt 'for' '(' <id-or-access> ':' <graph-call> ')' <block>
+                \alt '$>>$' <id-or-access> ';'
+                \alt '\textless\textless' <expr-assign> ';'
+                \alt <declaration> ';'
+                \alt <expr-assign> ';'
+                \alt <graph-add> ';'
+                \alt 'return' ';'
+                \alt 'return' <expr-assign> ';'
 
     <expr-assign> ::= <expr-relational> '=' <expr-assign>
-               \alt <expr-relational>
-
-    <expr-relational> ::= <expr-and> <compare-op> <expr-relational>
-                   \alt <expr-and>
+               \alt <expr-or>
 
     <expr-and> ::= <expr-or> <and> <expr-and>
             \alt <expr-or>
 
-    <expr-or> ::= <expr-add> <or> <expr-or>
-           \alt <expr-add>
+    <expr-or> ::= <expr-relational> <or> <expr-or>
+           \alt <expr-relational>
+
+    <expr-relational> ::= <expr-add> <compare-op> <expr-relational>
+                   \alt <expr-add>
 
     <expr-add> ::= <expr-sub> <add> <expr-add>
             \alt <expr-sub>

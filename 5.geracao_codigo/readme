@@ -4,4 +4,5 @@ Versão Bison:   bison (GNU Bison) 3.0.4
 
 - Para compilar utilize comando "make" na pasta contendo arquivo makefile.
 - Para executar os arquivos utilize o comando "./tradutor.out < <nome do arquivo>" para redirecionar stdin.
-    - Os testes disponiveis também podem ser rodados por "make c1", "make c2", "make e1" e "make e2".
+    - Os testes disponiveis também podem ser rodados por "make c1", "make c2" ... "make c8".
+    - Um arquivo "out.tac" será gerado na pasta raiz.
