@@ -21,10 +21,10 @@ char* stype_to_string(int type) {
 /*------------PRINT SYMBOL TABLE---------------*/
 
 void stable_symbol_print(SymbolNode* entry, int isChild) {
-  char default_format[] = "│%-20p-%-20s│%-15s│%-15s│%-15s│%-15s|\n";
-  char with_child_format[] = "│%-20p┌%-20s│%-15s│%-15s│%-15s│%-15s|\n";
-  char nth_child_format[] = "│%-20p├%-20s│%-15s│%-15s│%-15s│%-15s|\n";
-  char last_child_format[] = "│%-20p└%-20s│%-15s│%-15s│%-15s│%-15s|\n";
+  char default_format[]     = "│%-20p│-%-20s│%-15s│%-15s│%-15s│%-15s│\n";
+  char with_child_format[]  = "│%-20p│┌%-20s│%-15s│%-15s│%-15s│%-15s│\n";
+  char nth_child_format[]   = "│%-20p│├%-20s│%-15s│%-15s│%-15s│%-15s│\n";
+  char last_child_format[]  = "│%-20p│└%-20s│%-15s│%-15s│%-15s│%-15s│\n";
   
   char *format = isChild ? nth_child_format : default_format;
 
@@ -46,7 +46,7 @@ void stable_symbol_print(SymbolNode* entry, int isChild) {
 }
 
 void stable_print(SymbolNode* table) {
-  printf("│%-20s│%-20s│%-15s│%-15s│%-15s│%-15s|\n", "ID", "ENTRY", "SCOPE", "STYPE", "GTYPE", "TAC_FIELD");
+  printf("│%-20s│%-21s│%-15s│%-15s│%-15s│%-15s|\n", "ID", "ENTRY", "SCOPE", "STYPE", "GTYPE", "TAC_FIELD");
 
   SymbolNode *entry = table;
   while(entry) {
