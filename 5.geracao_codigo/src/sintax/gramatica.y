@@ -817,6 +817,19 @@ access_lvl: %empty {$$ = NULL;}
     normalize_to_list($$, $next_access);
     free_node($next_access);
   }
+
+  TypeExpression *tmax = type_max(&TYPE_EXPRESSION_INT, $expr_assign->type);
+  $expr_assign->cast = type_get_cast(&TYPE_EXPRESSION_INT, $expr_assign->type);
+  if (tmax == NULL) {
+    char buffer[300] = {0};
+    sprintf(buffer, "access must be of type int ");
+    semantic_error(buffer);
+  }
+
+  if (!invalid) {
+    cgen_append(&($expr_assign->code), cgen_derref_lvalue(cgen_last_inst($expr_assign->code)->fields[0], &temp_inst_count));
+    cgen_append(&($expr_assign->code), cgen_cast(cgen_last_inst($expr_assign->code)->fields[0], $expr_assign->cast, &temp_inst_count));
+  }
 }
 ;
 

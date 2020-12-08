@@ -1,5 +1,13 @@
+void outro(graph a, int i) {
+    addv(a);
+    a[i] = i;
+    << a;
+}
+
 void main() {
-    int i;
-    int[3] a;
-    a[i];
+    graph a;
+    outro(a, 0);
+    outro(a, 1);
+    outro(a, 2);
+    outro(a, 3);
 }
