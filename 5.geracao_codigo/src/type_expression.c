@@ -11,6 +11,8 @@ TypeExpression TYPE_EXPRESSION_VOID = {0, NULL, GTYPE_VOID};
 TypeExpression TYPE_EXPRESSION_BOOLEAN = {0, NULL, GTYPE_INT};
 TypeExpression TYPE_EXPRESSION_FLOAT = {0, NULL, GTYPE_FLOAT};
 TypeExpression TYPE_EXPRESSION_INT = {0, NULL, GTYPE_INT};
+TypeExpression TYPE_EXPRESSION_ARRAY_INT = {0, &TYPE_EXPRESSION_INT, GTYPE_ARRAY};
+
 
 GrammarType token_to_type(int token) {
   switch(token) {

@@ -652,7 +652,7 @@ compare_op: LE  { $$ = create_node(yytname[YYTRANSLATE(yylval.id)]); $$->t_token
 
 
 graph_add: ADDV OPEN_P id_or_access CLOSE_P { 
-  $$ = create_node("adda"); 
+  $$ = create_node("addv"); 
   push_child($$, $id_or_access);
 
   Node* params = get_params_addv();
@@ -662,9 +662,17 @@ graph_add: ADDV OPEN_P id_or_access CLOSE_P {
     $$ ? $$->begin_child : NULL
   );
   free_tree(params);
+
+  if (!invalid) {
+    cgen_append(&($$->code), $id_or_access->code);
+    cgen_append(
+      &($$->code),
+      cgen_addv($id_or_access->code, &temp_inst_count)
+    );
+  }
 }
 | ADDA OPEN_P id_or_access SEPARATOR expr_assign[exp1] SEPARATOR expr_assign[exp2] CLOSE_P { 
-  $$ = create_node("addv"); 
+  $$ = create_node("adda"); 
   push_child($$, $id_or_access);
   push_child($$, $exp1);
   push_child($$, $exp2);

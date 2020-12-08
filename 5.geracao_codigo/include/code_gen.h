@@ -128,6 +128,11 @@ Instruction* cgen_if_else(Node* dst, Instruction* condition, Node* body_if, Node
 Instruction* cgen_while(Node* dst, Instruction* condition, Node* body, int *temp_inst_count); 
 Instruction* cgen_for(Node* dst, Instruction *init, Instruction* condition, Instruction *increment, Node* body, int *temp_inst_count); 
 
+Instruction* cgen_cpy_array(Field *dst_adress, Field *src_adress, int *temp_inst_count);
+Instruction* cgen_addv(Instruction *graph, int *temp_inst_count);
+
+
+
 /*---------------------FREE-------------------------*/
 
 void free_cgen(); 
