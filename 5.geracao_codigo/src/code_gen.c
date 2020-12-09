@@ -802,6 +802,8 @@ Instruction *cgen_write(TypeExpression *type, Instruction *code, int *temp_inst_
             Field *adress = cgen_field_adress(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP, index);
             cgen_append(&inst, cgen_instr(NULL, TAC_MOVVV, adress, cgen_last_inst(inst)->fields[0], NULL));                
             cgen_append(&inst, cgen_write(type->child, inst, temp_inst_count));
+            cgen_append(&inst, cgen_write_string("\n"));
+
             break;
         }
         case GTYPE_INT:     
@@ -840,7 +842,7 @@ Instruction *cgen_write(TypeExpression *type, Instruction *code, int *temp_inst_
             }
 
             {
-                cgen_append(&inst, cgen_write_string("  EDGES: "));
+                cgen_append(&inst, cgen_write_string("  EDGES: \n "));
 
                 Field *edges_index = cgen_field(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP);
                 cgen_append(&inst, cgen_instr(NULL, TAC_ADD, edges_index, cgen_last_inst(code)->fields[0]->adress_index, cgen_field(get_value_ival(2), TAC_OPTYPE_INT)));
@@ -1078,31 +1080,44 @@ Instruction* cgen_addv(Instruction *graph, int *temp_inst_count) {
     return inst;
 }
 
-// Instruction* cgen_adda(Instruction *graph, Instruction *vsrc, Instruction *vdst, int *temp_inst_count) {
-//     Instruction *inst = NULL;
+Instruction* cgen_adda(Instruction *graph, Instruction *vsrc, Instruction *vdst, int *temp_inst_count) {
+    Instruction *inst = NULL;
 
-//     // pegar array de arestas    
-//     Field *graph_adress = cgen_last_inst(graph);
-//     Field *edges_index = cgen_field(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP);
-//     cgen_append(&inst, cgen_instr(NULL, TAC_ADD, edges_index, graph_adress->adress_index, cgen_field(get_value_ival(2), TAC_OPTYPE_INT)));
+    // pegar array de arestas    
+    Field *graph_adress = cgen_last_inst(graph)->fields[0];
+    Field *graph_edges_index = cgen_field(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP);
+    cgen_append(&inst, cgen_instr(NULL, TAC_ADD, graph_edges_index, graph_adress->adress_index, cgen_field(get_value_ival(2), TAC_OPTYPE_INT)));
 
-//     Field *edges_adress = cgen_field(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP);
-//     cgen_append(&inst, cgen_instr(NULL, TAC_MOVVI, edges_adress, graph_adress, edges_index));
+    Field *graph_edges_adress = cgen_field(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP);
+    cgen_append(&inst, cgen_instr(NULL, TAC_MOVVI, graph_edges_adress, graph_adress, graph_edges_index));
 
-//     // acessar indice em vsrc
+    // acessar indice em vsrc
+    Field *vertex_index = cgen_field(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP);
+    Field *edges_index = cgen_field(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP);
+    Field *edges_adress = cgen_field_adress(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP, edges_index);
 
-//     // Alocar novo array
+    cgen_append(&inst, cgen_instr(NULL, TAC_MOVVV, edges_index, cgen_field(get_value_ival(0), TAC_OPTYPE_INT), NULL));
+    cgen_append(&inst, cgen_instr(NULL, TAC_ADD, vertex_index, cgen_last_inst(vsrc)->fields[0], cgen_field(get_value_ival(1), TAC_OPTYPE_INT)));
+    cgen_append(&inst, cgen_instr(NULL, TAC_MOVVI, edges_adress, graph_edges_adress, vertex_index));
 
-//     // copiar antigo
+    // Alocar novo array e aumentar em 1 o tamanho
+    Field *edges_count = cgen_field(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP);
+    cgen_append(&inst, cgen_instr(NULL, TAC_MOVVI, cgen_field(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP), edges_adress, edges_index));
+    cgen_append(&inst, cgen_instr(NULL, TAC_ADD, edges_count, cgen_last_inst(inst)->fields[0], cgen_field(get_value_ival(1), TAC_OPTYPE_INT)));
 
-//     // desalocar antigo
+    cgen_append(&inst, cgen_alloc_array(edges_count, &TYPE_EXPRESSION_ARRAY_INT, temp_inst_count));
+    Field *new_edges_adress = cgen_last_inst(inst)->fields[0];
 
-//     // atribuir novo
+    // copiar antigo
+    cgen_append(&inst, cgen_cpy_array(new_edges_adress, edges_adress, temp_inst_count));
+    cgen_append(&inst, cgen_instr(NULL, TAC_MEMF, edges_adress, NULL, NULL));    
 
-//     // adicionar nova aresta
+    //atualizar valores
+    cgen_append(&inst, cgen_instr(NULL, TAC_MOVIV, graph_edges_adress, vertex_index, new_edges_adress));
+    cgen_append(&inst, cgen_instr(NULL, TAC_MOVIV, new_edges_adress, edges_count, cgen_last_inst(vdst)->fields[0]));
 
-//     return inst;
-// }
+    return inst;
+}
 
 /*---------------------FREE-------------------------*/
 

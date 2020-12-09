@@ -1,7 +1,18 @@
 void main() {
     graph g;
-    addv(g);
-    addv(g);
-    addv(g);
+    int i;
+    int sz;
+    sz = 5;
+    for (i = 0; i < sz; i = i + 1) {
+        addv(g);
+        << g[i] = i;
+    }
+
+    for (i = 0; i < sz; i = i + 1) {
+        int j;
+        for (j = 0; j < sz; j = j + 1) {
+            adda(g, i, j);
+        }
+    }
     << g;
 }

@@ -692,10 +692,16 @@ graph_add: ADDV OPEN_P id_or_access CLOSE_P {
     cgen_append(&($exp2->code), cgen_derref_lvalue(cgen_last_inst($exp2->code)->fields[0], &temp_inst_count));
     cgen_append(&($exp2->code), cgen_cast(cgen_last_inst($exp2->code)->fields[0], $exp2->cast, &temp_inst_count));
 
-    // cgen_append(
-    //   &($$->code),
-    //   cgen_adda($id_or_access->code, $exp1->code, $exp2->code, &temp_inst_count)
-    // );
+    Instruction *append = NULL;
+    cgen_append(
+      &append,
+      cgen_adda($id_or_access->code, $exp1->code, $exp2->code, &temp_inst_count)
+    );
+
+    cgen_append(&($$->code), $id_or_access->code);
+    cgen_append(&($$->code), $exp1->code);
+    cgen_append(&($$->code), $exp2->code);
+    cgen_append(&($$->code), append);
   }
 }
 ;
