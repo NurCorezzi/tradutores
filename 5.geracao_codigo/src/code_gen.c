@@ -234,45 +234,45 @@ Instruction* cgen_cast(Field *field, Cast cast, int *temp_inst_count) {
 }
 
 /**
- * Value serve para atualizar o tamanho 
+ * Value serve para atualizar o tamanho, assume-se que array contem sz ja no inicio preenchido
 */
-Instruction* cgen_fill_mem(Field* field, TypeExpression *type, int position, int value) {
+Instruction* cgen_fill_mem(Field* adress, Field *index, TypeExpression *type, int value, int *temp_inst_count) {
     Instruction *inst = NULL;
     
     switch(type->node_type) {
         case GTYPE_INT: {
-            inst = cgen_instr(NULL, TAC_MOVIV, 
-                field,
-                cgen_field(get_value_ival(position), TAC_OPTYPE_INT), 
-                cgen_field(get_value_ival(value), TAC_OPTYPE_INT));
+            cgen_append(&inst, cgen_instr(NULL, TAC_MOVIV, adress, index, cgen_field(get_value_ival(value), TAC_OPTYPE_INT)));
             break;
         }
         case GTYPE_FLOAT: {
-            inst = cgen_instr(NULL, TAC_MOVIV, 
-                field,
-                cgen_field(get_value_ival(position), TAC_OPTYPE_INT), 
-                cgen_field(get_value_fval(0), TAC_OPTYPE_FLOAT));
+            cgen_append(&inst, cgen_instr(NULL, TAC_MOVIV, adress, index, cgen_field(get_value_fval(0), TAC_OPTYPE_FLOAT)));
             break;
         }  
         case GTYPE_GRAPH: {
             // Possui 3 campos inicias porem apenas e necessario inicializar tamanho para zero
-            inst = cgen_instr(NULL, TAC_MOVIV, 
-                field,
-                cgen_field(get_value_ival(position), TAC_OPTYPE_INT), 
-                cgen_field(get_value_ival(0), TAC_OPTYPE_INT));
+            cgen_append(&inst, cgen_instr(NULL, TAC_MOVIV, adress, index, cgen_field(get_value_ival(0), TAC_OPTYPE_INT)));
             break;
         }    
         case GTYPE_ARRAY: {
-            int i;
-            int sz = type_mem_sz(type->child);
+            Field *objs_sz = cgen_field(get_value_ival(type_mem_sz(type->child)), TAC_OPTYPE_INT);
+            Field *sz = cgen_field(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP);
+            cgen_append(&inst, cgen_instr(NULL, TAC_MOVVI, sz, adress, index));
 
-            // Atualizar tamanho aramazenado no inicio do array
-            inst = cgen_fill_mem(field, &TYPE_EXPRESSION_INT, 0, type->size);
+            Field *next_index = cgen_field(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP);
+            cgen_append(&inst, cgen_instr(NULL, TAC_ADD, next_index, index, cgen_field(get_value_ival(1), TAC_OPTYPE_INT)));
 
-            for (i = 0; i < type->size; ++i) {
-                Instruction *next = cgen_fill_mem(field, type->child, position + sz*i + 1, 0);
-                cgen_append(&inst, next);
+            Field *init_loop = cgen_field(get_value_label(cgen_label_by_counter()), TAC_OPTYPE_LABEL);
+            Field *end_loop  = cgen_field(get_value_label(cgen_label_by_counter()), TAC_OPTYPE_LABEL);
+            cgen_append(&inst, cgen_instr(init_loop->value.label, TAC_BRZ, end_loop, sz, NULL));
+            {                
+                cgen_append(&inst, cgen_fill_mem(adress, next_index, type->child, value, temp_inst_count));
+
+                cgen_append(&inst, cgen_instr(NULL, TAC_ADD, next_index, next_index, objs_sz));
+                cgen_append(&inst, cgen_instr(NULL, TAC_SUB, sz, sz, cgen_field(get_value_ival(1), TAC_OPTYPE_INT)));
+                cgen_append(&inst, cgen_instr(NULL, TAC_JUMP, init_loop, NULL, NULL));
             }
+            cgen_append(&inst, cgen_instr(end_loop->value.label, TAC_NOP, NULL, NULL, NULL));
+
             break;
         }
         default: 
@@ -283,9 +283,9 @@ Instruction* cgen_fill_mem(Field* field, TypeExpression *type, int position, int
 }
 
 Instruction* cgen_declaration(SymbolNode *sym, int *temp_inst_count) {
-    int sz = type_mem_sz(sym->type);
+    int type_sz = type_mem_sz(sym->type);
 
-    if (sz == 0) {
+    if (type_sz == 0) {
         return NULL;
     }
 
@@ -307,10 +307,11 @@ Instruction* cgen_declaration(SymbolNode *sym, int *temp_inst_count) {
             sprintf(buffer, "%s%d", sym->id, declaration_count++);
 
             cgen_append(&inst, cgen_instr(cgen_label(buffer, 0), TAC_MOVVV, adress_index, cgen_field(get_value_ival(0), TAC_OPTYPE_INT), NULL));                       
-            cgen_append(&inst, cgen_instr(NULL, TAC_MEMA, adress, cgen_field(get_value_ival(sz), TAC_OPTYPE_INT), NULL));
-
+            cgen_append(&inst, cgen_instr(NULL, TAC_MEMA, adress, cgen_field(get_value_ival(type_sz), TAC_OPTYPE_INT), NULL));
             sym->tac_ref = adress;
-            cgen_append(&inst, cgen_fill_mem(adress, sym->type, 0, 0));
+            // Movemos o tamanho para posicao inicial sera sobreescrito para quem nao importa como int, graph e float
+            cgen_append(&inst, cgen_instr(NULL, TAC_MOVIV, adress, adress_index, cgen_field(get_value_ival(sym->type->size), TAC_OPTYPE_INT)));
+            cgen_append(&inst, cgen_fill_mem(adress, adress_index, sym->type, 0, temp_inst_count));
             break;
         }
         default: 
@@ -776,6 +777,12 @@ Instruction *cgen_write(TypeExpression *type, Instruction *code, int *temp_inst_
         }
         case GTYPE_GRAPH: {
             cgen_append(&inst, cgen_write_string("GRAPH:\n"));
+
+            Field *graph_sz = cgen_field(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP);
+            cgen_append(&inst, cgen_instr(NULL, TAC_MOVVI, graph_sz, cgen_last_inst(code)->fields[0], cgen_last_inst(code)->fields[0]->adress_index));
+
+            Field *jump_print = cgen_field(get_value_label(cgen_label_by_counter()), TAC_OPTYPE_LABEL);
+            cgen_append(&inst, cgen_instr(NULL, TAC_BRZ, jump_print, graph_sz, NULL));
             {
                 cgen_append(&inst, cgen_write_string("VALUES:"));
 
@@ -793,16 +800,19 @@ Instruction *cgen_write(TypeExpression *type, Instruction *code, int *temp_inst_
             }
 
             {
+                // TODO: print de arestas
                 cgen_append(&inst, cgen_write_string("EDGES:\n"));
-
             }
 
+            cgen_append(&inst, cgen_instr(jump_print->value.label, TAC_NOP, NULL, NULL, NULL));
             cgen_append(&inst, cgen_write_string("========\n"));
             break;
         }
         case GTYPE_ARRAY: {
-            cgen_append(&inst, cgen_write_string("ARRAY: "));
+            cgen_append(&inst, cgen_write_string("ARRAY:\n"));
             cgen_append(&inst, cgen_write_array(type, code, temp_inst_count));
+            cgen_append(&inst, cgen_write_string("\n"));          
+            cgen_append(&inst, cgen_write_string("========\n"));
             break;  
         } 
         default: break;
@@ -968,10 +978,9 @@ Instruction* cgen_addv(Instruction *graph, int *temp_inst_count) {
 
         cgen_append(&inst, cgen_instr(NULL, TAC_MOVVV, new_vadress_index, cgen_field(get_value_ival(0), TAC_OPTYPE_INT), NULL));
         cgen_append(&inst, cgen_instr(NULL, TAC_MEMA, new_vadress, alloc_size, NULL));
-        //TODO: fill esta levando em consideracao tamanho do array passado na type expression
-        cgen_append(&inst, cgen_fill_mem(new_vadress, &TYPE_EXPRESSION_ARRAY_INT, 0, 0));
-        // Preencher sz depois de fill
+
         cgen_append(&inst, cgen_instr(NULL, TAC_MOVIV, new_vadress, new_vadress_index, sz));
+        cgen_append(&inst, cgen_fill_mem(new_vadress, new_vadress_index, &TYPE_EXPRESSION_ARRAY_INT, 0, temp_inst_count));
 
         // Copiar valores anteriores
         Field *old_vadress_index = cgen_field(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP);

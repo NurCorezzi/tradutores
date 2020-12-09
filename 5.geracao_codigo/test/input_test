@@ -1,13 +1,10 @@
-void outro(graph a, int i) {
-    addv(a);
-    a[i] = i;
-    << a;
+
+void print(graph[2] g) {
+    << g[0];
 }
 
 void main() {
-    graph a;
-    outro(a, 0);
-    outro(a, 1);
-    outro(a, 2);
-    outro(a, 3);
+    graph[2] a;
+    addv(a[0]);
+    print(a);
 }

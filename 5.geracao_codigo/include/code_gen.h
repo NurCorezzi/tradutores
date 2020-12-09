@@ -103,7 +103,7 @@ int type_mem_sz(TypeExpression *type);
 Instruction* cgen_derref_lvalue(Field *adress, int *temp_inst_count); 
 Instruction* cgen_cast(Field *field, Cast cast, int *temp_inst_count); 
 
-Instruction* cgen_fill_mem(Field* field, TypeExpression *type, int position, int value); 
+Instruction* cgen_fill_mem(Field* adress, Field *index, TypeExpression *type, int value, int *temp_inst_count);
 Instruction* cgen_declaration(SymbolNode *sym, int *temp_inst_count); 
 Instruction* cgen_declaration_param(SymbolNode *sym, int *param_inst_count); 
 
