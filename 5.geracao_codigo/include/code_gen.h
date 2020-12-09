@@ -120,6 +120,7 @@ Instruction* cgen_expression_boolean(Node *a, Node *b, InstCode code, int *temp_
 Instruction* cgen_expression_relational(Node *a, Node *b, int op, int *temp_inst_count); 
 Instruction* cgen_expression_unary(Node *a, int op, int *temp_inst_count); 
 
+Instruction *cgen_write_string(char *string);
 Instruction *cgen_write_array(TypeExpression *type, Instruction *code, int *temp_inst_count);
 Instruction *cgen_write(TypeExpression *type, Instruction *code, int *temp_inst_count); 
 

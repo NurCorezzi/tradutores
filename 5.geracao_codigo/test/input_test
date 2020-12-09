@@ -1,10 +1,12 @@
-
-void print(graph[2] g) {
-    << g[0];
-}
-
 void main() {
-    graph[2] a;
-    addv(a[0]);
-    print(a);
+    graph g;
+    addv(g);
+    g[0] = 1;
+    << g;
+    addv(g);
+    g[1] = 2;
+    << g;
+    addv(g);
+    g[2] = 3;
+    << g;
 }

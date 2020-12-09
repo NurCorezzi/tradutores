@@ -445,7 +445,7 @@ statement: WHILE OPEN_P expr_assign CLOSE_P block {
   if (!invalid) {
     cgen_append(&($$->code), $expr_assign->code);  
     cgen_append(&($$->code), cgen_write($expr_assign->type, $expr_assign->code, &temp_inst_count));
-    cgen_append(&($$->code), cgen_instr(NULL, TAC_PRINTLN, NULL, NULL, NULL));  
+    cgen_append(&($$->code), cgen_write_string("\n"));          
   }
 }
 | declaration END {
@@ -684,6 +684,19 @@ graph_add: ADDV OPEN_P id_or_access CLOSE_P {
     $$ ? $$->begin_child : NULL
   );
   free_tree(params);
+
+  if (!invalid) {
+    cgen_append(&($exp1->code), cgen_derref_lvalue(cgen_last_inst($exp1->code)->fields[0], &temp_inst_count));
+    cgen_append(&($exp1->code), cgen_cast(cgen_last_inst($exp1->code)->fields[0], $exp1->cast, &temp_inst_count));
+
+    cgen_append(&($exp2->code), cgen_derref_lvalue(cgen_last_inst($exp2->code)->fields[0], &temp_inst_count));
+    cgen_append(&($exp2->code), cgen_cast(cgen_last_inst($exp2->code)->fields[0], $exp2->cast, &temp_inst_count));
+
+    // cgen_append(
+    //   &($$->code),
+    //   cgen_adda($id_or_access->code, $exp1->code, $exp2->code, &temp_inst_count)
+    // );
+  }
 }
 ;
 

@@ -233,6 +233,27 @@ Instruction* cgen_cast(Field *field, Cast cast, int *temp_inst_count) {
         );     
 }
 
+Instruction* cgen_alloc_array(Field *sz, TypeExpression *array_type, int *temp_inst_count) {
+    Instruction *inst = NULL;
+
+    Field *new_adress_index    = cgen_field(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP);
+    Field *new_adress          = cgen_field_adress(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP, new_adress_index);
+    Field *alloc_size          = cgen_field(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP);;
+
+    cgen_append(&inst, cgen_instr(NULL, TAC_ADD, alloc_size, sz, cgen_field(get_value_ival(1), TAC_OPTYPE_INT)));
+
+    cgen_append(&inst, cgen_instr(NULL, TAC_MOVVV, new_adress_index, cgen_field(get_value_ival(0), TAC_OPTYPE_INT), NULL));
+    cgen_append(&inst, cgen_instr(NULL, TAC_MEMA, new_adress, alloc_size, NULL));
+
+    cgen_append(&inst, cgen_instr(NULL, TAC_MOVIV, new_adress, new_adress_index, sz));
+    cgen_append(&inst, cgen_fill_mem(new_adress, new_adress_index, array_type, 0, temp_inst_count));
+
+    // Disponibiliza variavel com endereco alocado na ultima instrucao
+    cgen_append(&inst, cgen_instr(NULL, TAC_MOVVV, new_adress, new_adress, NULL));
+
+    return inst;
+}
+
 /**
  * Value serve para atualizar o tamanho, assume-se que array contem sz ja no inicio preenchido
 */
@@ -249,8 +270,23 @@ Instruction* cgen_fill_mem(Field* adress, Field *index, TypeExpression *type, in
             break;
         }  
         case GTYPE_GRAPH: {
-            // Possui 3 campos inicias porem apenas e necessario inicializar tamanho para zero
-            cgen_append(&inst, cgen_instr(NULL, TAC_MOVIV, adress, index, cgen_field(get_value_ival(0), TAC_OPTYPE_INT)));
+            // Possui 3 campos inicias tamanho, array de valores de vertices e arestas iniciados em zero
+            Field *const_zero = cgen_field(get_value_ival(0), TAC_OPTYPE_INT);
+            cgen_append(&inst, cgen_instr(NULL, TAC_MOVIV, adress, index, const_zero));
+                    
+            Field *values_index = cgen_field(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP);
+            Field *edges_index = cgen_field(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP);
+            cgen_append(&inst, cgen_instr(NULL, TAC_ADD, values_index, index, cgen_field(get_value_ival(1), TAC_OPTYPE_INT)));
+            cgen_append(&inst, cgen_instr(NULL, TAC_ADD, edges_index, index, cgen_field(get_value_ival(2), TAC_OPTYPE_INT)));
+
+            // Array tamanho zero para values
+            cgen_append(&inst, cgen_alloc_array(const_zero, &TYPE_EXPRESSION_ARRAY_INT, temp_inst_count));          
+            cgen_append(&inst, cgen_instr(NULL, TAC_MOVIV, adress, values_index, cgen_last_inst(inst)->fields[0]));
+
+            // Arrays tamanho zero para arestas
+            cgen_append(&inst, cgen_alloc_array(const_zero, &TYPE_EXPRESSION_ARRAY_INT, temp_inst_count));          
+            cgen_append(&inst, cgen_instr(NULL, TAC_MOVIV, adress, edges_index, cgen_last_inst(inst)->fields[0]));
+
             break;
         }    
         case GTYPE_ARRAY: {
@@ -758,25 +794,17 @@ Instruction *cgen_write(TypeExpression *type, Instruction *code, int *temp_inst_
     switch(type->node_type) {
         case GTYPE_INT:     
         case GTYPE_FLOAT: {
-            cgen_append(
-                &inst,
-                cgen_derref_lvalue(cgen_last_inst(code)->fields[0], temp_inst_count)
-            );
-
+            cgen_append(&inst, cgen_derref_lvalue(cgen_last_inst(code)->fields[0], temp_inst_count));
             // caso seja lvalue sera derreferenciado para novo temporario do tac
             Field *value = inst == NULL ?
                 cgen_last_inst(code)->fields[0] :
                 cgen_last_inst(inst)->fields[0] ;
 
-            cgen_append(
-                &inst,
-                cgen_instr(NULL, TAC_PRINT, value, NULL, NULL)
-            );
-
+            cgen_append(&inst, cgen_instr(NULL, TAC_PRINT, value, NULL, NULL));
             break;
         }
         case GTYPE_GRAPH: {
-            cgen_append(&inst, cgen_write_string("GRAPH:\n"));
+            cgen_append(&inst, cgen_write_string("GRAPH {\n"));
 
             Field *graph_sz = cgen_field(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP);
             cgen_append(&inst, cgen_instr(NULL, TAC_MOVVI, graph_sz, cgen_last_inst(code)->fields[0], cgen_last_inst(code)->fields[0]->adress_index));
@@ -784,7 +812,7 @@ Instruction *cgen_write(TypeExpression *type, Instruction *code, int *temp_inst_
             Field *jump_print = cgen_field(get_value_label(cgen_label_by_counter()), TAC_OPTYPE_LABEL);
             cgen_append(&inst, cgen_instr(NULL, TAC_BRZ, jump_print, graph_sz, NULL));
             {
-                cgen_append(&inst, cgen_write_string("VALUES:"));
+                cgen_append(&inst, cgen_write_string("  VALUES: "));
 
                 Field *values_index = cgen_field(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP);
                 cgen_append(&inst, cgen_instr(NULL, TAC_ADD, values_index, cgen_last_inst(code)->fields[0]->adress_index, cgen_field(get_value_ival(1), TAC_OPTYPE_INT)));
@@ -800,19 +828,31 @@ Instruction *cgen_write(TypeExpression *type, Instruction *code, int *temp_inst_
             }
 
             {
-                // TODO: print de arestas
-                cgen_append(&inst, cgen_write_string("EDGES:\n"));
+                // TODO: print funciona para grafo sem arestas mas e um comportamento estranho ja que listas ainda nao foram alocadas
+                cgen_append(&inst, cgen_write_string("  EDGES: "));
+
+                Field *edges_index = cgen_field(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP);
+                cgen_append(&inst, cgen_instr(NULL, TAC_ADD, edges_index, cgen_last_inst(code)->fields[0]->adress_index, cgen_field(get_value_ival(2), TAC_OPTYPE_INT)));
+
+                Field *eadress_index = cgen_field(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP);
+                Field *eadress = cgen_field_adress(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP, eadress_index);
+
+                cgen_append(&inst, cgen_instr(NULL, TAC_MOVVV, eadress_index, cgen_field(get_value_ival(0), TAC_OPTYPE_INT), NULL));
+                cgen_append(&inst, cgen_instr(NULL, TAC_MOVVI, eadress, cgen_last_inst(code)->fields[0], edges_index));
+
+                TypeExpression type_expression_array_array_int = {0, &TYPE_EXPRESSION_ARRAY_INT, GTYPE_ARRAY};
+
+                cgen_append(&inst, cgen_write_array(&type_expression_array_array_int, inst, temp_inst_count));
+                cgen_append(&inst, cgen_write_string("\n"));          
             }
 
             cgen_append(&inst, cgen_instr(jump_print->value.label, TAC_NOP, NULL, NULL, NULL));
-            cgen_append(&inst, cgen_write_string("========\n"));
+            cgen_append(&inst, cgen_write_string("}"));
             break;
         }
         case GTYPE_ARRAY: {
-            cgen_append(&inst, cgen_write_string("ARRAY:\n"));
+            cgen_append(&inst, cgen_write_string("ARRAY: "));
             cgen_append(&inst, cgen_write_array(type, code, temp_inst_count));
-            cgen_append(&inst, cgen_write_string("\n"));          
-            cgen_append(&inst, cgen_write_string("========\n"));
             break;  
         } 
         default: break;
@@ -970,47 +1010,58 @@ Instruction* cgen_addv(Instruction *graph, int *temp_inst_count) {
         cgen_append(&inst, cgen_instr(NULL, TAC_ADD, values_index, graph_adress->adress_index, cgen_field(get_value_ival(1), TAC_OPTYPE_INT)));
 
         // gerar novo vetor para valor de vertices com tamanho + 1
-        Field *new_vadress_index    = cgen_field(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP);
-        Field *new_vadress          = cgen_field_adress(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP, new_vadress_index);
-        Field *alloc_size           = cgen_field(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP);;
-
-        cgen_append(&inst, cgen_instr(NULL, TAC_ADD, alloc_size, sz, cgen_field(get_value_ival(1), TAC_OPTYPE_INT)));
-
-        cgen_append(&inst, cgen_instr(NULL, TAC_MOVVV, new_vadress_index, cgen_field(get_value_ival(0), TAC_OPTYPE_INT), NULL));
-        cgen_append(&inst, cgen_instr(NULL, TAC_MEMA, new_vadress, alloc_size, NULL));
-
-        cgen_append(&inst, cgen_instr(NULL, TAC_MOVIV, new_vadress, new_vadress_index, sz));
-        cgen_append(&inst, cgen_fill_mem(new_vadress, new_vadress_index, &TYPE_EXPRESSION_ARRAY_INT, 0, temp_inst_count));
+        cgen_append(&inst, cgen_alloc_array(sz, &TYPE_EXPRESSION_ARRAY_INT, temp_inst_count));
+        Field *new_vadress          = cgen_last_inst(inst)->fields[0];
 
         // Copiar valores anteriores
         Field *old_vadress_index = cgen_field(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP);
-        Field *old_vadress = cgen_field_adress(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP, new_vadress_index);
+        Field *old_vadress = cgen_field_adress(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP, old_vadress_index);
 
         cgen_append(&inst, cgen_instr(NULL, TAC_MOVVV, old_vadress_index, cgen_field(get_value_ival(0), TAC_OPTYPE_INT), NULL));
         cgen_append(&inst, cgen_instr(NULL, TAC_MOVVI, old_vadress, graph_adress, values_index));
 
-        // Caso tamanhho atual seja 1 array passado tinha tamanho zero nao sera necessario alocar nem liberar
-        Field *jump_cpy = cgen_field(get_value_label(cgen_label_by_counter()), TAC_OPTYPE_LABEL);
-        Field *condition = cgen_field(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP);
-        cgen_append(&inst, cgen_instr(NULL, TAC_SEQ, condition, cgen_field(get_value_ival(1), TAC_OPTYPE_INT), sz));
-        cgen_append(&inst, cgen_instr(NULL, TAC_BRNZ, jump_cpy, condition, NULL));
-
+        // Copiar e liberar memoria
         cgen_append(&inst, cgen_cpy_array(new_vadress, old_vadress, temp_inst_count));
         cgen_append(&inst, cgen_instr(NULL, TAC_MEMF, old_vadress, NULL, NULL));    
 
         // atualizar ponteiro para novo vetor
-        cgen_append(&inst, cgen_instr(jump_cpy->value.label, TAC_MOVIV, graph_adress, values_index, new_vadress));
+        cgen_append(&inst, cgen_instr(NULL, TAC_MOVIV, graph_adress, values_index, new_vadress));
     }
 
 
-    // gerar novo vetor de arestas com tamanho + 1
-    // Copiar valores anteriores
-    // lliberar vetor antigo
-    // atualizar ponteiro para novo vetor
+    // Tratar vetor de arestas
+    {
+        // indice para o ponteiro de vertices, utilizado no caso de array de grafos
+        Field *edges_index = cgen_field(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP);
+        cgen_append(&inst, cgen_instr(NULL, TAC_ADD, edges_index, graph_adress->adress_index, cgen_field(get_value_ival(2), TAC_OPTYPE_INT)));
+
+        // gerar novo vetor para valor de vertices com tamanho + 1
+        cgen_append(&inst, cgen_alloc_array(sz, &TYPE_EXPRESSION_ARRAY_INT, temp_inst_count));
+        Field *new_eadress          = cgen_last_inst(inst)->fields[0];
+
+        // Copiar valores anteriores
+        Field *old_eadress_index = cgen_field(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP);
+        Field *old_eadress = cgen_field_adress(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP, old_eadress_index);
+
+        cgen_append(&inst, cgen_instr(NULL, TAC_MOVVV, old_eadress_index, cgen_field(get_value_ival(0), TAC_OPTYPE_INT), NULL));
+        cgen_append(&inst, cgen_instr(NULL, TAC_MOVVI, old_eadress, graph_adress, edges_index));
+
+        // Copiar e liberar memoria
+        cgen_append(&inst, cgen_cpy_array(new_eadress, old_eadress, temp_inst_count));
+        cgen_append(&inst, cgen_instr(NULL, TAC_MEMF, old_eadress, NULL, NULL));    
+
+        // atualizar ponteiro para novo vetor
+        cgen_append(&inst, cgen_instr(NULL, TAC_MOVIV, graph_adress, edges_index, new_eadress));
+    }
 
     return inst;
 }
 
+// Instruction* cgen_adda(Instruction *graph, Instruction *vsrc, Instruction *vdst, int *temp_inst_count) {
+//     Instruction *inst = NULL;
+//     graph= NULL; vsrc= NULL; vdst= NULL; temp_inst_count= NULL;
+//     return inst;
+// }
 
 /*---------------------FREE-------------------------*/
 
