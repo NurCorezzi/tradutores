@@ -11,7 +11,8 @@ typedef enum {
     GTYPE_FLOAT,
     GTYPE_GRAPH,
     GTYPE_VOID,
-    GTYPE_ARRAY
+    GTYPE_ARRAY,
+    GTYPE_POINTER
 } GrammarType;
 
 typedef enum {

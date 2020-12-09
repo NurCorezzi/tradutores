@@ -112,396 +112,201 @@ _L11:
 nop
 memf $39
 mov $15[$32], $34
-mov $47, $0
-mov $48, $1
-add $49, $47, 1
-mov $50, 0
-mov $51, $48[$49]
+add $48, 2, 1
 mov $46, 0
-mov $53, $50
-mul $52, $46, 1
-add $53, $52, 1
-mov $54, $51
-mov $55, 1
-mov $54[$53], $55
-mov $56, $0
-mov $57, $1
-print 'G'
-print 'R'
-print 'A'
-print 'P'
-print 'H'
-print ' '
-print '{'
-println 
-mov $58, $57[$56]
-brz _L12, $58
-print ' '
-print ' '
-print 'V'
-print 'A'
-print 'L'
-print 'U'
-print 'E'
-print 'S'
-print ':'
-print ' '
-add $59, $56, 1
-mov $60, 0
-mov $61, $57[$59]
-print '['
-mov $63, $60
-mov $64, $61
-mov $62, $64[$63]
-add $63, $63, 1
-mov $65, 1
-_L13:
-brz _L14, $62
-mov $64, $64
-mov $66, $64[$63]
-print $66
-print ','
-print ' '
-add $63, $63, $65
-sub $62, $62, 1
-jump _L13
-_L14:
-print '#'
-print ']'
-println 
-print ' '
-print ' '
-print 'E'
-print 'D'
-print 'G'
-print 'E'
-print 'S'
-print ':'
-print ' '
-add $67, $56, 2
-mov $68, 0
-mov $69, $57[$67]
-print '['
-mov $71, $68
-mov $72, $69
-mov $70, $72[$71]
-add $71, $71, 1
-mov $73, 1
-_L15:
-brz _L16, $70
-mov $72, $72
-print 'A'
-print 'R'
-print 'R'
-print 'A'
-print 'Y'
-print ':'
-print ' '
-print '['
-mov $75, $71
-mov $76, $72
-mov $74, $76[$75]
-add $75, $75, 1
-mov $77, 1
-_L17:
-brz _L18, $74
-mov $76, $76
-mov $78, $76[$75]
-print $78
-print ','
-print ' '
-add $75, $75, $77
-sub $74, $74, 1
-jump _L17
-_L18:
-print '#'
-print ']'
-print ','
-print ' '
-add $71, $71, $73
-sub $70, $70, 1
-jump _L15
-_L16:
-print '#'
-print ']'
-println 
+mema $47, $48
+mov $47[$46], 2
+mov $49, $47[$46]
+add $50, $46, 1
 _L12:
+brz _L13, $49
+mov $47[$50], 0
+add $50, $50, 1
+sub $49, $49, 1
+jump _L12
+_L13:
 nop
-print '}'
-println 
-mov $79, $0
-mov $80, $1
-mov $82, $80[$79]
-add $81, $82, 1
-mov $80[$79], $81
-add $83, $79, 1
-add $86, $81, 1
+mov $47, $47
+add $51, $33, $16
+mov $34[$51], $47
+mov $52, $0
+mov $53, $1
+mov $55, $53[$52]
+add $54, $55, 1
+mov $53[$52], $54
+add $56, $52, 1
+add $59, $54, 1
+mov $57, 0
+mema $58, $59
+mov $58[$57], $54
+mov $60, $58[$57]
+add $61, $57, 1
+_L14:
+brz _L15, $60
+mov $58[$61], 0
+add $61, $61, 1
+sub $60, $60, 1
+jump _L14
+_L15:
+nop
+mov $58, $58
+mov $62, 0
+mov $63, $53[$56]
+mov $64, $63[$62]
+mov $65, 1
+_L16:
+sleq $66, $65, $64
+brz _L17, $66
+add $67, $62, $65
+add $68, $57, $65
+mov $69, $63[$67]
+mov $58[$68], $69
+add $65, $65, 1
+jump _L16
+_L17:
+nop
+memf $63
+mov $53[$56], $58
+add $70, $52, 2
+add $73, $54, 1
+mov $71, 0
+mema $72, $73
+mov $72[$71], $54
+mov $74, $72[$71]
+add $75, $71, 1
+_L18:
+brz _L19, $74
+mov $72[$75], 0
+add $75, $75, 1
+sub $74, $74, 1
+jump _L18
+_L19:
+nop
+mov $72, $72
+mov $76, 0
+mov $77, $53[$70]
+mov $78, $77[$76]
+mov $79, 1
+_L20:
+sleq $80, $79, $78
+brz _L21, $80
+add $81, $76, $79
+add $82, $71, $79
+mov $83, $77[$81]
+mov $72[$82], $83
+add $79, $79, 1
+jump _L20
+_L21:
+nop
+memf $77
+mov $53[$70], $72
+add $86, 2, 1
 mov $84, 0
 mema $85, $86
-mov $85[$84], $81
+mov $85[$84], 2
 mov $87, $85[$84]
 add $88, $84, 1
-_L19:
-brz _L20, $87
+_L22:
+brz _L23, $87
 mov $85[$88], 0
 add $88, $88, 1
 sub $87, $87, 1
-jump _L19
-_L20:
+jump _L22
+_L23:
 nop
 mov $85, $85
-mov $89, 0
-mov $90, $80[$83]
-mov $91, $90[$89]
-mov $92, 1
-_L21:
-sleq $93, $92, $91
-brz _L22, $93
-add $94, $89, $92
-add $95, $84, $92
-mov $96, $90[$94]
-mov $85[$95], $96
-add $92, $92, 1
-jump _L21
-_L22:
-nop
-memf $90
-mov $80[$83], $85
-add $97, $79, 2
-add $100, $81, 1
-mov $98, 0
-mema $99, $100
-mov $99[$98], $81
-mov $101, $99[$98]
-add $102, $98, 1
-_L23:
-brz _L24, $101
-mov $99[$102], 0
-add $102, $102, 1
-sub $101, $101, 1
-jump _L23
+add $89, $71, $54
+mov $72[$89], $85
+mov $90, $0
+mov $91, $1
+mov $93, $91[$90]
+add $92, $93, 1
+mov $91[$90], $92
+add $94, $90, 1
+add $97, $92, 1
+mov $95, 0
+mema $96, $97
+mov $96[$95], $92
+mov $98, $96[$95]
+add $99, $95, 1
 _L24:
-nop
-mov $99, $99
-mov $103, 0
-mov $104, $80[$97]
-mov $105, $104[$103]
-mov $106, 1
+brz _L25, $98
+mov $96[$99], 0
+add $99, $99, 1
+sub $98, $98, 1
+jump _L24
 _L25:
-sleq $107, $106, $105
-brz _L26, $107
-add $108, $103, $106
-add $109, $98, $106
-mov $110, $104[$108]
-mov $99[$109], $110
-add $106, $106, 1
-jump _L25
-_L26:
 nop
-memf $104
-mov $80[$97], $99
-mov $112, $0
-mov $113, $1
-add $114, $112, 1
-mov $115, 0
-mov $116, $113[$114]
-mov $111, 1
-mov $118, $115
-mul $117, $111, 1
-add $118, $117, 1
-mov $119, $116
-mov $120, 2
-mov $119[$118], $120
-mov $121, $0
-mov $122, $1
-print 'G'
-print 'R'
-print 'A'
-print 'P'
-print 'H'
-print ' '
-print '{'
-println 
-mov $123, $122[$121]
-brz _L27, $123
-print ' '
-print ' '
-print 'V'
-print 'A'
-print 'L'
-print 'U'
-print 'E'
-print 'S'
-print ':'
-print ' '
-add $124, $121, 1
-mov $125, 0
-mov $126, $122[$124]
-print '['
-mov $128, $125
-mov $129, $126
-mov $127, $129[$128]
-add $128, $128, 1
-mov $130, 1
-_L28:
-brz _L29, $127
-mov $129, $129
-mov $131, $129[$128]
-print $131
-print ','
-print ' '
-add $128, $128, $130
-sub $127, $127, 1
-jump _L28
-_L29:
-print '#'
-print ']'
-println 
-print ' '
-print ' '
-print 'E'
-print 'D'
-print 'G'
-print 'E'
-print 'S'
-print ':'
-print ' '
-add $132, $121, 2
-mov $133, 0
-mov $134, $122[$132]
-print '['
-mov $136, $133
-mov $137, $134
-mov $135, $137[$136]
-add $136, $136, 1
-mov $138, 1
-_L30:
-brz _L31, $135
-mov $137, $137
-print 'A'
-print 'R'
-print 'R'
-print 'A'
-print 'Y'
-print ':'
-print ' '
-print '['
-mov $140, $136
-mov $141, $137
-mov $139, $141[$140]
-add $140, $140, 1
-mov $142, 1
-_L32:
-brz _L33, $139
-mov $141, $141
-mov $143, $141[$140]
-print $143
-print ','
-print ' '
-add $140, $140, $142
-sub $139, $139, 1
-jump _L32
-_L33:
-print '#'
-print ']'
-print ','
-print ' '
-add $136, $136, $138
-sub $135, $135, 1
-jump _L30
-_L31:
-print '#'
-print ']'
-println 
+mov $96, $96
+mov $100, 0
+mov $101, $91[$94]
+mov $102, $101[$100]
+mov $103, 1
+_L26:
+sleq $104, $103, $102
+brz _L27, $104
+add $105, $100, $103
+add $106, $95, $103
+mov $107, $101[$105]
+mov $96[$106], $107
+add $103, $103, 1
+jump _L26
 _L27:
 nop
-print '}'
-println 
-mov $144, $0
-mov $145, $1
-mov $147, $145[$144]
-add $146, $147, 1
-mov $145[$144], $146
-add $148, $144, 1
-add $151, $146, 1
-mov $149, 0
-mema $150, $151
-mov $150[$149], $146
-mov $152, $150[$149]
-add $153, $149, 1
-_L34:
-brz _L35, $152
-mov $150[$153], 0
-add $153, $153, 1
-sub $152, $152, 1
-jump _L34
-_L35:
+memf $101
+mov $91[$94], $96
+add $108, $90, 2
+add $111, $92, 1
+mov $109, 0
+mema $110, $111
+mov $110[$109], $92
+mov $112, $110[$109]
+add $113, $109, 1
+_L28:
+brz _L29, $112
+mov $110[$113], 0
+add $113, $113, 1
+sub $112, $112, 1
+jump _L28
+_L29:
 nop
-mov $150, $150
-mov $154, 0
-mov $155, $145[$148]
-mov $156, $155[$154]
-mov $157, 1
-_L36:
-sleq $158, $157, $156
-brz _L37, $158
-add $159, $154, $157
-add $160, $149, $157
-mov $161, $155[$159]
-mov $150[$160], $161
-add $157, $157, 1
-jump _L36
-_L37:
+mov $110, $110
+mov $114, 0
+mov $115, $91[$108]
+mov $116, $115[$114]
+mov $117, 1
+_L30:
+sleq $118, $117, $116
+brz _L31, $118
+add $119, $114, $117
+add $120, $109, $117
+mov $121, $115[$119]
+mov $110[$120], $121
+add $117, $117, 1
+jump _L30
+_L31:
 nop
-memf $155
-mov $145[$148], $150
-add $162, $144, 2
-add $165, $146, 1
-mov $163, 0
-mema $164, $165
-mov $164[$163], $146
-mov $166, $164[$163]
-add $167, $163, 1
-_L38:
-brz _L39, $166
-mov $164[$167], 0
-add $167, $167, 1
-sub $166, $166, 1
-jump _L38
-_L39:
+memf $115
+mov $91[$108], $110
+add $124, 2, 1
+mov $122, 0
+mema $123, $124
+mov $123[$122], 2
+mov $125, $123[$122]
+add $126, $122, 1
+_L32:
+brz _L33, $125
+mov $123[$126], 0
+add $126, $126, 1
+sub $125, $125, 1
+jump _L32
+_L33:
 nop
-mov $164, $164
-mov $168, 0
-mov $169, $145[$162]
-mov $170, $169[$168]
-mov $171, 1
-_L40:
-sleq $172, $171, $170
-brz _L41, $172
-add $173, $168, $171
-add $174, $163, $171
-mov $175, $169[$173]
-mov $164[$174], $175
-add $171, $171, 1
-jump _L40
-_L41:
-nop
-memf $169
-mov $145[$162], $164
-mov $177, $0
-mov $178, $1
-add $179, $177, 1
-mov $180, 0
-mov $181, $178[$179]
-mov $176, 2
-mov $183, $180
-mul $182, $176, 1
-add $183, $182, 1
-mov $184, $181
-mov $185, 3
-mov $184[$183], $185
-mov $186, $0
-mov $187, $1
+mov $123, $123
+add $127, $109, $92
+mov $110[$127], $123
+mov $128, $0
+mov $129, $1
 print 'G'
 print 'R'
 print 'A'
@@ -510,8 +315,8 @@ print 'H'
 print ' '
 print '{'
 println 
-mov $188, $187[$186]
-brz _L42, $188
+mov $130, $129[$128]
+brz _L34, $130
 print ' '
 print ' '
 print 'V'
@@ -522,26 +327,26 @@ print 'E'
 print 'S'
 print ':'
 print ' '
-add $189, $186, 1
-mov $190, 0
-mov $191, $187[$189]
+add $131, $128, 1
+mov $132, 0
+mov $133, $129[$131]
 print '['
-mov $193, $190
-mov $194, $191
-mov $192, $194[$193]
-add $193, $193, 1
-mov $195, 1
-_L43:
-brz _L44, $192
-mov $194, $194
-mov $196, $194[$193]
-print $196
+mov $135, $132
+mov $136, $133
+mov $134, $136[$135]
+add $135, $135, 1
+mov $137, 1
+_L35:
+brz _L36, $134
+mov $136, $136
+mov $138, $136[$135]
+print $138
 print ','
 print ' '
-add $193, $193, $195
-sub $192, $192, 1
-jump _L43
-_L44:
+add $135, $135, $137
+sub $134, $134, 1
+jump _L35
+_L36:
 print '#'
 print ']'
 println 
@@ -554,18 +359,20 @@ print 'E'
 print 'S'
 print ':'
 print ' '
-add $197, $186, 2
-mov $198, 0
-mov $199, $187[$197]
+add $139, $128, 2
+mov $140, 0
+mov $141, $129[$139]
 print '['
-mov $201, $198
-mov $202, $199
-mov $200, $202[$201]
-add $201, $201, 1
-mov $203, 1
-_L45:
-brz _L46, $200
-mov $202, $202
+mov $143, $140
+mov $144, $141
+mov $142, $144[$143]
+add $143, $143, 1
+mov $145, 1
+_L37:
+brz _L38, $142
+mov $144, $144
+mov $146, $144[$143]
+mov $148, $146
 print 'A'
 print 'R'
 print 'R'
@@ -574,36 +381,36 @@ print 'Y'
 print ':'
 print ' '
 print '['
-mov $205, $201
-mov $206, $202
-mov $204, $206[$205]
-add $205, $205, 1
-mov $207, 1
-_L47:
-brz _L48, $204
-mov $206, $206
-mov $208, $206[$205]
-print $208
+mov $150, $147
+mov $151, $148
+mov $149, $151[$150]
+add $150, $150, 1
+mov $152, 1
+_L39:
+brz _L40, $149
+mov $151, $151
+mov $153, $151[$150]
+print $153
 print ','
 print ' '
-add $205, $205, $207
-sub $204, $204, 1
-jump _L47
-_L48:
+add $150, $150, $152
+sub $149, $149, 1
+jump _L39
+_L40:
 print '#'
 print ']'
 print ','
 print ' '
-add $201, $201, $203
-sub $200, $200, 1
-jump _L45
-_L46:
+add $143, $143, $145
+sub $142, $142, 1
+jump _L37
+_L38:
 print '#'
 print ']'
 println 
-_L42:
+_L34:
 nop
 print '}'
 println 
-_L49:
+_L41:
 nop

@@ -102,8 +102,9 @@ void cgen_back_patch(BackPatchList *patch_list, Label *patch);
 int type_mem_sz(TypeExpression *type); 
 Instruction* cgen_derref_lvalue(Field *adress, int *temp_inst_count); 
 Instruction* cgen_cast(Field *field, Cast cast, int *temp_inst_count); 
-
+Instruction* cgen_cpy_array(Field *dst_adress, Field *src_adress, int *temp_inst_count);
 Instruction* cgen_fill_mem(Field* adress, Field *index, TypeExpression *type, int value, int *temp_inst_count);
+
 Instruction* cgen_declaration(SymbolNode *sym, int *temp_inst_count); 
 Instruction* cgen_declaration_param(SymbolNode *sym, int *param_inst_count); 
 
@@ -114,7 +115,6 @@ Instruction *cgen_var_access(SymbolNode *sym, Node *dimension, int *temp_inst_co
 Instruction* cgen_const_code(OperandType type, int ival, float fval, int *temp_inst_count); 
 
 Instruction* cgen_assign(Node *dst, Node *src, int *temp_inst_count); 
-
 Instruction* cgen_expression_aritmetic(Node *a, Node *b, InstCode code, int *temp_inst_count); 
 Instruction* cgen_expression_boolean(Node *a, Node *b, InstCode code, int *temp_inst_count);
 Instruction* cgen_expression_relational(Node *a, Node *b, int op, int *temp_inst_count); 
@@ -129,8 +129,9 @@ Instruction* cgen_if_else(Node* dst, Instruction* condition, Node* body_if, Node
 Instruction* cgen_while(Node* dst, Instruction* condition, Node* body, int *temp_inst_count); 
 Instruction* cgen_for(Node* dst, Instruction *init, Instruction* condition, Instruction *increment, Node* body, int *temp_inst_count); 
 
-Instruction* cgen_cpy_array(Field *dst_adress, Field *src_adress, int *temp_inst_count);
 Instruction* cgen_addv(Instruction *graph, int *temp_inst_count);
+Instruction* cgen_adda(Instruction *graph, Instruction *vsrc, Instruction *vdst, int *temp_inst_count);
+
 
 
 

@@ -1,12 +1,7 @@
 void main() {
     graph g;
     addv(g);
-    g[0] = 1;
-    << g;
     addv(g);
-    g[1] = 2;
-    << g;
     addv(g);
-    g[2] = 3;
     << g;
 }

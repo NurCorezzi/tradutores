@@ -192,6 +192,7 @@ void cgen_back_patch(BackPatchList *patch_list, Label *patch) {
 */
 int type_mem_sz(TypeExpression *type) {
     switch(type->node_type) {
+        case GTYPE_POINTER: return 1;  
         case GTYPE_INT:     return 1;  
         case GTYPE_FLOAT:   return 1;  
         case GTYPE_GRAPH:   return 3; // sz, *valores_vertices, *arestas    
@@ -792,6 +793,17 @@ Instruction *cgen_write_array(TypeExpression *type, Instruction *code, int *temp
 Instruction *cgen_write(TypeExpression *type, Instruction *code, int *temp_inst_count) {
     Instruction *inst = NULL;
     switch(type->node_type) {
+        // Pointer "reinicia" indice de acesso para zero
+        case GTYPE_POINTER: { 
+            cgen_append(&inst, cgen_derref_lvalue(cgen_last_inst(code)->fields[0], temp_inst_count));
+            // caso seja lvalue sera derreferenciado para novo temporario do tac
+
+            Field *index = cgen_field(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP);
+            Field *adress = cgen_field_adress(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP, index);
+            cgen_append(&inst, cgen_instr(NULL, TAC_MOVVV, adress, cgen_last_inst(inst)->fields[0], NULL));                
+            cgen_append(&inst, cgen_write(type->child, inst, temp_inst_count));
+            break;
+        }
         case GTYPE_INT:     
         case GTYPE_FLOAT: {
             cgen_append(&inst, cgen_derref_lvalue(cgen_last_inst(code)->fields[0], temp_inst_count));
@@ -828,7 +840,6 @@ Instruction *cgen_write(TypeExpression *type, Instruction *code, int *temp_inst_
             }
 
             {
-                // TODO: print funciona para grafo sem arestas mas e um comportamento estranho ja que listas ainda nao foram alocadas
                 cgen_append(&inst, cgen_write_string("  EDGES: "));
 
                 Field *edges_index = cgen_field(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP);
@@ -840,9 +851,10 @@ Instruction *cgen_write(TypeExpression *type, Instruction *code, int *temp_inst_
                 cgen_append(&inst, cgen_instr(NULL, TAC_MOVVV, eadress_index, cgen_field(get_value_ival(0), TAC_OPTYPE_INT), NULL));
                 cgen_append(&inst, cgen_instr(NULL, TAC_MOVVI, eadress, cgen_last_inst(code)->fields[0], edges_index));
 
-                TypeExpression type_expression_array_array_int = {0, &TYPE_EXPRESSION_ARRAY_INT, GTYPE_ARRAY};
+                TypeExpression texp_pointer_array_int = {0, &TYPE_EXPRESSION_ARRAY_INT, GTYPE_POINTER};
+                TypeExpression texp_array_pointer = {0, &texp_pointer_array_int, GTYPE_ARRAY};
 
-                cgen_append(&inst, cgen_write_array(&type_expression_array_array_int, inst, temp_inst_count));
+                cgen_append(&inst, cgen_write_array(&texp_array_pointer, inst, temp_inst_count));
                 cgen_append(&inst, cgen_write_string("\n"));          
             }
 
@@ -1011,7 +1023,7 @@ Instruction* cgen_addv(Instruction *graph, int *temp_inst_count) {
 
         // gerar novo vetor para valor de vertices com tamanho + 1
         cgen_append(&inst, cgen_alloc_array(sz, &TYPE_EXPRESSION_ARRAY_INT, temp_inst_count));
-        Field *new_vadress          = cgen_last_inst(inst)->fields[0];
+        Field *new_vadress = cgen_last_inst(inst)->fields[0];
 
         // Copiar valores anteriores
         Field *old_vadress_index = cgen_field(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP);
@@ -1037,7 +1049,7 @@ Instruction* cgen_addv(Instruction *graph, int *temp_inst_count) {
 
         // gerar novo vetor para valor de vertices com tamanho + 1
         cgen_append(&inst, cgen_alloc_array(sz, &TYPE_EXPRESSION_ARRAY_INT, temp_inst_count));
-        Field *new_eadress          = cgen_last_inst(inst)->fields[0];
+        Field *new_eadress = cgen_last_inst(inst)->fields[0];
 
         // Copiar valores anteriores
         Field *old_eadress_index = cgen_field(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP);
@@ -1050,8 +1062,17 @@ Instruction* cgen_addv(Instruction *graph, int *temp_inst_count) {
         cgen_append(&inst, cgen_cpy_array(new_eadress, old_eadress, temp_inst_count));
         cgen_append(&inst, cgen_instr(NULL, TAC_MEMF, old_eadress, NULL, NULL));    
 
-        // atualizar ponteiro para novo vetor
+        // atualizar ponteiro para novo vetor de arestas
         cgen_append(&inst, cgen_instr(NULL, TAC_MOVIV, graph_adress, edges_index, new_eadress));
+
+        // Acescentar nova lista de arestas
+        Field *const_zero = cgen_field(get_value_ival(0), TAC_OPTYPE_INT);
+        cgen_append(&inst, cgen_alloc_array(const_zero, &TYPE_EXPRESSION_ARRAY_INT, temp_inst_count));
+        Field *new_edge_list = cgen_last_inst(inst)->fields[0];
+        
+        Field *new_edge_list_index = cgen_field(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP);
+        cgen_append(&inst, cgen_instr(NULL, TAC_ADD, new_edge_list_index, new_eadress->adress_index, sz));
+        cgen_append(&inst, cgen_instr(NULL, TAC_MOVIV, new_eadress, new_edge_list_index, new_edge_list));
     }
 
     return inst;
@@ -1059,7 +1080,27 @@ Instruction* cgen_addv(Instruction *graph, int *temp_inst_count) {
 
 // Instruction* cgen_adda(Instruction *graph, Instruction *vsrc, Instruction *vdst, int *temp_inst_count) {
 //     Instruction *inst = NULL;
-//     graph= NULL; vsrc= NULL; vdst= NULL; temp_inst_count= NULL;
+
+//     // pegar array de arestas    
+//     Field *graph_adress = cgen_last_inst(graph);
+//     Field *edges_index = cgen_field(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP);
+//     cgen_append(&inst, cgen_instr(NULL, TAC_ADD, edges_index, graph_adress->adress_index, cgen_field(get_value_ival(2), TAC_OPTYPE_INT)));
+
+//     Field *edges_adress = cgen_field(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP);
+//     cgen_append(&inst, cgen_instr(NULL, TAC_MOVVI, edges_adress, graph_adress, edges_index));
+
+//     // acessar indice em vsrc
+
+//     // Alocar novo array
+
+//     // copiar antigo
+
+//     // desalocar antigo
+
+//     // atribuir novo
+
+//     // adicionar nova aresta
+
 //     return inst;
 // }
 
