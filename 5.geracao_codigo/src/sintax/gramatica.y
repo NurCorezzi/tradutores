@@ -437,6 +437,19 @@ statement: WHILE OPEN_P expr_assign CLOSE_P block {
 | READ id_or_access END {
   $$ = create_node("read");
   push_child($$, $id_or_access);
+
+  if (!type_can_read($id_or_access->type)) {
+    char buffer[300] = {0};
+    char *t_str = type_to_string($id_or_access->type);
+    sprintf(buffer, "type %s cannot be read", t_str);
+    semantic_error(buffer);
+    free(t_str);
+  }
+
+  if (!invalid) {
+    cgen_append(&($$->code), $id_or_access->code);  
+    cgen_append(&($$->code), cgen_read($id_or_access, &temp_inst_count));
+  }
 }
 | WRITE expr_assign END {
   $$ = create_node("write");

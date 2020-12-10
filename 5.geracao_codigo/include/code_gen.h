@@ -123,6 +123,7 @@ Instruction* cgen_expression_unary(Node *a, int op, int *temp_inst_count);
 Instruction *cgen_write_string(char *string);
 Instruction *cgen_write_array(TypeExpression *type, Instruction *code, int *temp_inst_count);
 Instruction *cgen_write(TypeExpression *type, Instruction *code, int *temp_inst_count); 
+Instruction *cgen_read(Node *variable, int *temp_inst_count);
 
 Instruction* cgen_if(Node* dst, Instruction* condition, Node* body, int *temp_inst_count); 
 Instruction* cgen_if_else(Node* dst, Instruction* condition, Node* body_if, Node* else_statement, int *temp_inst_count);

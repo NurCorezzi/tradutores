@@ -875,6 +875,34 @@ Instruction *cgen_write(TypeExpression *type, Instruction *code, int *temp_inst_
     return inst;
 }
 
+/**
+ * @param code contem codigo com field inicial sendo o destino a ser printado, pode ser lval ou rval
+*/
+Instruction *cgen_read(Node *variable, int *temp_inst_count) {
+    Instruction *inst = NULL;
+    Field *value = cgen_field(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP);
+
+    switch(variable->type->node_type) {
+        case GTYPE_INT: {
+            cgen_append(&inst, cgen_instr(NULL, TAC_SCANI, value, NULL, NULL));
+            break;
+        }     
+        case GTYPE_FLOAT: {
+            cgen_append(&inst, cgen_instr(NULL, TAC_SCANF, value, NULL, NULL));            
+            break;
+        }
+        default: {
+            printf("ERRO: read type not possible");
+            exit(0);
+            break;
+        }
+    }   
+
+    Field *adress = cgen_last_inst(variable->code)->fields[0];
+    cgen_append(&inst, cgen_instr(NULL, TAC_MOVIV, adress, adress->adress_index, value));
+    return inst;
+}
+
 Instruction* cgen_if(Node* dst, Instruction* condition, Node* body, int *temp_inst_count) {
     Instruction *inst = condition;
     cgen_append(&inst, cgen_derref_lvalue(cgen_last_inst(inst)->fields[0], temp_inst_count));
@@ -1213,8 +1241,8 @@ void print_inst(Instruction *inst) {
         case TAC_PRINT:   sprintf(buffer, "%sprint %s", label, field[0]);                                   break;
         case TAC_PRINTLN: sprintf(buffer, "%sprintln %s", label, field[0]);                                 break;
         case TAC_SCANC:   sprintf(buffer, "scanc");                                                         break;
-        case TAC_SCANI:   sprintf(buffer, "scani");                                                         break;
-        case TAC_SCANF:   sprintf(buffer, "scanf");                                                         break;
+        case TAC_SCANI:   sprintf(buffer, "%sscani %s", label, field[0]);                                   break;
+        case TAC_SCANF:   sprintf(buffer, "%sscanf %s", label, field[0]);                                   break;
         case TAC_RAND:    sprintf(buffer, "rand");                                                          break;
         case TAC_MEMA:    sprintf(buffer, "%smema %s, %s", label, field[0], field[1]);                      break;
         case TAC_MEMF:    sprintf(buffer, "%smemf %s", label, field[0]);                                    break;

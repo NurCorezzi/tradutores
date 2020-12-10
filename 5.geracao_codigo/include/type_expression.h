@@ -33,6 +33,7 @@ int type_is_aritmetic(TypeExpression *type);
 int type_is_boolean(TypeExpression *type); 
 int type_can_assign(TypeExpression *tgt); 
 int type_can_return(TypeExpression *tgt); 
+int type_can_read(TypeExpression *tgt);
 
 void free_type(TypeExpression* type);
 

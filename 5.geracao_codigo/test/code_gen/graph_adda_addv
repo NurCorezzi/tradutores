@@ -1,0 +1,31 @@
+void graph_addv(graph g) {
+    addv(g);
+}
+
+void assign(graph[2] g, int sz) {
+    g[1][0] = g[1][1] = g[0][sz - 1];
+}
+
+void main() {
+    graph[2] g;
+    int i;
+    int sz;
+    sz = 5;
+    for (i = 0; i < sz; i = i + 1) {
+        graph_addv(g[0]);
+        << g[0][i] = i;
+    }
+
+    for (i = 0; i < sz; i = i + 1) {
+        int j;
+        for (j = 0; j < sz; j = j + 1) {
+            adda(g[0], i, j);
+        }
+    }
+
+    graph_addv(g[1]);
+    addv(g[1]);
+
+    assign(g, sz);
+    << g;
+}

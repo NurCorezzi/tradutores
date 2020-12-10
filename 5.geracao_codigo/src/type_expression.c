@@ -294,6 +294,16 @@ int type_is_boolean(TypeExpression *type) {
 }
 
 /**
+ * Tipos que podem ser eleitos 
+*/
+int type_can_read(TypeExpression *tgt) {
+    if (tgt == NULL) {
+        return 0;
+    }
+    return tgt->node_type == GTYPE_FLOAT || tgt->node_type == GTYPE_INT;
+}
+
+/**
  * Tipos que podem ser retornados em funcoes
  */
 int type_can_return(TypeExpression *tgt) {
@@ -302,6 +312,7 @@ int type_can_return(TypeExpression *tgt) {
     }
     return tgt->node_type == GTYPE_FLOAT || tgt->node_type == GTYPE_INT || tgt->node_type == GTYPE_VOID;
 }
+
 
 void free_type(TypeExpression* type) {
     if (type == NULL) {
