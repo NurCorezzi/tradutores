@@ -1110,7 +1110,7 @@ Instruction* cgen_addv(Instruction *graph, int *temp_inst_count) {
 
 Instruction* cgen_adda(Instruction *graph, Instruction *vsrc, Instruction *vdst, int *temp_inst_count) {
     Instruction *inst = NULL;
-
+    
     // pegar array de arestas    
     Field *graph_adress = cgen_last_inst(graph)->fields[0];
     Field *graph_edges_index = cgen_field(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP);
@@ -1143,6 +1143,125 @@ Instruction* cgen_adda(Instruction *graph, Instruction *vsrc, Instruction *vdst,
     //atualizar valores
     cgen_append(&inst, cgen_instr(NULL, TAC_MOVIV, graph_edges_adress, vertex_index, new_edges_adress));
     cgen_append(&inst, cgen_instr(NULL, TAC_MOVIV, new_edges_adress, edges_count, cgen_last_inst(vdst)->fields[0]));
+
+    return inst;
+}
+
+
+Instruction* cgen_access_edge_list(Instruction *graph, Field *index, int *temp_inst_count) {
+    Instruction *inst = NULL;
+
+    // pegar array de arestas    
+    Field *graph_adress = cgen_last_inst(graph)->fields[0];
+    Field *graph_edges_index = cgen_field(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP);
+    cgen_append(&inst, cgen_instr(NULL, TAC_ADD, graph_edges_index, graph_adress->adress_index, cgen_field(get_value_ival(2), TAC_OPTYPE_INT)));
+
+    Field *graph_edges_adress = cgen_field(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP);
+    cgen_append(&inst, cgen_instr(NULL, TAC_MOVVI, graph_edges_adress, graph_adress, graph_edges_index));
+
+    // acessar indice em vsrc
+    Field *vertex_index = cgen_field(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP);
+    Field *edges_index = cgen_field(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP);
+    Field *edges_adress = cgen_field_adress(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP, edges_index);
+
+    cgen_append(&inst, cgen_instr(NULL, TAC_MOVVV, edges_index, cgen_field(get_value_ival(0), TAC_OPTYPE_INT), NULL));
+    cgen_append(&inst, cgen_instr(NULL, TAC_ADD, vertex_index, index, cgen_field(get_value_ival(1), TAC_OPTYPE_INT)));
+    cgen_append(&inst, cgen_instr(NULL, TAC_MOVVI, edges_adress, graph_edges_adress, vertex_index));
+
+    return inst;
+}
+
+Instruction* cgen_bfs(Instruction *graph, Instruction *vdst, Instruction *vsrc, Node *block, int *temp_inst_count) {
+    Instruction *inst = NULL;
+
+    Field *graph_adress = cgen_last_inst(graph)->fields[0];
+    Field *sz = cgen_field(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP);
+    cgen_append(&inst, cgen_instr(NULL, TAC_MOVVI, cgen_field(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP), graph_adress, graph_adress->adress_index));
+    cgen_append(&inst, cgen_instr(NULL, TAC_MOVVV, sz, cgen_last_inst(inst)->fields[0], NULL));
+
+    // Alocar queue 
+    cgen_append(&inst, cgen_alloc_array(sz, &TYPE_EXPRESSION_ARRAY_INT, temp_inst_count));
+    Field *queue = cgen_last_inst(inst)->fields[0];
+
+    Field *qindex = cgen_field(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP);
+    Field *qsz = cgen_field(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP);
+
+    cgen_append(&inst, cgen_instr(NULL, TAC_MOVVV, qindex, cgen_field(get_value_ival(1), TAC_OPTYPE_INT), NULL));
+    cgen_append(&inst, cgen_instr(NULL, TAC_MOVVV, qsz, cgen_field(get_value_ival(1), TAC_OPTYPE_INT), NULL));
+
+    // Alocar visitados
+    cgen_append(&inst, cgen_alloc_array(sz, &TYPE_EXPRESSION_ARRAY_INT, temp_inst_count));
+    Field *visited = cgen_last_inst(inst)->fields[0];
+
+    // colocar vsrc na queue
+    cgen_append(&inst, cgen_instr(NULL, TAC_MOVIV, queue, qindex, cgen_last_inst(vsrc)->fields[0]));
+    // marcar vsrc como visitado, adicionar 1 por causa de sz armazenado em array
+    cgen_append(&inst, cgen_instr(NULL, TAC_ADD, cgen_field(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP), cgen_last_inst(vsrc)->fields[0], cgen_field(get_value_ival(1), TAC_OPTYPE_INT)));
+    cgen_append(&inst, cgen_instr(NULL, TAC_MOVIV, visited, cgen_last_inst(inst)->fields[0], cgen_field(get_value_ival(1), TAC_OPTYPE_INT)));    
+
+    // caso index > size pular loop
+    Field *init_loop_bfs = cgen_field(get_value_label(cgen_label_by_counter()), TAC_OPTYPE_LABEL);
+    Field *end_loop_bfs  = cgen_field(get_value_label(cgen_label_by_counter()), TAC_OPTYPE_LABEL);
+    Field *condition_bfs = cgen_field(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP);
+    cgen_append(&inst, cgen_instr(init_loop_bfs->value.label, TAC_SLEQ, condition_bfs, qindex, qsz));
+    cgen_append(&inst, cgen_instr(NULL, TAC_BRZ, end_loop_bfs, condition_bfs, NULL));
+    {
+        // pegar indice na queue do vertice que deve ser acessado
+        Field *cur_vertex = cgen_field(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP);
+        cgen_append(&inst, cgen_instr(NULL, TAC_MOVVI, cur_vertex, queue, qindex));
+
+        // iterar lista de arestas do vertice
+        cgen_append(&inst, cgen_access_edge_list(graph, cur_vertex, temp_inst_count));
+        Field *edges_adress = cgen_last_inst(inst)->fields[0];
+
+        Field *eindex = cgen_field(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP);
+        Field *esz = cgen_field(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP);
+
+        cgen_append(&inst, cgen_instr(NULL, TAC_MOVVV, eindex, cgen_field(get_value_ival(1), TAC_OPTYPE_INT), NULL));
+        cgen_append(&inst, cgen_instr(NULL, TAC_MOVVI, esz, edges_adress, edges_adress->adress_index));
+        
+        Field *init_loop_arestas = cgen_field(get_value_label(cgen_label_by_counter()), TAC_OPTYPE_LABEL);
+        Field *end_loop_arestas  = cgen_field(get_value_label(cgen_label_by_counter()), TAC_OPTYPE_LABEL);
+        Field *condition_arestas = cgen_field(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP);
+        cgen_append(&inst, cgen_instr(init_loop_arestas->value.label, TAC_SLEQ, condition_arestas, eindex, esz));
+        cgen_append(&inst, cgen_instr(NULL, TAC_BRZ, end_loop_arestas, condition_arestas, NULL));
+        {
+            //obter aresta
+            Field *adj = cgen_field(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP);
+            cgen_append(&inst, cgen_instr(NULL, TAC_MOVVI, adj, edges_adress, eindex));
+
+            // verificar se vertice de destino ja foi visitado
+            Field *is_visited = cgen_field(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP);
+            cgen_append(&inst, cgen_instr(NULL, TAC_ADD, cgen_field(get_value_ival((*temp_inst_count)++), TAC_OPTYPE_TEMP), adj, cgen_field(get_value_ival(1), TAC_OPTYPE_INT)));
+            cgen_append(&inst, cgen_instr(NULL, TAC_MOVVI, is_visited, visited, cgen_last_inst(inst)->fields[0]));    
+
+            Field *last_label = cgen_field(get_value_label(cgen_label_by_counter()), TAC_OPTYPE_LABEL);
+            cgen_append(&inst, cgen_instr(NULL, TAC_BRNZ, last_label, is_visited, NULL));
+            // colocar vertice e incrementar sz da queue
+            {   
+                cgen_append(&inst, cgen_instr(NULL, TAC_ADD, qsz, qsz, cgen_field(get_value_ival(1), TAC_OPTYPE_INT)));
+                cgen_append(&inst, cgen_instr(NULL, TAC_MOVIV, queue, qsz, adj));    
+            }
+
+            cgen_append(&inst, cgen_instr(last_label->value.label, TAC_ADD, eindex, eindex, cgen_field(get_value_ival(1), TAC_OPTYPE_INT)));
+            cgen_append(&inst, cgen_instr(NULL, TAC_JUMP, init_loop_arestas, NULL, NULL));
+        }
+        cgen_append(&inst, cgen_instr(end_loop_arestas->value.label, TAC_NOP, NULL, NULL, NULL));
+
+        // atualizar vdst
+        Field *cur_vertex_ref = cgen_last_inst(vdst)->fields[0];
+        cgen_append(&inst, cgen_instr(NULL, TAC_MOVIV, cur_vertex_ref, cur_vertex_ref->adress_index, cur_vertex));    
+
+        // executar bloco de codigo
+        Label *last_label = cgen_label_by_counter();
+        cgen_append(&inst, block->code);
+        cgen_back_patch(block->back_patch, last_label);
+
+        //incrementar index da queu
+        cgen_append(&inst, cgen_instr(last_label, TAC_ADD, qindex, qindex, cgen_field(get_value_ival(1), TAC_OPTYPE_INT)));
+        cgen_append(&inst, cgen_instr(NULL, TAC_JUMP, init_loop_bfs, NULL, NULL));
+    }
+    cgen_append(&inst, cgen_instr(end_loop_bfs->value.label, TAC_NOP, NULL, NULL, NULL));
 
     return inst;
 }

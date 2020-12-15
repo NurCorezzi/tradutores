@@ -310,24 +310,30 @@ params_call: %empty {$$ = NULL;}
 
 graph_call: DFS graph_params_call { 
   $$ = create_node("dfs"); 
-  push_child($$, $graph_params_call);
   check_graph_call($$->id, $graph_params_call);
+
+  if ($graph_params_call != NULL) {
+    normalize_to_list($$, $graph_params_call);
+    free_node($graph_params_call);
+  } 
 }
 | BFS graph_params_call { 
   $$ = create_node("bfs"); 
-  push_child($$, $graph_params_call);
   check_graph_call($$->id, $graph_params_call);
+
+  if ($graph_params_call != NULL) {
+    normalize_to_list($$, $graph_params_call);
+    free_node($graph_params_call);
+  } 
 }
 ;
 
-graph_params_call: OPEN_P id_or_access SEPARATOR expr_assign[exp1] SEPARATOR expr_assign[exp2] CLOSE_P {
+graph_params_call: OPEN_P id_or_access SEPARATOR expr_assign[exp1] CLOSE_P {
   $$ = create_node("graph_params");
   push_child($$, $id_or_access);
   push_child($$, $exp1);
-  push_child($$, $exp2);
 }
 ;
-
 
 /*------------------STATEMENTS-----------------------*/
 
@@ -433,6 +439,26 @@ statement: WHILE OPEN_P expr_assign CLOSE_P block {
     sprintf(buffer, "receiving var in for mut be of type int ");
     semantic_error(buffer);
   } 
+
+  if (!invalid) {
+    Node *graph  = $graph_call->begin_child; 
+    Node *vdst   = $id_or_access; 
+    Node *vsrc   = $graph_call->begin_child->next; 
+
+    cgen_append(&(vsrc->code), cgen_derref_lvalue(cgen_last_inst(vsrc->code)->fields[0], &temp_inst_count));
+    cgen_append(&(vsrc->code), cgen_cast(cgen_last_inst(vsrc->code)->fields[0], vsrc->cast, &temp_inst_count));
+
+    Instruction *append = NULL;
+    cgen_append(
+      &append,
+      cgen_bfs(graph->code, vdst->code, vsrc->code, $block, &temp_inst_count)
+    );
+
+    cgen_append(&($$->code), graph->code);
+    cgen_append(&($$->code), vdst->code);
+    cgen_append(&($$->code), vsrc->code);
+    cgen_append(&($$->code), append);
+  }
 }
 | READ id_or_access END {
   $$ = create_node("read");
@@ -990,15 +1016,12 @@ Node* get_params_graph_call() {
 
   Node* graph  = create_node("standalone_type"); graph->t_token  = GRAPH; 
   Node* vertex = create_node("standalone_type"); vertex->t_token = INT; 
-  Node* value  = create_node("standalone_type"); value->t_token  = INT; 
 
   graph->type  = type_build(graph, NULL);
   vertex->type = type_build(vertex, NULL);
-  value->type  = type_build(value, NULL);
 
   push_child(params, graph);
   push_child(params, vertex);
-  push_child(params, value);
 
   return params;
 }

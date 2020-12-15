@@ -132,7 +132,7 @@ Instruction* cgen_for(Node* dst, Instruction *init, Instruction* condition, Inst
 
 Instruction* cgen_addv(Instruction *graph, int *temp_inst_count);
 Instruction* cgen_adda(Instruction *graph, Instruction *vsrc, Instruction *vdst, int *temp_inst_count);
-
+Instruction* cgen_bfs(Instruction *graph, Instruction *vdst, Instruction *vsrc, Node *block, int *temp_inst_count);
 
 
 

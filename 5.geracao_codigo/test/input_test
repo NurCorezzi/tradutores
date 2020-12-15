@@ -1,3 +1,20 @@
 void main() {
+    int i;
+    graph g;
+    addv(g);
+    addv(g);
+    addv(g);
+    addv(g);
+    adda(g, 0, 3);
+    adda(g, 0, 1);
+    adda(g, 3, 2);
+    
+    int it;
+    for (i : bfs(g, 0)) {
+        g[i] = it;
+        it = it + 1;
+        if (false) {}
+    }
 
+    << g;
 }

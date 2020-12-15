@@ -26,6 +26,18 @@ Node* create_node_with_type(char const *id, TypeExpression *type) {
   return node;
 }
 
+Node* last_node(Node *node) {
+  if (node == NULL) {
+    return NULL;
+  }
+
+  Node *it = node;
+  while(it->next != NULL) {
+    it = it->next;
+  }
+  return it;
+}
+
 void push_child(Node *root, Node *child) {
   if (child == NULL) {
     return;
