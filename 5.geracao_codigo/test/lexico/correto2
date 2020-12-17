@@ -3,11 +3,12 @@ int calc(float a, float b) {
 }
 
 void main() {
-    boolean exec = 1;
+    boolean exec;
+    exec = 1;
     while(exec) {
         float a;
         float b;
-        >> a; >> b;
+        a = 0; b = 3;
         << calc(a, b);
         if (a == 0) {
             exec = 0;

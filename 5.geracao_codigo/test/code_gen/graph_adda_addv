@@ -29,3 +29,27 @@ void main() {
     assign(g, sz);
     << g;
 }
+
+/*
+0
+1
+2
+3
+4
+ARRAY: [GRAPH {
+  VALUES: [0, 1, 2, 3, 4, #]
+  EDGES: 
+ [ARRAY: [0, 1, 2, 3, 4, #]
+, ARRAY: [0, 1, 2, 3, 4, #]
+, ARRAY: [0, 1, 2, 3, 4, #]
+, ARRAY: [0, 1, 2, 3, 4, #]
+, ARRAY: [0, 1, 2, 3, 4, #]
+, #]
+}, GRAPH {
+  VALUES: [4, 4, #]
+  EDGES: 
+ [ARRAY: [#]
+, ARRAY: [#]
+, #]
+}, #]
+*/

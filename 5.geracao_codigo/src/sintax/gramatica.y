@@ -62,7 +62,6 @@ void build_incompatible_types_str(char* buffer, TypeExpression *a, TypeExpressio
 void yyerror (char const *s);
 void semantic_error(char const *s);
 void warning(char const *s);
-int error_recovery_mode;
 int invalid;
 
 %}
@@ -238,7 +237,7 @@ function: type dimension id {
     }
   }
 }
-| error { error_recovery_mode = 0; $$ = NULL; }
+| error { $$ = NULL; }
 ;
 
 params: %empty {$$ = NULL;}
@@ -514,6 +513,7 @@ statement: WHILE OPEN_P expr_assign CLOSE_P block {
   }
 }
 | statement_control
+| error { $$ = NULL; }
 ;
 
 /*----------------------EXPRESSIONS--------------------------------*/
@@ -1156,7 +1156,6 @@ void build_incompatible_types_str(char* buffer, TypeExpression *a, TypeExpressio
 
 void yyerror (char const *s) {
   invalid = 1;
-  error_recovery_mode = 1;
   printf("\033[01;33m%d:%d-%d:%d\033[0;0m \033[1;31merror:\033[0;0m %s\n", 
     yylloc.first_line, yylloc.first_column,
     yylloc.last_line, yylloc.last_column,

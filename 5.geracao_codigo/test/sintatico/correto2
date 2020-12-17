@@ -1,7 +1,8 @@
 
-boolean outra(int outro, boolean outro, graph outro) {
-    << outro;
-    if (a) << outro; else {}
+boolean outra(int a, boolean b, graph c) {
+    << a;
+    if (a) {<< b;} else {}
+    << c;
     return true || false;
 }
 
@@ -17,7 +18,8 @@ float main() {
         for (b;a;a) {}
         if (a * 10.4) {}
     }
-    int a;
-    for (a: bfs(a,1,1)) {}
-    >> outro[10];
+    graph gg;
+    addv(gg);
+    for (a: bfs(gg,0)) {}
+    << outro[10];
 }

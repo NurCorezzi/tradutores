@@ -1,10 +1,12 @@
 void main() {
-    boolean a = true || false;
+    boolean a; 
+    a = true || false;
     graph[5] g;
-    g[0 to 2];
-    g[0] = g[2] = 1;
-    for (int vertice : dfs(g, 0, 1)) { 
+    addv(g[0]);
+    addv(g[0]);
+    g[0][0] = g[0][1] = 1;
+    int vertice;
+    for (vertice : dfs(g[0], 0)) { 
         << vertice;
     }
-    return 0;
 }

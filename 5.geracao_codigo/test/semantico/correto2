@@ -12,10 +12,12 @@ float main() {
     adda(g, 0, 0);
     outra(a, g);
     if (a && b[1]) {
-    } else if (b[0] >= 10.0 != 10){
-        while(a) {}
+    } else if (b[0] >= 10.0 != 10) {
+        while(a) {
+
+        }
     }
-    for (a: bfs(g,1.0,1)) {
-        >> g[10];
+    for (a: bfs(g,0)) {
+        >> g[0];
     }
 }
